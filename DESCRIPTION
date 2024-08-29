@@ -1,0 +1,21 @@
+Package: rvoronoi
+Type: Package
+Title: Fast Voronoi Tesselation and Delaunty Triangulation using Fortune's Algorithm
+Version: 0.1.0
+Authors@R: c(
+    person("Mike", "Cheng", role = c("aut", "cre", 'cph'), email = "mikefc@coolbutuseless.com"),
+    person("Steven", "Fortune", role = c("aut"))
+    )
+Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
+Description: Fast voronoi tesselation and delaunay triangulation with Fortune's algorithm.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 2.10)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Copyright: The include voronoi C code was written by Steven Fortune. 
+    Copyright (c) 1994 by AT&T Bell Laboratories.
