@@ -9,7 +9,13 @@
 [![R-CMD-check](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of rvoronoi is to …
+`rvoronoi` is a testing ground for some rendering ideas using fast
+delaunay triangulation and voronoi tesselation.
+
+The core of this package is Steven Fortune’s original C source code for
+his sweep algorithm. This code has been updated and adapted to run
+within R. [Original Source has a shell
+archive](https://netlib.sandia.gov/voronoi/sweep2)
 
 ## Installation
 
@@ -21,29 +27,20 @@ You can install from
 remotes::install_github('coolbutuseless/rvoronoi')
 ```
 
-## Original Source Code
-
-- <https://www3.cs.stonybrook.edu/~algorith/implement/fortune/implement.shtml>
-- <https://netlib.sandia.gov/voronoi/sweep2>
-  - wget then ‘sh’ to unpack
-- Another persons go at tidying up source:
-  <https://github.com/stolk/forvor>
-- tech info
-  <https://www.cs.tufts.edu/comp/163/notes05/voronoi_handout.pdf>
-  - max vertices = 2 \* n - 5
-  - max edges = 3 \* n - 6
-- Delaunay:
-  - In the plane (d = 2), if there are b vertices on the convex hull,
-    then any triangulation of the points has at most 2n – 2 – b triangle
-
 ## Voronoi Tesselation
+
+The following code calculates the voronoi tesselation on 20 random
+points.
+
+Only finite length segments are plotted. Segments which head to infinity
+are not plotted here.
 
 ``` r
 library(rvoronoi)
 
-set.seed(2024)
-x <- runif(10)
-y <- runif(10)
+set.seed(2)
+x <- runif(20)
+y <- runif(20)
 
 vor <- voronoi(x, y) 
 
@@ -87,6 +84,10 @@ segments(x[del$v1], y[del$v1], x[del$v3], y[del$v3])
 
 ## Delaunay Benchmark
 
+Simple benchmark comparing this package with `{RTriangle}`
+
+Benchmarking code for other packages is welcomed!
+
 ``` r
 library(RTriangle)
 
@@ -105,9 +106,15 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |    min | median |   itr/sec | mem_alloc |
-|:--------------|-------:|-------:|----------:|----------:|
-| del_rtriangle | 91.2µs |  101µs |  9667.011 |   29.45KB |
-| del_new       | 19.5µs | 20.1µs | 48257.578 |    2.48KB |
+| expression    |    min | median |  itr/sec | mem_alloc |
+|:--------------|-------:|-------:|---------:|----------:|
+| del_rtriangle | 88.3µs | 94.1µs | 10314.01 |   29.45KB |
+| del_new       | 19.2µs | 20.1µs | 48309.73 |    2.48KB |
 
-## Related Software
+## Related
+
+- [mdsumner’s helpful
+  gist](https://gist.github.com/mdsumner/8db5ac01e47fa86f10e7ebc372e0ebda?permalink_comment_id=5171205)
+- [`RTriangle::triangulate()`]()
+- [`terra::voronoi()`](https://rspatial.github.io/terra/reference/voronoi.html)
+- [`geos::geos_voronoi_polygons()`]()
