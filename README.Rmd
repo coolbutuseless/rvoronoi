@@ -27,7 +27,7 @@ and voronoi tesselation.
 
 The core of this package is Steven Fortune's original C source code for his
 sweep algorithm.   This code has been updated and adapted to run within R.
-[Original Source has a shell archive](https://netlib.sandia.gov/voronoi/sweep2)
+[Original source code (packaged as a shell archive)](https://netlib.sandia.gov/voronoi/sweep2)
 
 ## Installation
 

@@ -14,8 +14,8 @@ delaunay triangulation and voronoi tesselation.
 
 The core of this package is Steven Fortune’s original C source code for
 his sweep algorithm. This code has been updated and adapted to run
-within R. [Original Source has a shell
-archive](https://netlib.sandia.gov/voronoi/sweep2)
+within R. [Original source code (packaged as a shell
+archive)](https://netlib.sandia.gov/voronoi/sweep2)
 
 ## Installation
 
@@ -108,8 +108,8 @@ identical(
 
 | expression    |    min | median |  itr/sec | mem_alloc |
 |:--------------|-------:|-------:|---------:|----------:|
-| del_rtriangle | 88.3µs | 94.1µs | 10314.01 |   29.45KB |
-| del_new       | 19.2µs | 20.1µs | 48309.73 |    2.48KB |
+| del_rtriangle | 87.7µs | 94.8µs | 10286.50 |   29.45KB |
+| del_new       | 19.7µs | 20.3µs | 48075.88 |    2.48KB |
 
 ## Related
 
