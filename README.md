@@ -12,6 +12,10 @@
 `rvoronoi` is a testing ground for some rendering ideas using fast
 delaunay triangulation and voronoi tesselation.
 
+For small sets of seed points (e.g. 20 points) this package can be 10x
+faster than `RTriangle` package. For larger sets of seed points, the gap
+closes up - e.g. for N = 1000, still 2x faster than `RTriangle` package.
+
 The core of this package is Steven Fortune’s original C source code for
 his sweep algorithm. This code has been updated and adapted to run
 within R. [Original source code (packaged as a shell
@@ -92,7 +96,7 @@ Benchmarking code for other packages is welcomed!
 library(RTriangle)
 
 set.seed(2024)
-N <- 100
+N <- 20
 x <- runif(N)
 y <- runif(N)
 
@@ -106,10 +110,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |    min | median |  itr/sec | mem_alloc |
-|:--------------|-------:|-------:|---------:|----------:|
-| del_rtriangle | 87.7µs | 94.8µs | 10286.50 |   29.45KB |
-| del_new       | 19.7µs | 20.3µs | 48075.88 |    2.48KB |
+| expression    |     min |  median |   itr/sec | mem_alloc |
+|:--------------|--------:|--------:|----------:|----------:|
+| del_rtriangle | 49.36µs | 56.42µs |  17290.21 |    5.76KB |
+| del_new       |  4.39µs |  4.67µs | 205565.53 |      624B |
 
 ## Related
 
