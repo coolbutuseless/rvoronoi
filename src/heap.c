@@ -7,21 +7,21 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void PQinsert(context_t *ctx, struct Halfedge *he, struct Site *v, float offset) {
+void PQinsert(context_t *ctx, struct Halfedge *he, struct Site *v, double offset) {
   struct Halfedge *last, *next;
 
   he->vertex = v;
   ref(v);
   he->ystar = v->coord.y + offset;
   last = &ctx->PQhash[PQbucket(ctx, he)];
-  while ((next = last->PQnext) != (struct Halfedge *)NULL &&
+  while ((next = last->PQnext) != NULL &&
          (he->ystar > next->ystar ||
           (he->ystar == next->ystar && v->coord.x > next->vertex->coord.x))) {
     last = next;
   };
   he->PQnext = last->PQnext;
   last->PQnext = he;
-  ctx->PQcount += 1;
+  ctx->PQcount++;
 }
 
 
@@ -31,14 +31,14 @@ void PQinsert(context_t *ctx, struct Halfedge *he, struct Site *v, float offset)
 void PQdelete(context_t *ctx, struct Halfedge *he) {
   struct Halfedge *last;
 
-  if (he->vertex != (struct Site *)NULL) {
+  if (he->vertex != NULL) {
     last = &ctx->PQhash[PQbucket(ctx, he)];
     while (last->PQnext != he)
       last = last->PQnext;
     last->PQnext = he->PQnext;
-    ctx->PQcount -= 1;
+    ctx->PQcount--;
     deref(ctx, he->vertex);
-    he->vertex = (struct Site *)NULL;
+    he->vertex = NULL;
   };
 }
 
@@ -74,8 +74,8 @@ int PQempty(context_t *ctx) {
 struct Point PQ_min(context_t *ctx) {
   struct Point answer;
 
-  while (ctx->PQhash[ctx->PQmin].PQnext == (struct Halfedge *)NULL) {
-    ctx->PQmin += 1;
+  while (ctx->PQhash[ctx->PQmin].PQnext == NULL) {
+    ctx->PQmin++;
   };
   answer.x = ctx->PQhash[ctx->PQmin].PQnext->vertex->coord.x;
   answer.y = ctx->PQhash[ctx->PQmin].PQnext->ystar;
@@ -91,7 +91,7 @@ struct Halfedge *PQextractmin(context_t *ctx) {
 
   curr = ctx->PQhash[ctx->PQmin].PQnext;
   ctx->PQhash[ctx->PQmin].PQnext = curr->PQnext;
-  ctx->PQcount -= 1;
+  ctx->PQcount--;
   return (curr);
 }
 
@@ -100,14 +100,13 @@ struct Halfedge *PQextractmin(context_t *ctx) {
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void PQinitialize(context_t *ctx) {
-  int i;
 
   ctx->PQcount = 0;
   ctx->PQmin = 0;
   ctx->PQhashsize = 4 * ctx->sqrt_nsites;
   ctx->PQhash = (struct Halfedge *)myalloc(ctx, ctx->PQhashsize * sizeof *ctx->PQhash);
-  for (i = 0; i < ctx->PQhashsize; i += 1)
-    ctx->PQhash[i].PQnext = (struct Halfedge *)NULL;
+  for (int i = 0; i < ctx->PQhashsize; i++)
+    ctx->PQhash[i].PQnext = NULL;
 }
 
 

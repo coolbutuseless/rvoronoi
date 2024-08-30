@@ -16,7 +16,7 @@
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void freeinit(struct Freelist *fl, int size) {
-  fl->head = (struct Freenode *)NULL;
+  fl->head = NULL;
   fl->nodesize = size;
 }
 
@@ -24,11 +24,10 @@ void freeinit(struct Freelist *fl, int size) {
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 char *getfree(context_t *ctx, struct Freelist *fl) {
-  int i;
   struct Freenode *t;
-  if (fl->head == (struct Freenode *)NULL) {
+  if (fl->head == NULL) {
     t = (struct Freenode *)myalloc(ctx, ctx->sqrt_nsites * fl->nodesize);
-    for (i = 0; i < ctx->sqrt_nsites; i += 1)
+    for (int i = 0; i < ctx->sqrt_nsites; i++)
       makefree((struct Freenode *)((char *)t + i * fl->nodesize), fl);
   };
   t = fl->head;

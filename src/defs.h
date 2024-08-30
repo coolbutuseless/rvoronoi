@@ -19,7 +19,7 @@ struct Freelist {
 
 
 struct Point {
-  float x, y;
+  double x, y;
 };
 
 
@@ -32,7 +32,7 @@ struct Site {
 
 
 struct Edge {
-  float a, b, c;
+  double a, b, c;
   struct Site *ep[2];
   struct Site *reg[2];
   int edgenbr;
@@ -45,7 +45,7 @@ struct Halfedge {
   int ELrefcnt;
   char ELpm;
   struct Site *vertex;
-  float ystar;
+  double ystar;
   struct Halfedge *PQnext;
 };
 
@@ -59,7 +59,7 @@ typedef struct {
   
   int total_alloc;
   
-  float xmin, xmax, ymin, ymax, deltax, deltay;
+  double xmin, xmax, ymin, ymax, deltax, deltay;
   
   struct Site *sites;
   

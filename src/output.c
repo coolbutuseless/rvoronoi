@@ -33,12 +33,12 @@ void out_bisector(context_t *ctx, struct Edge *e) {
 void out_ep(context_t *ctx, struct Edge *e) {
   if (!ctx->triangulate) {
     // Rprintf("e %d", e->edgenbr);
-    // Rprintf(" %d ", e->ep[le] != (struct Site *)NULL ? e->ep[le]->sitenbr : -1);
-    // Rprintf("%d\n", e->ep[re] != (struct Site *)NULL ? e->ep[re]->sitenbr : -1);
+    // Rprintf(" %d ", e->ep[le] != NULL ? e->ep[le]->sitenbr : -1);
+    // Rprintf("%d\n", e->ep[re] != NULL ? e->ep[re]->sitenbr : -1);
     
     ctx->seg_line[ctx->seg_idx] = e->edgenbr + 1; // convert to R 1-indexing
-    ctx->seg_v1  [ctx->seg_idx] = e->ep[le] != (struct Site *)NULL ? e->ep[le]->sitenbr + 1 : NA_INTEGER;
-    ctx->seg_v2  [ctx->seg_idx] = e->ep[re] != (struct Site *)NULL ? e->ep[re]->sitenbr + 1 : NA_INTEGER;
+    ctx->seg_v1  [ctx->seg_idx] = e->ep[le] != NULL ? e->ep[le]->sitenbr + 1 : NA_INTEGER;
+    ctx->seg_v2  [ctx->seg_idx] = e->ep[re] != NULL ? e->ep[re]->sitenbr + 1 : NA_INTEGER;
     
     ctx->seg_idx++;
     

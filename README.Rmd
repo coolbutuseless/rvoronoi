@@ -105,7 +105,7 @@ Benchmarking code for other packages is welcomed!
 library(RTriangle)
 
 set.seed(2024)
-N <- 20
+N <- 2000
 x <- runif(N)
 y <- runif(N)
 

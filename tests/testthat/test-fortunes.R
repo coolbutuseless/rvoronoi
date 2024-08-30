@@ -52,9 +52,13 @@ delaunay_ref <- structure(
 
 
 test_that("Delaunay works", {
+  
   del <- delaunay(tpoints$x, tpoints$y) 
   
-  expect_identical(del, delaunay_ref)
+  del <- rvoronoi:::normalise_del(del)
+  ref <- rvoronoi:::normalise_del(delaunay_ref)
+  
+  expect_identical(del, ref)
 })
 
 

@@ -32,7 +32,7 @@ void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t
     if (!PQempty(ctx))
       newintstar = PQ_min(ctx);
 
-    if (newsite != (struct Site *)NULL &&
+    if (newsite != NULL &&
         (PQempty(ctx) || newsite->coord.y < newintstar.y ||
          (newsite->coord.y == newintstar.y &&
           newsite->coord.x < newintstar.x))) { /* new site is smallest */
@@ -43,14 +43,14 @@ void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t
       e = bisect(ctx, bot, newsite);
       bisector = HEcreate(ctx, e, le);
       ELinsert(lbnd, bisector);
-      if ((p = intersect(ctx, lbnd, bisector)) != (struct Site *)NULL) {
+      if ((p = intersect(ctx, lbnd, bisector)) != NULL) {
         PQdelete(ctx, lbnd);
         PQinsert(ctx, lbnd, p, dist(p, newsite));
       };
       lbnd = bisector;
       bisector = HEcreate(ctx, e, re);
       ELinsert(lbnd, bisector);
-      if ((p = intersect(ctx, bisector, rbnd)) != (struct Site *)NULL) {
+      if ((p = intersect(ctx, bisector, rbnd)) != NULL) {
         PQinsert(ctx, bisector, p, dist(p, newsite));
       };
       newsite = (*nextsite)(ctx);
@@ -83,11 +83,11 @@ void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t
       ELinsert(llbnd, bisector);
       endpoint(ctx, e, re - pm, v);
       deref(ctx, v);
-      if ((p = intersect(ctx, llbnd, bisector)) != (struct Site *)NULL) {
+      if ((p = intersect(ctx, llbnd, bisector)) != NULL) {
         PQdelete(ctx, llbnd);
         PQinsert(ctx, llbnd, p, dist(p, bot));
       };
-      if ((p = intersect(ctx, bisector, rrbnd)) != (struct Site *)NULL) {
+      if ((p = intersect(ctx, bisector, rrbnd)) != NULL) {
         PQinsert(ctx, bisector, p, dist(p, bot));
       };
     } else

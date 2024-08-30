@@ -244,10 +244,10 @@ struct Site *next_site(context_t *ctx) {
   struct Site *s;
   if (ctx->siteidx < ctx->nsites) {
     s = &ctx->sites[ctx->siteidx];
-    ctx->siteidx += 1;
+    ctx->siteidx++;
     return (s);
   } else
-    return ((struct Site *)NULL);
+    return NULL;
 }
 
 
@@ -255,11 +255,10 @@ struct Site *next_site(context_t *ctx) {
 /* read all ctx->sites, sort, and compute xmin, xmax, ymin, ymax */
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void init_sites(context_t *ctx, double *x, double *y, int n) {
-  int i;
   
   ctx->nsites = n;
   ctx->sites = (struct Site *)myalloc(ctx, ctx->nsites * sizeof *ctx->sites);
-  for (i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     ctx->sites[i].coord.x = x[i];
     ctx->sites[i].coord.y = y[i];
     ctx->sites[i].sitenbr = i;
@@ -268,7 +267,7 @@ void init_sites(context_t *ctx, double *x, double *y, int n) {
   qsort(ctx->sites, ctx->nsites, sizeof *ctx->sites, site_comparison);
   ctx->xmin = ctx->sites[0].coord.x;
   ctx->xmax = ctx->sites[0].coord.x;
-  for (i = 1; i < ctx->nsites; i += 1) {
+  for (int i = 1; i < ctx->nsites; i++) {
     if (ctx->sites[i].coord.x < ctx->xmin)
       ctx->xmin = ctx->sites[i].coord.x;
     if (ctx->sites[i].coord.x > ctx->xmax)

@@ -1,5 +1,5 @@
 
-void PQinsert(context_t *ctx, struct Halfedge *he, struct Site *v, float offset);
+void PQinsert(context_t *ctx, struct Halfedge *he, struct Site *v, double offset);
 void PQdelete(context_t *ctx, struct Halfedge *he) ;
 int PQbucket(context_t *ctx, struct Halfedge *he);
 int PQempty(context_t *ctx);

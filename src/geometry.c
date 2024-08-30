@@ -12,7 +12,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void geominit(context_t *ctx) {
   struct Edge e;
-  float sn;
+  double sn;
 
   freeinit(&ctx->efl, sizeof e);
   ctx->nvertices = 0;
@@ -28,7 +28,7 @@ void geominit(context_t *ctx) {
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Edge *bisect(context_t *ctx, struct Site *s1, struct Site *s2) {
-  float dx, dy, adx, ady;
+  double dx, dy, adx, ady;
   struct Edge *newedge;
 
   newedge = (struct Edge *)getfree(ctx, &ctx->efl);
@@ -37,8 +37,8 @@ struct Edge *bisect(context_t *ctx, struct Site *s1, struct Site *s2) {
   newedge->reg[1] = s2;
   ref(s1);
   ref(s2);
-  newedge->ep[0] = (struct Site *)NULL;
-  newedge->ep[1] = (struct Site *)NULL;
+  newedge->ep[0] = NULL;
+  newedge->ep[1] = NULL;
 
   dx = s2->coord.x - s1->coord.x;
   dy = s2->coord.y - s1->coord.y;
@@ -57,7 +57,7 @@ struct Edge *bisect(context_t *ctx, struct Site *s1, struct Site *s2) {
 
   newedge->edgenbr = ctx->nedges;
   out_bisector(ctx, newedge);
-  ctx->nedges += 1;
+  ctx->nedges++;
   return (newedge);
 }
 
@@ -68,20 +68,20 @@ struct Edge *bisect(context_t *ctx, struct Site *s1, struct Site *s2) {
 struct Site *intersect(context_t *ctx, struct Halfedge *el1, struct Halfedge *el2) {
   struct Edge *e1, *e2, *e;
   struct Halfedge *el;
-  float d, xint, yint;
+  double d, xint, yint;
   int right_of_site;
   struct Site *v;
 
   e1 = el1->ELedge;
   e2 = el2->ELedge;
-  if (e1 == (struct Edge *)NULL || e2 == (struct Edge *)NULL)
-    return ((struct Site *)NULL);
+  if (e1 == NULL || e2 == NULL)
+    return (NULL);
   if (e1->reg[1] == e2->reg[1])
-    return ((struct Site *)NULL);
+    return (NULL);
 
   d = e1->a * e2->b - e1->b * e2->a;
   if (-1.0e-10 < d && d < 1.0e-10)
-    return ((struct Site *)NULL);
+    return (NULL);
 
   xint = (e1->c * e2->b - e2->c * e1->b) / d;
   yint = (e2->c * e1->a - e1->c * e2->a) / d;
@@ -97,7 +97,7 @@ struct Site *intersect(context_t *ctx, struct Halfedge *el1, struct Halfedge *el
   };
   right_of_site = xint >= e->reg[1]->coord.x;
   if ((right_of_site && el->ELpm == le) || (!right_of_site && el->ELpm == re))
-    return ((struct Site *)NULL);
+    return (NULL);
 
   v = (struct Site *)getfree(ctx, &ctx->sfl);
   v->refcnt = 0;
@@ -114,7 +114,7 @@ int right_of(struct Halfedge *el, struct Point *p) {
   struct Edge *e;
   struct Site *topsite;
   int right_of_site, above, fast;
-  float dxp, dyp, dxs, t1, t2, t3, yl;
+  double dxp, dyp, dxs, t1, t2, t3, yl;
 
   e = el->ELedge;
   topsite = e->reg[1];
@@ -163,7 +163,7 @@ int right_of(struct Halfedge *el, struct Point *p) {
 void endpoint(context_t *ctx, struct Edge *e, int lr, struct Site *s) {
   e->ep[lr] = s;
   ref(s);
-  if (e->ep[re - lr] == (struct Site *)NULL)
+  if (e->ep[re - lr] == NULL)
     return;
   out_ep(ctx, e);
   deref(ctx, e->reg[le]);
@@ -175,8 +175,8 @@ void endpoint(context_t *ctx, struct Edge *e, int lr, struct Site *s) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-float dist(struct Site *s, struct Site *t) {
-  float dx, dy;
+double dist(struct Site *s, struct Site *t) {
+  double dx, dy;
   dx = s->coord.x - t->coord.x;
   dy = s->coord.y - t->coord.y;
   return (sqrt(dx * dx + dy * dy));
@@ -188,7 +188,7 @@ float dist(struct Site *s, struct Site *t) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void makevertex(context_t *ctx, struct Site *v) {
   v->sitenbr = ctx->nvertices;
-  ctx->nvertices += 1;
+  ctx->nvertices++;
   out_vertex(ctx, v);
 }
 
@@ -197,7 +197,7 @@ void makevertex(context_t *ctx, struct Site *v) {
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void deref(context_t *ctx, struct Site *v) {
-  v->refcnt -= 1;
+  v->refcnt--;
   if (v->refcnt == 0)
     makefree((struct Freenode *)v, (struct Freelist *)&ctx->sfl);
 }
@@ -207,7 +207,7 @@ void deref(context_t *ctx, struct Site *v) {
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void ref(struct Site *v) { 
-  v->refcnt += 1; 
+  v->refcnt++; 
 }
 
 
