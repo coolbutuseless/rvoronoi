@@ -1,0 +1,85 @@
+---
+title: "Handling Infinite Edges"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Handling Infinite Edges}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(rvoronoi)
+```
+
+Voronoi tesselation applies to an infinite plane which means that some edges
+are unbounded.
+
+In order to draw these edges, we must bound their extent (so we have two endpoints 
+to plot the line between)
+
+`voronoi()` returns the line equation for each edge in the form `ax + by = c`.
+Each edge is then a triplet of `line equation`, `first vertex` and `second vertex`
+on that line.  If the line goes to infinity, then that vertex takes the value
+`NA`.
+
+
+## Example Voronoi
+
+```{r fig.height = 6, fig.width = 6}
+set.seed(3)
+N <- 20
+x <- runif(N)
+y <- runif(N)
+
+vor <- voronoi(x, y)
+
+dw <- 0.2
+lim <- c(0 - dw, 1 + dw)
+
+# Plotting all the finite segments
+plot(x, y, col = 'red', pch = '+',
+     asp = 1, ann = FALSE, axes = FALSE, 
+     xlim = c(vor$extents$xmin, vor$extents$xmax), 
+     ylim = c(vor$extents$ymin, vor$extents$ymax))
+segments(
+  vor$vertex$x[vor$segment$v1], vor$vertex$y[vor$segment$v1],
+  vor$vertex$x[vor$segment$v2], vor$vertex$y[vor$segment$v2]
+)
+
+
+# Add in the lines representing infinite segments
+# Extract segments which are unbounded. i.e. v1 or v2 is NA
+inf_seg <- vor$segment[!complete.cases(vor$segment),]
+
+# Get the lines associated with these segments
+inf_line <- vor$line[inf_seg$line,]
+
+xlo <- vor$extents$xmin
+xhi <- vor$extents$xmax
+ylo <- with(inf_line, (c - a * xlo)/b)
+yhi <- with(inf_line, (c - a * xhi)/b)
+
+with(vor$extents, rect(xmin, ymin, xmax, ymax, border = 'grey90'))
+
+for (i in seq_len(nrow(inf_seg))) {
+  seg <- inf_seg[i, ]
+  # segments(xlo, ylo[i], xhi, yhi[i], col = 'grey90')
+  if (is.na(seg$v1) && is.na(seg$v2)) {
+    stop("Double NA segment: ", i)
+  } else if (!is.na(seg$v1)) {
+    segments(vor$vertex$x[seg$v1], vor$vertex$y[seg$v1], xhi, yhi[i], lty = 1, col = 'hotpink')
+  } else if (!is.na(seg$v2)) {
+    segments(xlo, ylo[i], vor$vertex$x[seg$v2], vor$vertex$y[seg$v2], lty = 1, col = 'hotpink')
+  } else {
+    stop("Shouldn't get here")
+  }
+}
+```
+

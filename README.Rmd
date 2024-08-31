@@ -33,6 +33,7 @@ The core of this package is Steven Fortune's original C source code for his
 sweep algorithm.   This code has been updated and adapted to run within R.
 [Original source code (packaged as a shell archive)](https://netlib.sandia.gov/voronoi/sweep2)
 
+
 ## Installation
 
 You can install from [GitHub](https://github.com/coolbutuseless/rvoronoi) with:
@@ -105,7 +106,7 @@ Benchmarking code for other packages is welcomed!
 library(RTriangle)
 
 set.seed(2024)
-N <- 2000
+N <- 20
 x <- runif(N)
 y <- runif(N)
 
@@ -127,6 +128,33 @@ res <- bench::mark(
 ) 
 
 res[1:5] |> knitr::kable()
+```
+
+
+
+## Debug plotting
+
+* Used for debugging
+* Not ready for general use
+
+```{r}
+set.seed(3)
+N <- 10
+x0 <- runif(N)
+y0 <- runif(N)
+
+vor <- voronoi(x0, y0)
+
+if (FALSE) {
+  ps <- extract_polygons_r(vor)
+  ps
+}
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
 ```
 
 

@@ -112,8 +112,35 @@ identical(
 
 | expression    |     min |  median |   itr/sec | mem_alloc |
 |:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 49.36µs | 56.42µs |  17290.21 |    5.76KB |
-| del_new       |  4.39µs |  4.67µs | 205565.53 |      624B |
+| del_rtriangle | 50.63µs | 61.75µs |  15897.45 |    5.76KB |
+| del_new       |  4.55µs |  4.84µs | 200025.23 |      624B |
+
+## Debug plotting
+
+- Used for debugging
+- Not ready for general use
+
+``` r
+set.seed(3)
+N <- 10
+x0 <- runif(N)
+y0 <- runif(N)
+
+vor <- voronoi(x0, y0)
+
+if (FALSE) {
+  ps <- extract_polygons_r(vor)
+  ps
+}
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 ## Related
 

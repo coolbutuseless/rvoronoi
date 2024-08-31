@@ -6,15 +6,30 @@
 #include "edgelist.h"
 #include "geometry.h"
 
-/* implicit parameters: nsites, sqrt_nsites, xmin, xmax, ymin, ymax,
-   deltax, deltay (can all be estimates).
-   Performance suffers if they are wrong; better to make nsites,
-   deltax, and deltay too big than too small.  (?) */
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// 
+/* return a single in-storage site */
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t *ctx)) {
+struct Site *nextsite(context_t *ctx) {
+  struct Site *s;
+  if (ctx->siteidx < ctx->nsites) {
+    s = &ctx->sites[ctx->siteidx];
+    ctx->siteidx++;
+    return (s);
+  } else
+    return NULL;
+}
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// implicit parameters: nsites, sqrt_nsites, xmin, xmax, ymin, ymax,
+// deltax, deltay (can all be estimates).
+// Performance suffers if they are wrong; better to make nsites,
+// deltax, and deltay too big than too small.  (?) */
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void voronoi(context_t *ctx, int triangulate) {
   struct Site *newsite, *bot, *top, *temp, *p;
   struct Site *v;
   struct Point newintstar;
@@ -23,11 +38,11 @@ void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t
   struct Edge *e;
 
   PQinitialize(ctx);
-  ctx->bottomsite = (*nextsite)(ctx);
+  ctx->bottomsite = nextsite(ctx);
   out_site(ctx, ctx->bottomsite);
   ELinitialize(ctx);
 
-  newsite = (*nextsite)(ctx);
+  newsite = nextsite(ctx);
   while (1) {
     if (!PQempty(ctx))
       newintstar = PQ_min(ctx);
@@ -53,7 +68,7 @@ void voronoi(context_t *ctx, int triangulate, struct Site *(*nextsite)(context_t
       if ((p = intersect(ctx, bisector, rbnd)) != NULL) {
         PQinsert(ctx, bisector, p, dist(p, newsite));
       };
-      newsite = (*nextsite)(ctx);
+      newsite = nextsite(ctx);
     } else if (!PQempty(ctx))
     /* intersection is smallest */
     {
