@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
-[![R-CMD-check](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `rvoronoi` is a testing ground for some rendering ideas using fast
