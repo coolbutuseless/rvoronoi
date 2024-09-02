@@ -15,6 +15,7 @@
 #include "voronoi.h"
 
 #include "utils.h"
+#include "R-polygon.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,6 +147,8 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   geominit(&ctx);
   voronoi(&ctx, ctx.triangulate);
   
+  SEXP polys_ = PROTECT(extract_polygons(&ctx)); nprotect++;
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,18 +248,20 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //     extents = list()
   // )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 4)); nprotect++;
-  nms_      = PROTECT(allocVector(STRSXP, 4)); nprotect++;
+  SEXP res_ = PROTECT(allocVector(VECSXP, 5)); nprotect++;
+  nms_      = PROTECT(allocVector(STRSXP, 5)); nprotect++;
   
   SET_STRING_ELT(nms_, 0, mkChar("vertex"));
   SET_STRING_ELT(nms_, 1, mkChar("line"));
   SET_STRING_ELT(nms_, 2, mkChar("segment"));
   SET_STRING_ELT(nms_, 3, mkChar("extents"));
+  SET_STRING_ELT(nms_, 4, mkChar("polygons"));
   
   SET_VECTOR_ELT(res_, 0, vert_);
   SET_VECTOR_ELT(res_, 1, line_);
   SET_VECTOR_ELT(res_, 2, seg_);
   SET_VECTOR_ELT(res_, 3, ext_);
+  SET_VECTOR_ELT(res_, 4, polys_);
   
   setAttrib(res_, R_NamesSymbol, nms_);
   setAttrib(res_, R_ClassSymbol, mkString("vor"));

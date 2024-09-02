@@ -65,7 +65,7 @@ test_that("Delaunay works", {
 test_that("Voronoi works", {
   vor <- voronoi(tpoints$x, tpoints$y)
   
-  expect_identical(names(vor), c("vertex", "line", "segment", "extents"))
+  expect_identical(names(vor), c("vertex", "line", "segment", "extents", "polygons"))
   
   expect_equal(nrow(vor$vertex ), 187)
   expect_equal(nrow(vor$line   ), 286)

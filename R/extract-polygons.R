@@ -20,10 +20,11 @@ polygon_bbox_area <- function(p) {
 #' Extract all bounded polygons from a voronoi tessellation (R version)
 #' 
 #' @param vor result of \code{voronoi()}
+#' @param verbosity verbosity level. default: 0
 #' @return list of polygons
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-extract_polygons_r <- function(vor) {
+extract_polygons_r <- function(vor, verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Vertices
@@ -41,6 +42,11 @@ extract_polygons_r <- function(vor) {
   idx <- with(e, !is.na(v1) & !is.na(v2)) 
   e <- e[idx, ]
   
+  if (nrow(e) == 0) {
+    warning("No bounded edges at all!")
+    return(NULL)
+  }
+  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Phase 1: Find all the wedges
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +60,6 @@ extract_polygons_r <- function(vor) {
   theta <- ifelse(theta < 0, theta + 2 * pi, theta)
   
   e$theta <- theta
-  e
   
   # 3. Sort by v1, theta
   e <- e[with(e, order(v1, theta)), ]
@@ -81,6 +86,10 @@ extract_polygons_r <- function(vor) {
   #    Sort needed as actual lookup to find matching wedge should be done 
   #    by binary search.
   wedge <- wedge[with(wedge, order(v0, v1)), ]
+  
+  if (verbosity > 0) {
+    print(as.data.frame(wedge))
+  }
   
   # 2. Mark all wedges as unused
   wedge$used <- FALSE
@@ -184,7 +193,7 @@ draw_inf_segments <- function(vor, col = 'grey90', ...) {
   for (i in seq_len(nrow(inf_seg))) {
     seg <- inf_seg[i, ]
     if (is.na(seg$v1) && is.na(seg$v2)) {
-      stop("Double NA segment: ", i)
+      # warning("Double NA segment: ", i)
     } else if (!is.na(seg$v1)) {
       segments(vor$vertex$x[seg$v1], vor$vertex$y[seg$v1], xhi, yhi[i], col = col, ...)
     } else if (!is.na(seg$v2)) {
@@ -236,12 +245,18 @@ draw_inf_lines <- function(vor, lty = 1, col = 'grey90', ...) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 draw_bounded_polygons <- function(vor, ...) {
   
+  cols <- rainbow(length(vor$polygons))
+  
   ps <- extract_polygons_r(vor)
-  
-  for (p in ps) {
-    polygon(p$x, p$y, ...)
+  for (i in seq_along(ps)) {
+    polygon(ps[[i]], col = cols[i], ...)
   }
+
+  # for (i in seq_along(vor$polygons)) {
+  #   polygon(vor$polygons[[i]], col = cols[i], ...)
+  # }
   
+    
   invisible(vor)
 }
 
@@ -290,6 +305,17 @@ plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...) {
   invisible(vor)
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Draw vertex nodes
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+draw_vertices <- function(vor, nudge_x = 0.1, nudge_y = nudge_x, ...) {
+  points(vor$vertex, ...)
+  text(x = vor$vertex$x + nudge_x, 
+       y = vor$vertex$y + nudge_y, labels = seq_along(vor$vertex$x))
+  
+  
+  invisible(vor)
+}
 
 
 
@@ -314,7 +340,7 @@ if (FALSE) {
     draw_inf_lines() |>
     draw_inf_segments(col = 'hotpink') |>
     draw_bounded_polygons(border = 'red')
-  points(x0, y0, pch = 'o') 
+  points(x0, y0, pch = '+') 
   
 }
 
@@ -325,7 +351,7 @@ if (FALSE) {
   library(rvoronoi)
   
   
-  set.seed(3)
+  set.seed(3) 
   N <- 10
   x0 <- runif(N)
   y0 <- runif(N)

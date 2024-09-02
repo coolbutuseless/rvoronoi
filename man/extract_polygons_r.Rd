@@ -4,10 +4,12 @@
 \alias{extract_polygons_r}
 \title{Extract all bounded polygons from a voronoi tessellation (R version)}
 \usage{
-extract_polygons_r(vor)
+extract_polygons_r(vor, verbosity = 0)
 }
 \arguments{
 \item{vor}{result of \code{voronoi()}}
+
+\item{verbosity}{verbosity level. default: 0}
 }
 \value{
 list of polygons
