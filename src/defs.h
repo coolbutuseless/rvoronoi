@@ -90,12 +90,12 @@ typedef struct {
   int *v1;
   int *v2;
   int *v3;
-  int idel;
+  int ntris;
   
   // Voronoi Information to return to R
-  int line_idx;
-  int vert_idx;
-  int seg_idx;
+  int nlines;
+  int nverts;
+  int nsegs;
   double *line_a, *line_b, *line_c;
   double *vert_x, *vert_y;
   int *seg_line, *seg_v1, *seg_v2;

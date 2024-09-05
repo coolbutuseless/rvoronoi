@@ -15,7 +15,7 @@
 #include "voronoi.h"
 
 #include "utils.h"
-#include "R-polygon.h"
+#include "R-extract-polygons.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +113,7 @@ int wedge_comparison(const void *p1, const void *p2) {
 //     4. Search for matching continuing wedge. E.g. if initial wedge is c(1, 4, 7), look for wedge c(4, 7, x). Add to region
 //     5. If new wedge matches original wedge, then: region is extracted. Go to 3 else: go to 4
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP extract_polygons(context_t *ctx) {
+SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2) {
   
   int nprotect = 0;
   
@@ -121,10 +121,10 @@ SEXP extract_polygons(context_t *ctx) {
   // How many bounded edges are there - with neither vertex index being NA
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int n_undir_edges = 0;
-  for (int i = 0; i < ctx->seg_idx; i++) {
-    n_undir_edges += ctx->seg_v1[i] != NA_INTEGER && ctx->seg_v2[i] != NA_INTEGER;
+  for (int i = 0; i < seg_n; i++) {
+    n_undir_edges += seg_v1[i] >= 0 && seg_v2[i] >= 0;
   }
-  // Rprintf("poly: %i/%i edges are bounded\n", n_undir_edges, ctx->seg_idx);
+  // Rprintf("poly: %i/%i edges are bounded\n", n_undir_edges, seg_n);
   int n_dir_edges = 2 * n_undir_edges;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,17 +138,21 @@ SEXP extract_polygons(context_t *ctx) {
   // Copy edges in primary direction and calculate angle
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int idx = 0;
-  for (int i = 0; i < ctx->seg_idx; i++) {
-    if (ctx->seg_v1[i] == NA_INTEGER || ctx->seg_v2[i] == NA_INTEGER)
+  for (int i = 0; i < seg_n; i++) {
+    if (seg_v1[i] < 0 || seg_v2[i] < 0)
       continue;
     
-    int v1 = ctx->seg_v1[i] - 1; // Convert from Rs 1-index to C's 0-indexing
-    int v2 = ctx->seg_v2[i] - 1;
+    if (seg_v1[i] == seg_v2[i]) {
+      error("dupe vertex at C index %i. Use `merge_vertices()`", i);
+    }
     
-    double x1 = ctx->vert_x[v1];
-    double x2 = ctx->vert_x[v2];
-    double y1 = ctx->vert_y[v1];
-    double y2 = ctx->vert_y[v2];
+    int v1 = seg_v1[i]; // Convert from Rs 1-index to C's 0-indexing
+    int v2 = seg_v2[i];
+    
+    double x1 = vert_x[v1];
+    double x2 = vert_x[v2];
+    double y1 = vert_y[v1];
+    double y2 = vert_y[v2];
     
     // Rprintf("(%2i, %2i) (%.3f, %.3f) (%.3f, %.3f)\n", v1, v2, x1, y1, x2, y2);
     
@@ -162,7 +166,7 @@ SEXP extract_polygons(context_t *ctx) {
   }
   
   if (idx != n_undir_edges) {
-    error("poly: sanity idx != nedges.  %i != %i", idx, n_undir_edges);
+    error("extract_polygons() poly: sanity idx != nedges.  %i != %i", idx, n_undir_edges);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -409,8 +413,8 @@ SEXP extract_polygons(context_t *ctx) {
     double ymax = -INFINITY;
     
     for (int j = 0; j < nvert; j++) {
-      x[j] = ctx->vert_x[ vidx[j] ];
-      y[j] = ctx->vert_y[ vidx[j] ];
+      x[j] = vert_x[ vidx[j] ];
+      y[j] = vert_y[ vidx[j] ];
       
       xmin = x[j] < xmin ? x[j] : xmin;
       xmax = x[j] > xmax ? x[j] : xmax;
@@ -477,4 +481,45 @@ SEXP extract_polygons(context_t *ctx) {
   UNPROTECT(nprotect);
   return res_filtered_;
 }
+
+
+
+
+
+
+SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
+
+  if (length(x_) == 0 || length(x_) != length(y_)) {
+    error("merge_vertices_() x & y must be equal length");
+  }
+  if (length(v1_) == 0) {
+    warning("merge_vertices_(): No vertices to process\n");
+    return R_NilValue;
+  }
+  if (length(v1_) != length(v2_)) {
+    error("merge_vertices_(): v1 & v2 must be equal length");
+  }
+  
+  int *v1 = malloc(length(v1_) * sizeof(int));
+  int *v2 = malloc(length(v2_) * sizeof(int));
+  if (v1 == NULL || v2 == NULL) error("extract_polygons_() v1/v2 failed allocation");
+  
+  int *v1_p = INTEGER(v1_);
+  int *v2_p = INTEGER(v2_);
+  
+  // Convert from R 1-indexing to C 0-indexing
+  for (int i = 0; i < length(v1_); i++) {
+    v1[i] = v1_p[i] - 1;
+    v2[i] = v2_p[i] - 1;
+  }
+  
+  
+  // SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2)
+  return extract_polygons_core_(
+    length(x_), REAL(x_), REAL(y_),
+    length(v1_), v1, v2
+  );
+}
+
+
 

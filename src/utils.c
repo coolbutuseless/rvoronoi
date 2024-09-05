@@ -11,6 +11,20 @@
 #include <Rdefines.h>
 #include "utils.h"
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Trim a vector to the given length
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void trim_vec(SEXP vec_, int visible_length, int allocated_length) {
+  if (visible_length != allocated_length) {
+      SETLENGTH(vec_, visible_length); 
+      SET_TRUELENGTH(vec_, allocated_length); 
+      SET_GROWABLE_BIT(vec_);
+  }
+}
+
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // @param df_ data.frame object
 // @param N number of rows in data.frame

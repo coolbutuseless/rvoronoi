@@ -128,7 +128,7 @@ int right_of(struct Halfedge *el, struct Point *p) {
     dyp = p->y - topsite->coord.y;
     dxp = p->x - topsite->coord.x;
     fast = 0;
-    if ((!right_of_site & (e->b < 0.0)) | (right_of_site & (e->b >= 0.0))) {
+    if ((!right_of_site & (e->b < 0.0)) || (right_of_site & (e->b >= 0.0))) {
       above = dyp >= e->b * dxp;
       fast = above;
     } else {

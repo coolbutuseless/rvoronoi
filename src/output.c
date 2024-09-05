@@ -19,10 +19,10 @@
 void out_bisector(context_t *ctx, struct Edge *e) {
   if (!ctx->triangulate) {
     // Rprintf("l %f %f %f\n", e->a, e->b, e->c);
-    ctx->line_a[ctx->line_idx] = e->a;
-    ctx->line_b[ctx->line_idx] = e->b;
-    ctx->line_c[ctx->line_idx] = e->c;
-    ctx->line_idx++;
+    ctx->line_a[ctx->nlines] = e->a;
+    ctx->line_b[ctx->nlines] = e->b;
+    ctx->line_c[ctx->nlines] = e->c;
+    ctx->nlines++;
   }
 }
 
@@ -36,11 +36,11 @@ void out_ep(context_t *ctx, struct Edge *e) {
     // Rprintf(" %d ", e->ep[le] != NULL ? e->ep[le]->sitenbr : -1);
     // Rprintf("%d\n", e->ep[re] != NULL ? e->ep[re]->sitenbr : -1);
     
-    ctx->seg_line[ctx->seg_idx] = e->edgenbr + 1; // convert to R 1-indexing
-    ctx->seg_v1  [ctx->seg_idx] = e->ep[le] != NULL ? e->ep[le]->sitenbr + 1 : NA_INTEGER;
-    ctx->seg_v2  [ctx->seg_idx] = e->ep[re] != NULL ? e->ep[re]->sitenbr + 1 : NA_INTEGER;
+    ctx->seg_line[ctx->nsegs] = e->edgenbr; // convert to R 1-indexing
+    ctx->seg_v1  [ctx->nsegs] = e->ep[le] != NULL ? e->ep[le]->sitenbr : -999;
+    ctx->seg_v2  [ctx->nsegs] = e->ep[re] != NULL ? e->ep[re]->sitenbr : -999;
     
-    ctx->seg_idx++;
+    ctx->nsegs++;
     
   };
 }
@@ -51,9 +51,9 @@ void out_ep(context_t *ctx, struct Edge *e) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void out_vertex(context_t *ctx, struct Site *v) {
   if (!ctx->triangulate) {
-    ctx->vert_x[ctx->vert_idx] = v->coord.x;
-    ctx->vert_y[ctx->vert_idx] = v->coord.y;
-    ctx->vert_idx++;
+    ctx->vert_x[ctx->nverts] = v->coord.x;
+    ctx->vert_y[ctx->nverts] = v->coord.y;
+    ctx->nverts++;
     // Rprintf("v %f %f\n", v->coord.x, v->coord.y);
   }
 }
@@ -74,10 +74,10 @@ void out_site(context_t *ctx, struct Site *s) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void out_triple(context_t *ctx, struct Site *s1, struct Site *s2, struct Site *s3) {
   if (ctx->triangulate) {
-    ctx->v1[ctx->idel] = s1->sitenbr + 1;
-    ctx->v2[ctx->idel] = s2->sitenbr + 1;
-    ctx->v3[ctx->idel] = s3->sitenbr + 1;
-    ctx->idel++;
+    ctx->v1[ctx->ntris] = s1->sitenbr;
+    ctx->v2[ctx->ntris] = s2->sitenbr;
+    ctx->v3[ctx->ntris] = s3->sitenbr;
+    ctx->ntris++;
     
     // Rprintf("%d %d %d\n", s1->sitenbr, s2->sitenbr, s3->sitenbr);
   }

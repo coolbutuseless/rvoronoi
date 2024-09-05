@@ -48,9 +48,14 @@ plot(x, y, col = 'red', pch = '+',
      asp = 1, ann = FALSE, axes = FALSE, 
      xlim = c(vor$extents$xmin, vor$extents$xmax), 
      ylim = c(vor$extents$ymin, vor$extents$ymax))
+
+# Finite segments
+fseg <- vor$segment
+fseg <- subset(fseg, v1 > 0 & v2 > 0)
+
 segments(
-  vor$vertex$x[vor$segment$v1], vor$vertex$y[vor$segment$v1],
-  vor$vertex$x[vor$segment$v2], vor$vertex$y[vor$segment$v2]
+  vor$vertex$x[fseg$v1], vor$vertex$y[fseg$v1],
+  vor$vertex$x[fseg$v2], vor$vertex$y[fseg$v2]
 )
 
 
@@ -71,11 +76,11 @@ with(vor$extents, rect(xmin, ymin, xmax, ymax, border = 'grey90'))
 for (i in seq_len(nrow(inf_seg))) {
   seg <- inf_seg[i, ]
   # segments(xlo, ylo[i], xhi, yhi[i], col = 'grey90')
-  if (is.na(seg$v1) && is.na(seg$v2)) {
+  if (seg$v1 <= 0 && seg$v2 <= 0) {
     stop("Double NA segment: ", i)
-  } else if (!is.na(seg$v1)) {
+  } else if (seg$v1 > 0) {
     segments(vor$vertex$x[seg$v1], vor$vertex$y[seg$v1], xhi, yhi[i], lty = 1, col = 'hotpink')
-  } else if (!is.na(seg$v2)) {
+  } else if (seg$v2 > 0) {
     segments(xlo, ylo[i], vor$vertex$x[seg$v2], vor$vertex$y[seg$v2], lty = 1, col = 'hotpink')
   } else {
     stop("Shouldn't get here")

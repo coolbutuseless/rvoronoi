@@ -1,0 +1,122 @@
+---
+title: "voronoi-within-convex-polygon"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{voronoi-within-convex-polygon}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+```{r eval=TRUE}
+
+library(polyclip)
+library(rvoronoi)
+library(ggplot2)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# My original polygon
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set.seed(3)
+N <- 20
+x0 <- runif(N)
+y0 <- runif(N)
+idx <- grDevices::chull(x0, y0)
+mypoly <- list(x = x0[idx], y = y0[idx])
+x0 <- x0[idx]
+y0 <- y0[idx]
+
+# png("working/00-mypoly.png")
+plot(x0, y0, asp = 1, ann = FALSE, axes = FALSE, pch = '.')
+polygon(mypoly)
+# invisible(dev.off())
+
+# bounding box of mypoly
+xr <- range(mypoly$x)
+yr <- range(mypoly$y)
+
+# Create many random seed points and find ones within mypoly
+Ns <- 5
+set.seed(1)
+xs <- runif(Ns * 2, xr[1], xr[2])
+ys <- runif(Ns * 2, yr[1], yr[2])
+
+idx <- polyclip::pointinpolygon(list(x = xs, y = ys), mypoly)
+idx <- which(idx == 1)
+idx <- sample(idx, Ns)
+
+xs <- xs[idx]
+ys <- ys[idx]
+
+# Expand our original polygon to use as seed points 
+expanded1 <- polyclip::polyoffset(mypoly, 0.25 * max(diff(xr), diff(yr)))[[1]]
+expanded2 <- polyclip::polyoffset(mypoly, 0.50 * max(diff(xr), diff(yr)))[[1]]
+
+
+
+xs <- c(xs, expanded1$x, expanded2$x)
+ys <- c(ys, expanded1$y, expanded2$y)
+
+
+plot(xs, ys, asp = 1, ann = FALSE, axes = FALSE)
+polygon(mypoly)
+
+
+
+vor <- voronoi(xs, ys)
+segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$v1, vor$segment$v2, verbosity = 0)
+polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+
+# png("working/02-voronoi.png")
+plot_vor(vor, buffer = 0.3, pch = '.') |>
+  # draw_segments() |>
+  # draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(xs, ys, pch = '+') 
+# invisible(dev.off())
+
+
+segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$v1, vor$segment$v2)
+polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+
+ints <- lapply(polys, function(poly) {
+  polyclip::polyclip(mypoly, poly) 
+})
+ints <- unlist(ints, recursive = FALSE)
+
+cols <- rainbow(length(ints))
+
+# png("working/03-intersect.png")
+plot_vor(vor, buffer = 0.3, pch = '.') |>
+  # draw_segments() |>
+  # draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(xs, ys, pch = '+') 
+
+for (i in seq_along(ints)) {
+  polygon(ints[[i]], col = cols[i])
+}
+# invisible(dev.off())
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Final segmentation
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# png("working/04-final.png")
+plot(x0, y0, asp = 1, ann = FALSE, axes = FALSE, pch = '.')
+for (i in seq_along(ints)) {
+  polygon(ints[[i]], col = cols[i])
+}
+# invisible(dev.off())
+
+```
+

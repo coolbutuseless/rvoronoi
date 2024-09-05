@@ -6,6 +6,7 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
+![](https://img.shields.io/badge/status-dangerously_unstable-red.svg)
 [![R-CMD-check](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -53,11 +54,14 @@ plot(x, y, asp = 1, col = 'red')
 
 # Plot all finite segments.  
 # This will not plot any of the segments which do not converge
+
+fseg <- subset(vor$segment, v1 > 0 & v2 > 0)
+
 segments(
-  vor$vertex$x[vor$segment$v1],
-  vor$vertex$y[vor$segment$v1],
-  vor$vertex$x[vor$segment$v2],
-  vor$vertex$y[vor$segment$v2],
+  vor$vertex$x[ fseg$v1 ],
+  vor$vertex$y[ fseg$v1 ],
+  vor$vertex$x[ fseg$v2 ],
+  vor$vertex$y[ fseg$v2 ],
 )
 ```
 
@@ -112,8 +116,8 @@ identical(
 
 | expression    |     min |  median |   itr/sec | mem_alloc |
 |:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 50.63µs | 61.75µs |  15897.45 |    5.76KB |
-| del_new       |  4.55µs |  4.84µs | 200025.23 |      624B |
+| del_rtriangle | 48.91µs | 51.87µs |  18661.99 |    5.76KB |
+| del_new       |  4.55µs |  4.84µs | 200241.91 |      624B |
 
 ## Debug plotting
 
@@ -141,6 +145,162 @@ plot_vor(vor) |>
 ```
 
 <img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+
+## Pathological 1
+
+- 100 points in a circle
+
+``` r
+theta <- seq(0, 2*pi, length.out = 101)[-1]
+x <- cos(theta)
+y <- sin(theta)
+
+vor <- voronoi(x, y)
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(x, y)
+```
+
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+
+## Pathological 2
+
+- 100 points in a circle
+- 1 point at the centre
+
+``` r
+theta <- seq(0, 2*pi, length.out = 101)[-1]
+x <- c(0, cos(theta))
+y <- c(0, sin(theta))
+
+vor <- voronoi(x, y)
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(x, y, pch = '+')
+```
+
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+
+## Pathological 2a
+
+- 2 concentric circles
+- 1 point at the centre
+
+``` r
+theta <- seq(0, 2*pi, length.out = 100)[-1]
+x <- c(0, cos(theta), 2 * cos(theta))
+y <- c(0, sin(theta), 2 * sin(theta))
+
+vor <- voronoi(x, y)
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(x, y, pch = '+')
+```
+
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+
+## Pathological 3
+
+- 100 points in a line
+
+``` r
+x <- seq(0, 2*pi, length.out = 100)
+y <- 0.5 * x  
+
+vor <- voronoi(x, y)
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red')
+points(x, y, pch = '+')
+```
+
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
+
+## Pathological 4
+
+- 2 concentric cirles (50 points each)
+- 1 point at the centre
+
+``` r
+theta <- seq(0, 2*pi, length.out = 6)[-1]
+x <- c(0, cos(theta), 2 * cos(theta))
+y <- c(0, sin(theta), 2 * sin(theta))
+
+vor <- voronoi(x, y)
+
+plot_vor(vor) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red') |>
+  draw_vertices()
+```
+
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
+``` r
+# points(x, y, pch = '+')
+```
+
+``` r
+library(RTriangle)
+theta <- seq(0, 2*pi, length.out = 6)[-1]
+x <- c(0, cos(theta), 2 * cos(theta))
+y <- c(0, sin(theta), 2 * sin(theta))
+
+tri <- triangulate(pslg(P = cbind(x, y)))
+
+v1 <- tri$VE[,1]
+v2 <- tri$VE[,2]
+
+seg <- merge_vertices(tri$VP[,1], tri$VP[,2], v1, v2)
+
+polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
+
+cols <- rainbow(length(polys))
+plot(tri$VP, asp = 1, ann = F, axes = FALSE)
+for (i in seq_along(polys)) {
+  polygon(polys[[i]], col = cols[i])
+}
+```
+
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
+
+## Random
+
+``` r
+set.seed(1)
+N <- 6
+x <- runif(N)
+y <- runif(N)
+
+vor <- voronoi(x, y)
+
+plot_vor(vor, buffer = 1) |>
+  draw_segments() |> 
+  draw_inf_lines() |>
+  draw_inf_segments(col = 'hotpink') |>
+  draw_bounded_polygons(border = 'red') |>
+  draw_vertices()
+points(x, y, pch = '+')
+```
+
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
 
 ## Related
 

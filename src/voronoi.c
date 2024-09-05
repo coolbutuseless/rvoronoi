@@ -1,4 +1,10 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>
+
 #include "defs.h"
 #include "voronoi.h"
 #include "heap.h"
@@ -32,7 +38,7 @@ struct Site *nextsite(context_t *ctx) {
 void voronoi(context_t *ctx, int triangulate) {
   struct Site *newsite, *bot, *top, *temp, *p;
   struct Site *v;
-  struct Point newintstar;
+  struct Point newintstar = { 0 };
   int pm;
   struct Halfedge *lbnd, *rbnd, *llbnd, *rrbnd, *bisector;
   struct Edge *e;

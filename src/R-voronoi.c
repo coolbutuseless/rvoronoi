@@ -15,7 +15,8 @@
 #include "voronoi.h"
 
 #include "utils.h"
-#include "R-polygon.h"
+#include "R-merge-vertices.h"
+#include "R-extract-polygons.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +113,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP vert_x_ = PROTECT(allocVector(REALSXP, max_verts)); nprotect++;
   SEXP vert_y_ = PROTECT(allocVector(REALSXP, max_verts)); nprotect++;
-  ctx.vert_idx = 0;
+  ctx.nverts = 0;
   ctx.vert_x = REAL(vert_x_);
   ctx.vert_y = REAL(vert_y_);
   
@@ -122,7 +123,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   SEXP line_a_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
   SEXP line_b_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
   SEXP line_c_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
-  ctx.line_idx = 0;
+  ctx.nlines = 0;
   ctx.line_a = REAL(line_a_);
   ctx.line_b = REAL(line_b_);
   ctx.line_c = REAL(line_c_);
@@ -133,7 +134,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   SEXP seg_line_ = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
   SEXP seg_v1_   = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
   SEXP seg_v2_   = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
-  ctx.seg_idx = 0;
+  ctx.nsegs = 0;
   ctx.seg_line = INTEGER(seg_line_);
   ctx.seg_v1   = INTEGER(seg_v1_);
   ctx.seg_v2   = INTEGER(seg_v2_);
@@ -147,8 +148,51 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   geominit(&ctx);
   voronoi(&ctx, ctx.triangulate);
   
-  SEXP polys_ = PROTECT(extract_polygons(&ctx)); nprotect++;
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Merge vertices in voronoi segments to prep for polygon building
+  // void merge_vertices_core_(double tol, 
+  //                           int nverts, double *x, double *y, 
+  //                           int nedges, int *v1, int *v2, 
+  //                           int *fnedges,
+  //                           int verbosity)
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int fnedges = 0; // Final number of edges after merging
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Set up the "working area" for the merging of vertices
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int *v1 = malloc(ctx.nsegs * sizeof(int));
+  int *v2 = malloc(ctx.nsegs * sizeof(int));
+  if (v1 == NULL || v2 == NULL) error("voronoi_(): Couldn't allocate for 'v1' and 'v2'");
+
+  for (int i = 0; i < ctx.nsegs; i++) {
+    v1[i] = ctx.seg_v1[i]; 
+    v2[i] = ctx.seg_v2[i];
+  }
+
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Merge close vertices which are an artefact of the tessellation
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  merge_vertices_core_(1e-5, ctx.nverts, ctx.vert_x, ctx.vert_y,
+                       ctx.nsegs, v1, v2, &fnedges, 0);
+
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Extract the polygons using the (temporary) merged vertices
+  // 
+  // SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y,
+  //                                      int seg_n, int *seg_v1, int *seg_v2)
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP polys_ = PROTECT(
+    extract_polygons_core_(ctx.nverts, ctx.vert_x, ctx.vert_y, fnedges, v1, v2)
+  ); nprotect++;
+
+  free(v1);
+  free(v2);
+  
+  
+    
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,7 +205,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   SET_VECTOR_ELT(vert_, 1, vert_y_);
   
   setAttrib(vert_, R_NamesSymbol, nms_);
-  set_df_attributes(vert_, ctx.vert_idx, max_verts);
+  set_df_attributes(vert_, ctx.nverts, max_verts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
@@ -177,7 +221,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   SET_VECTOR_ELT(line_, 2, line_c_);
   
   setAttrib(line_, R_NamesSymbol, nms_);
-  set_df_attributes(line_, ctx.line_idx, max_edges);
+  set_df_attributes(line_, ctx.nlines, max_edges);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -194,7 +238,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   SET_VECTOR_ELT(seg_, 2, seg_v2_);
   
   setAttrib(seg_, R_NamesSymbol, nms_);
-  set_df_attributes(seg_, ctx.seg_idx, max_edges);
+  set_df_attributes(seg_, ctx.nsegs, max_edges);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
@@ -204,7 +248,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   double xmax = -INFINITY;
   double ymin =  INFINITY;
   double ymax = -INFINITY;
-  for (int i = 0; i < ctx.vert_idx; i++) {
+  for (int i = 0; i < ctx.nverts; i++) {
     if (ctx.vert_x[i] > xmax) xmax = ctx.vert_x[i];
     if (ctx.vert_x[i] < xmin) xmin = ctx.vert_x[i];
     if (ctx.vert_y[i] > ymax) ymax = ctx.vert_y[i];
@@ -274,6 +318,17 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   }
   free(ctx.allocs);
   
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Convert C 0-indexing to R 1-indexing
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int *seg_line = INTEGER(seg_line_);
+  int *seg_v1   = INTEGER(seg_v1_);
+  int *seg_v2   = INTEGER(seg_v2_);
+  for (int i = 0; i < length(seg_line_); i++) seg_line[i]++;
+  for (int i = 0; i < length(seg_v1_  ); i++) seg_v1  [i]++;
+  for (int i = 0; i < length(seg_v2_  ); i++) seg_v2  [i]++;
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -327,7 +382,7 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialize context
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ctx.idel = 0;
+  ctx.ntris = 0;
   ctx.v1 = INTEGER(v1_);
   ctx.v2 = INTEGER(v2_);
   ctx.v3 = INTEGER(v3_);
@@ -355,7 +410,7 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   SET_VECTOR_ELT(res_, 2, v3_);
   
   setAttrib(res_, R_NamesSymbol, nms_);
-  set_df_attributes(res_, ctx.idel, max_tris);
+  set_df_attributes(res_, ctx.ntris, max_tris);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations
@@ -364,6 +419,16 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
     free(ctx.allocs[i]);
   }
   free(ctx.allocs);
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Convert C 0-indexing to R 1-indexing
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int *v1 = INTEGER(v1_);
+  int *v2 = INTEGER(v2_);
+  int *v3 = INTEGER(v3_);
+  for (int i = 0; i < ctx.ntris; i++) v1[i]++;
+  for (int i = 0; i < ctx.ntris; i++) v2[i]++;
+  for (int i = 0; i < ctx.ntris; i++) v3[i]++;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
