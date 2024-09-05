@@ -45,9 +45,11 @@ if (FALSE) {
 if (FALSE) {
   
   set.seed(1)
-  N <- 300
+  N <- 1000
   x <- runif(N)
   y <- runif(N)
+  
+  voronoi(x, y) |> bench::mark()
   
   vor <- voronoi(x, y)
   
