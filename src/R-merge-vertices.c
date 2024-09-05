@@ -144,6 +144,8 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
     }
   }
   
+  // Mark discarded edges with a sentinel value so it's easy to see
+  // when something's not right.
   for (; dst < nedges; dst++) {
     v1[dst] = 998;
     v2[dst] = 998;

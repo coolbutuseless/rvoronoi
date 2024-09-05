@@ -157,6 +157,9 @@ plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...) {
   invisible(vor)
 }
 
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Draw vertex nodes
 #' @param vor vor
