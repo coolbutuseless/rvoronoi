@@ -7,7 +7,7 @@
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
 ![](https://img.shields.io/badge/status-dangerously_unstable-red.svg)
-[![R-CMD-check](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/voronoi-dev/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `rvoronoi` is a testing ground for some rendering ideas using fast
@@ -116,8 +116,8 @@ identical(
 
 | expression    |     min |  median |   itr/sec | mem_alloc |
 |:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 48.91µs | 51.87µs |  18661.99 |    5.76KB |
-| del_new       |  4.55µs |  4.84µs | 200241.91 |      624B |
+| del_rtriangle | 49.36µs | 59.82µs |  15992.03 |    5.76KB |
+| del_new       |  4.39µs |  5.21µs | 181147.02 |      624B |
 
 ## Debug plotting
 

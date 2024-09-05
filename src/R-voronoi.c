@@ -46,7 +46,7 @@ int site_comparison(const void *v1, const void *v2) {
 void init_sites(context_t *ctx, double *x, double *y, int n) {
   
   ctx->nsites = n;
-  ctx->sites = (struct Site *)myalloc(ctx, ctx->nsites * sizeof *ctx->sites);
+  ctx->sites = (struct Site *)myalloc(ctx, (unsigned int)ctx->nsites * sizeof *ctx->sites);
   for (int i = 0; i < n; i++) {
     ctx->sites[i].coord.x = x[i];
     ctx->sites[i].coord.y = y[i];
@@ -54,7 +54,7 @@ void init_sites(context_t *ctx, double *x, double *y, int n) {
     ctx->sites[i].refcnt  = 0;
   }
   
-  qsort(ctx->sites, ctx->nsites, sizeof *ctx->sites, site_comparison);
+  qsort(ctx->sites, (unsigned long)ctx->nsites, sizeof *ctx->sites, site_comparison);
   ctx->xmin = ctx->sites[0].coord.x;
   ctx->xmax = ctx->sites[0].coord.x;
   
@@ -96,7 +96,7 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ctx.alloc_count    = 0;
   ctx.alloc_capacity = 1024;
-  ctx.allocs = (void **)calloc(ctx.alloc_capacity, sizeof(void *));
+  ctx.allocs = (void **)calloc((unsigned long)ctx.alloc_capacity, sizeof(void *));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Space for vertices
@@ -161,8 +161,8 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set up the "working area" for the merging of vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *v1 = malloc(ctx.nsegs * sizeof(int));
-  int *v2 = malloc(ctx.nsegs * sizeof(int));
+  int *v1 = malloc((unsigned long)ctx.nsegs * sizeof(int));
+  int *v2 = malloc((unsigned long)ctx.nsegs * sizeof(int));
   if (v1 == NULL || v2 == NULL) error("voronoi_(): Couldn't allocate for 'v1' and 'v2'");
 
   for (int i = 0; i < ctx.nsegs; i++) {
@@ -363,7 +363,7 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ctx.alloc_count    = 0;
   ctx.alloc_capacity = 1024;
-  ctx.allocs = (void **)calloc(ctx.alloc_capacity, sizeof(void *));
+  ctx.allocs = (void **)calloc((unsigned long)ctx.alloc_capacity, sizeof(void *));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Maximum number of triangles = 2 * n - 2 - b

@@ -18,7 +18,7 @@ void geominit(context_t *ctx) {
   ctx->nvertices = 0;
   ctx->nedges = 0;
   sn = ctx->nsites + 4;
-  ctx->sqrt_nsites = sqrt(sn);
+  ctx->sqrt_nsites = (int)ceil(sqrt((double)sn));
   ctx->deltay = ctx->ymax - ctx->ymin;
   ctx->deltax = ctx->xmax - ctx->xmin;
 }

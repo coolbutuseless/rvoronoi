@@ -26,7 +26,7 @@ void freeinit(struct Freelist *fl, int size) {
 char *getfree(context_t *ctx, struct Freelist *fl) {
   struct Freenode *t;
   if (fl->head == NULL) {
-    t = (struct Freenode *)myalloc(ctx, ctx->sqrt_nsites * fl->nodesize);
+    t = (struct Freenode *)myalloc(ctx, (unsigned int)ctx->sqrt_nsites * (unsigned int)fl->nodesize);
     for (int i = 0; i < ctx->sqrt_nsites; i++)
       makefree((struct Freenode *)((char *)t + i * fl->nodesize), fl);
   };
@@ -58,7 +58,7 @@ char *myalloc(context_t *ctx, unsigned n) {
   // keep track of memory allocations to free at end
   if (ctx->alloc_count == ctx->alloc_capacity) {
     ctx->alloc_capacity *= 2;
-    ctx->allocs = realloc(ctx->allocs, ctx->alloc_capacity * sizeof(void *));
+    ctx->allocs = realloc(ctx->allocs, (unsigned int)ctx->alloc_capacity * sizeof(void *));
   }
   
   ctx->allocs[ctx->alloc_count] = (void *)t;

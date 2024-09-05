@@ -131,7 +131,7 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   // Allocate space for TWICE the number of bounded edges (undirected)
   // 'edge' is going to hold **directed** edges
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  edge_t *edge = calloc(n_dir_edges, sizeof(edge_t));
+  edge_t *edge = calloc((unsigned long)n_dir_edges, sizeof(edge_t));
   if (edge == NULL) error("Could not allocate edge memory");
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,12 +183,12 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sort edges by (v1, theta)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  qsort(edge, n_dir_edges, sizeof(edge_t), edge_comparison);
+  qsort(edge, (size_t)n_dir_edges, sizeof(edge_t), edge_comparison);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Create wedges
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  wedge_t *wedge = calloc(n_dir_edges, sizeof(wedge_t));
+  wedge_t *wedge = calloc((unsigned long)n_dir_edges, sizeof(wedge_t));
   if (wedge == NULL) error("Could not allocated wedge memory");
   idx = 0;
   int v1_group = edge[0].v1;
@@ -225,7 +225,7 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sort wedges by (v1, v2)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  qsort(wedge, n_dir_edges, sizeof(wedge_t), wedge_comparison);
+  qsort(wedge, (size_t)n_dir_edges, sizeof(wedge_t), wedge_comparison);
   
   
   // for (int i = 0; i < n_dir_edges; i++) {
@@ -248,12 +248,12 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   int **polys;
   int poly_capacity = 32;
   int poly_idx = 0;
-  polys = calloc(poly_capacity, sizeof(int *));
+  polys = calloc((unsigned long)poly_capacity, sizeof(int *));
   if (polys == NULL) error("Couldn't allocate polys");
   
   // Keep track of the number of vertices within each polygon
   int *nverts;
-  nverts = calloc(poly_capacity, sizeof(int));
+  nverts = calloc((unsigned long)poly_capacity, sizeof(int));
   if (nverts == NULL) error("Couldn't allocate nverts");
   
   // Temp storage for the current set of vertex indices
@@ -346,12 +346,12 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
     if (poly_idx == poly_capacity) {
       // Exaand storage if we've reached capacity
       poly_capacity *= 2;
-      polys = realloc(polys, poly_capacity * sizeof(int *));
-      nverts = realloc(nverts, poly_capacity * sizeof(int));
+      polys  = realloc(polys , (unsigned long)poly_capacity * sizeof(int *));
+      nverts = realloc(nverts, (unsigned long)poly_capacity * sizeof(int));
     } 
-    polys[poly_idx] = malloc(nvert * sizeof(int));
+    polys[poly_idx] = malloc((unsigned long)nvert * sizeof(int));
     if (polys[poly_idx] == NULL) error("polys[poly_idx] failed allocation");
-    memcpy(polys[poly_idx], &vidx, nvert * sizeof(int));
+    memcpy(polys[poly_idx], &vidx, (unsigned long)nvert * sizeof(int));
     nverts[poly_idx] = nvert;
     
     poly_idx++;
@@ -381,7 +381,7 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP res_ = PROTECT(allocVector(VECSXP, poly_idx)); nprotect++;
   double *bbox;
-  bbox = malloc(poly_idx * sizeof(double));
+  bbox = malloc((unsigned long)poly_idx * sizeof(double));
   if (bbox == NULL) error("Couldn't allocate bbox");
   
   for (int i = 0; i < poly_idx; i++) {
@@ -500,8 +500,8 @@ SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
     error("merge_vertices_(): v1 & v2 must be equal length");
   }
   
-  int *v1 = malloc(length(v1_) * sizeof(int));
-  int *v2 = malloc(length(v2_) * sizeof(int));
+  int *v1 = malloc((unsigned long)length(v1_) * sizeof(int));
+  int *v2 = malloc((unsigned long)length(v2_) * sizeof(int));
   if (v1 == NULL || v2 == NULL) error("extract_polygons_() v1/v2 failed allocation");
   
   int *v1_p = INTEGER(v1_);

@@ -28,8 +28,8 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
                           int verbosity) {
   
   
-  int *remap1 = malloc(nverts * sizeof(int));
-  int *remap2 = malloc(nverts * sizeof(int));
+  int *remap1 = malloc((unsigned long)nverts * sizeof(int));
+  int *remap2 = malloc((unsigned long)nverts * sizeof(int));
   if (remap1 == NULL || remap2 == NULL) {
     error("merge_vertices_core_(): could not allocate 'remap1' and 'remap2'");
   }

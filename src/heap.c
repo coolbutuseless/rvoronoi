@@ -104,7 +104,7 @@ void PQinitialize(context_t *ctx) {
   ctx->PQcount = 0;
   ctx->PQmin = 0;
   ctx->PQhashsize = 4 * ctx->sqrt_nsites;
-  ctx->PQhash = (struct Halfedge *)myalloc(ctx, ctx->PQhashsize * sizeof *ctx->PQhash);
+  ctx->PQhash = (struct Halfedge *)myalloc(ctx, (unsigned int)ctx->PQhashsize * sizeof *ctx->PQhash);
   for (int i = 0; i < ctx->PQhashsize; i++)
     ctx->PQhash[i].PQnext = NULL;
 }
