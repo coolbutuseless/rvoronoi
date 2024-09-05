@@ -156,6 +156,9 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
   }
   
   *fnedges = nedges - ndiscard;
+  
+  free(remap1);
+  free(remap2);
 }
 
 
