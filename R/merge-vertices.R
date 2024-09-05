@@ -40,3 +40,29 @@ if (FALSE) {
   
 }  
 
+
+
+if (FALSE) {
+  
+  set.seed(1)
+  N <- 300
+  x <- runif(N)
+  y <- runif(N)
+  
+  vor <- voronoi(x, y)
+  
+  vor$segment
+  segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$v1, vor$segment$v2)
+  
+  polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+  extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2) |> bench::mark()
+  # Linear search: N = 3000,  24.6 itr/sec
+  
+  cols <- rainbow(length(polys))
+  plot(vor$vertex, asp = 1, ann = F, axes = FALSE, xlim = c(-0.2, 1.2), ylim = c(-0.2, 1.2))
+  for (i in seq_along(polys)) {
+    polygon(polys[[i]], col = cols[i])
+  }
+  
+}  
+

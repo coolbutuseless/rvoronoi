@@ -228,9 +228,53 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   qsort(wedge, (size_t)n_dir_edges, sizeof(wedge_t), wedge_comparison);
   
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Figure out search bounds for each wedge starting with a particular
+  // vertex
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  typedef struct {
+    int first; // At which index is this vertex first seen in 'wedge'?
+    int last;  // At which index is this vertex last  seen in 'wedge'?
+  } bounds_t;
+  bounds_t *bounds = NULL;
+
+  // Find maximum vertex which appears - which tells me the memory 
+  // allocation for the number of 'bounds'
+  int max_vert_num = wedge[n_dir_edges - 1].v1;
+  int nbounds = max_vert_num + 1;
+
+  // Allocate the 'bounds'
+  bounds = calloc(nbounds, sizeof(bounds_t));
+  if (bounds == NULL) error("Failed to allocate 'bounds'");
+
+  // Initialise the cvert (current vertex) to be the first seen vertex
+  int cvert = wedge[0].v1;
+  
+  // Note that the first seen vertex starts at '0'
+  bounds[cvert].first = 0;
+
+  // Find the start and end of all indices
+  for (int i = 1; i < n_dir_edges; i++) {
+    if (wedge[i].v1 != cvert) {
+      bounds[cvert].last = i - 1;
+      cvert = wedge[i].v1;
+      bounds[cvert].first = i;
+    }
+  }
+
+  // last time the last vertex index is seen is the last edge (obviously :)
+  bounds[cvert].last = n_dir_edges - 1;
+
+  // Verbosity/debugging
   // for (int i = 0; i < n_dir_edges; i++) {
-  //   Rprintf("%3i %i: (%3i, %3i, %3i)\n", i, wedge[i].used, wedge[i].v1, wedge[i].v2, wedge[i].v3);
+  //   Rprintf("W %3i %i: (%3i, %3i, %3i)\n", i, wedge[i].used, wedge[i].v1, wedge[i].v2, wedge[i].v3);
   // }
+  //
+  // for (int i = 0; i < nbounds; i++) {
+  //   Rprintf("B %i  [%i, %i]\n", i, bounds[i].first, bounds[i].last);
+  // }
+  
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,6 +332,8 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
     int i = first;  // current wedge
     bool capturing = true;
     
+    
+    // Find all subsequent wedge matches for the initial wedge
     while (true) {
       
       if (capturing) {
@@ -301,14 +347,29 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // Linear search for matching wedge
       // Original paper uses binary search to achieve O(nlogn)
-      // My method: index the start of each v1_group and just 
-      // jump to there to start the linear search.
-      // TODO: Implement jump-started linear search
+      // My method: index the start/end index of each v1 within wedge 
+      // and just search within there.
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       int j = 0; // index of matching edge
       bool match_found = false;
-      for (j = 0; j < n_dir_edges; j++) {
-        if (!wedge[j].used && 
+      
+      
+      // Old linear search for next wedge
+      // for (j = 0; j < n_dir_edges; j++) {
+      //   if (!wedge[j].used &&
+      //       wedge[j].v1 == wedge[i].v2 &&
+      //       wedge[j].v2 == wedge[i].v3) {
+      //     wedge[j].used = true;
+      //     match_found = true;
+      //     break;
+      //   }
+      // }
+      
+      // New sub-limear search for next matching wedge.
+      // just searches between the known start/end index in 'wedge' where
+      int this_v1 = wedge[i].v2;
+      for (j = bounds[this_v1].first; j <= bounds[this_v1].last; j++) {
+        if (!wedge[j].used &&
             wedge[j].v1 == wedge[i].v2 &&
             wedge[j].v2 == wedge[i].v3) {
           wedge[j].used = true;
@@ -475,6 +536,7 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   }
   free(polys);
   free(nverts);
+  free(bounds);
   
   free(wedge);
   free(edge);
