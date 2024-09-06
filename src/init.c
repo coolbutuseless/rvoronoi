@@ -9,7 +9,7 @@ extern SEXP delaunay_(SEXP x_, SEXP y_);
 extern SEXP merge_vertices_  (SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP tol_, SEXP verbosity_);
 extern SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_,            SEXP verbosity_);
 
-extern SEXP point_in_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_);
+extern SEXP points_in_convex_polygon_ (SEXP x_, SEXP y_, SEXP xp_, SEXP yp_);
 
 static const R_CallMethodDef CEntries[] = {
   
@@ -19,7 +19,7 @@ static const R_CallMethodDef CEntries[] = {
   {"merge_vertices_"  , (DL_FUNC) &merge_vertices_  , 6},
   {"extract_polygons_", (DL_FUNC) &extract_polygons_, 5},
   
-  {"point_in_polygon_", (DL_FUNC) &point_in_polygon_, 4},
+  {"points_in_convex_polygon_", (DL_FUNC) &points_in_convex_polygon_, 4},
   
   {NULL , NULL, 0}
 };

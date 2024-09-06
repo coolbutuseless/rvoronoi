@@ -6,14 +6,16 @@
 #' @param x,y point
 #' @param xp,yp polygon vertices
 #' @return logical
+#' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-point_in_polygon <- function(x, y, xp, yp) {
-  .Call(point_in_polygon_, x, y, xp, yp)
+point_in_convex_polygon <- function(x, y, xp, yp) {
+  .Call(points_in_convex_polygon_, x, y, xp, yp)
 }
 
 
 if (FALSE) {
   
+  set.seed(1)
   n  <- 4
   px <- c(0, 1, 1, 0)
   py <- c(0, 0, 1, 1)
@@ -38,11 +40,20 @@ if (FALSE) {
   xs <- runif(N, -0.5, 1.5)
   ys <- runif(N, -0.5, 1.5)
   
-  inside  <- mapply(test, x= xs, y = ys)
-  inside2 <- mapply(point_in_polygon, x = xs, y = ys, MoreArgs = list(xp = px, yp = py)) 
-  table(inside)
+  inside1 <- mapply(test, x= xs, y = ys)
+  inside2 <- mapply(point_in_convex_polygon, x = xs, y = ys, MoreArgs = list(xp = px, yp = py)) 
+  inside3 <- point_in_convex_polygon(xs, ys, px, py)
+  table(inside1)
   table(inside2)
+  table(inside3)
   
   points(xs, ys, col = c('red', 'blue')[inside2 + 1])
   
+  
+  bench::mark(
+    mapply(test, x= xs, y = ys),
+    mapply(point_in_convex_polygon, x = xs, y = ys, MoreArgs = list(xp = px, yp = py)),
+    point_in_convex_polygon(xs, ys, px, py)
+  )
 }
+
