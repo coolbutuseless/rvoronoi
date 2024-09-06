@@ -15,59 +15,9 @@
 #include "voronoi.h"
 
 #include "utils.h"
+#include "R-common.h"
 #include "R-merge-vertices.h"
 #include "R-extract-polygons.h"
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Helper function used with sort()
-// sort ctx->sites on y, then x, coord 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int site_comparison(const void *v1, const void *v2) {
-  
-  struct Point *s1 = (struct Point *)v1;
-  struct Point *s2 = (struct Point *)v2;
-  
-  if (s1->y < s2->y)
-    return (-1);
-  if (s1->y > s2->y)
-    return (1);
-  if (s1->x < s2->x)
-    return (-1);
-  if (s1->x > s2->x)
-    return (1);
-  return (0);
-}
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Convert coordinates to ctx->sites, sort, and compute xmin, xmax, ymin, ymax 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void init_sites(context_t *ctx, double *x, double *y, int n) {
-  
-  ctx->nsites = n;
-  ctx->sites = (struct Site *)myalloc(ctx, (unsigned int)ctx->nsites * sizeof *ctx->sites);
-  for (int i = 0; i < n; i++) {
-    ctx->sites[i].coord.x = x[i];
-    ctx->sites[i].coord.y = y[i];
-    ctx->sites[i].sitenbr = i;
-    ctx->sites[i].refcnt  = 0;
-  }
-  
-  qsort(ctx->sites, (unsigned long)ctx->nsites, sizeof *ctx->sites, site_comparison);
-  ctx->xmin = ctx->sites[0].coord.x;
-  ctx->xmax = ctx->sites[0].coord.x;
-  
-  for (int i = 1; i < ctx->nsites; i++) {
-    if (ctx->sites[i].coord.x < ctx->xmin)
-      ctx->xmin = ctx->sites[i].coord.x;
-    if (ctx->sites[i].coord.x > ctx->xmax)
-      ctx->xmax = ctx->sites[i].coord.x;
-  };
-  
-  ctx->ymin = ctx->sites[0].coord.y;
-  ctx->ymax = ctx->sites[ctx->nsites - 1].coord.y;
-}
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,22 +111,20 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set up the "working area" for the merging of vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *v1 = malloc((unsigned long)ctx.nsegs * sizeof(int));
-  int *v2 = malloc((unsigned long)ctx.nsegs * sizeof(int));
-  if (v1 == NULL || v2 == NULL) error("voronoi_(): Couldn't allocate for 'v1' and 'v2'");
-
-  for (int i = 0; i < ctx.nsegs; i++) {
-    v1[i] = ctx.seg_v1[i]; 
-    v2[i] = ctx.seg_v2[i];
-  }
-
+  SEXP v1m_ = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
+  SEXP v2m_ = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
   
+  int *v1m = INTEGER(v1m_);
+  int *v2m = INTEGER(v2m_);
+  
+  memcpy(v1m, ctx.seg_v1, ctx.nsegs * sizeof(int));
+  memcpy(v2m, ctx.seg_v2, ctx.nsegs * sizeof(int));
+
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge close vertices which are an artefact of the tessellation
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   merge_vertices_core_(1e-5, ctx.nverts, ctx.vert_x, ctx.vert_y,
-                       ctx.nsegs, v1, v2, &fnedges, 0);
-
+                       ctx.nsegs, v1m, v2m, &fnedges, 0);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract the polygons using the (temporary) merged vertices
@@ -185,12 +133,23 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //                                      int seg_n, int *seg_v1, int *seg_v2)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP polys_ = PROTECT(
-    extract_polygons_core_(ctx.nverts, ctx.vert_x, ctx.vert_y, fnedges, v1, v2)
+    extract_polygons_core_(ctx.nverts, ctx.vert_x, ctx.vert_y, fnedges, v1m, v2m)
   ); nprotect++;
 
-  free(v1);
-  free(v2);
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Trim the merged indices to size 
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP msegs_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
+  SEXP mnms_  = PROTECT(allocVector(STRSXP, 2)); nprotect++;  
+  SET_STRING_ELT(mnms_, 0, mkChar("v1"));
+  SET_STRING_ELT(mnms_, 1, mkChar("v2"));
+  setAttrib(msegs_, R_NamesSymbol, mnms_);
+  
+  SET_VECTOR_ELT(msegs_, 0, v1m_);
+  SET_VECTOR_ELT(msegs_, 1, v2m_);
+  
+  set_df_attributes(msegs_, fnedges, length(v1m_));
   
     
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -292,20 +251,22 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //     extents = list()
   // )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 5)); nprotect++;
-  nms_      = PROTECT(allocVector(STRSXP, 5)); nprotect++;
+  SEXP res_ = PROTECT(allocVector(VECSXP, 6)); nprotect++;
+  nms_      = PROTECT(allocVector(STRSXP, 6)); nprotect++;
   
   SET_STRING_ELT(nms_, 0, mkChar("vertex"));
   SET_STRING_ELT(nms_, 1, mkChar("line"));
   SET_STRING_ELT(nms_, 2, mkChar("segment"));
   SET_STRING_ELT(nms_, 3, mkChar("extents"));
   SET_STRING_ELT(nms_, 4, mkChar("polygons"));
+  SET_STRING_ELT(nms_, 5, mkChar("msegments"));
   
   SET_VECTOR_ELT(res_, 0, vert_);
   SET_VECTOR_ELT(res_, 1, line_);
   SET_VECTOR_ELT(res_, 2, seg_);
   SET_VECTOR_ELT(res_, 3, ext_);
   SET_VECTOR_ELT(res_, 4, polys_);
+  SET_VECTOR_ELT(res_, 5, msegs_);
   
   setAttrib(res_, R_NamesSymbol, nms_);
   setAttrib(res_, R_ClassSymbol, mkString("vor"));
@@ -336,110 +297,4 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   return res_;
 }
 
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Delauney Triangulation
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP delaunay_(SEXP x_, SEXP y_) {
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Sanity Check
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) == 0 || length(x_) != length(y_)) {
-    error("x/y lengths aren't valid");
-  }
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Initialise the calculation context
-  // Do delauney? TRUE
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int nprotect = 0;
-  context_t ctx = { 0 };
-  ctx.triangulate = 1;
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Track *ALL* the allocations done via 'myalloc()'
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ctx.alloc_count    = 0;
-  ctx.alloc_capacity = 1024;
-  ctx.allocs = (void **)calloc((unsigned long)ctx.alloc_capacity, sizeof(void *));
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Maximum number of triangles = 2 * n - 2 - b
-  // where 'b' is number of vertices on the convex hull
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n = length(x_);
-  int max_tris = 2 * n;
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Vertices of each triangles
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP v1_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
-  SEXP v2_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
-  SEXP v3_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Initialize context
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ctx.ntris = 0;
-  ctx.v1 = INTEGER(v1_);
-  ctx.v2 = INTEGER(v2_);
-  ctx.v3 = INTEGER(v3_);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Use Fortune's algo to calculate delaunay triangulation
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  freeinit(&ctx.sfl, sizeof *ctx.sites);
-  init_sites(&ctx, REAL(x_), REAL(y_), length(x_));
-  ctx.siteidx = 0;
-  geominit(&ctx);
-  voronoi(&ctx, ctx.triangulate);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Final result = data.frame(v1 = integer(), v2 = integer(), v3 = integer())
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("v1"));
-  SET_STRING_ELT(nms_, 1, mkChar("v2"));
-  SET_STRING_ELT(nms_, 2, mkChar("v3"));
-  
-  SET_VECTOR_ELT(res_, 0, v1_);
-  SET_VECTOR_ELT(res_, 1, v2_);
-  SET_VECTOR_ELT(res_, 2, v3_);
-  
-  setAttrib(res_, R_NamesSymbol, nms_);
-  set_df_attributes(res_, ctx.ntris, max_tris);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Free all the 'myalloc()' allocations
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  for (int i = 0; i < ctx.alloc_count; i++) {
-    free(ctx.allocs[i]);
-  }
-  free(ctx.allocs);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Convert C 0-indexing to R 1-indexing
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *v1 = INTEGER(v1_);
-  int *v2 = INTEGER(v2_);
-  int *v3 = INTEGER(v3_);
-  for (int i = 0; i < ctx.ntris; i++) v1[i]++;
-  for (int i = 0; i < ctx.ntris; i++) v2[i]++;
-  for (int i = 0; i < ctx.ntris; i++) v3[i]++;
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Tidy and return
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  UNPROTECT(nprotect);
-  return res_;
-}
-
-
-
-
-
- 
 

@@ -87,7 +87,7 @@ set.seed(2024)
 x <- runif(10)
 y <- runif(10)
 
-del <- delaunay(x, y) 
+del <- delaunay(x, y)$segment
 
 # Plot the seed points
 plot(x, y, asp = 1, col = 'red')

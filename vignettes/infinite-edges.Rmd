@@ -44,10 +44,11 @@ dw <- 0.2
 lim <- c(0 - dw, 1 + dw)
 
 # Plotting all the finite segments
+buf <- 0.5
 plot(x, y, col = 'red', pch = '+',
      asp = 1, ann = FALSE, axes = FALSE, 
-     xlim = c(vor$extents$xmin, vor$extents$xmax), 
-     ylim = c(vor$extents$ymin, vor$extents$ymax))
+     xlim = c(vor$extents$xmin - buf, vor$extents$xmax) + buf, 
+     ylim = c(vor$extents$ymin - buf, vor$extents$ymax) + buf)
 
 # Finite segments
 fseg <- vor$segment
@@ -61,13 +62,13 @@ segments(
 
 # Add in the lines representing infinite segments
 # Extract segments which are unbounded. i.e. v1 or v2 is NA
-inf_seg <- vor$segment[!complete.cases(vor$segment),]
+inf_seg <- subset(vor$segment, v1 < 0 | v2 < 0)
 
 # Get the lines associated with these segments
 inf_line <- vor$line[inf_seg$line,]
 
-xlo <- vor$extents$xmin
-xhi <- vor$extents$xmax
+xlo <- vor$extents$xmin - buf
+xhi <- vor$extents$xmax + buf
 ylo <- with(inf_line, (c - a * xlo)/b)
 yhi <- with(inf_line, (c - a * xhi)/b)
 
