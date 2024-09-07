@@ -16,6 +16,7 @@
 
 #include "utils.h"
 #include "R-extract-polygons.h"
+#include "R-polygon-matching.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,6 +94,19 @@ int wedge_comparison(const void *p1, const void *p2) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Free the C array-of-structs holding the poly_t polygon definition
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void free_polys(int npolys, poly_t *polys) {
+  for (int i = 0; i < npolys; i++) {
+    free(polys[i].v);
+    free(polys[i].x);
+    free(polys[i].y);
+  }
+  free(polys);
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Given the vertices and edge information (after running voronoi())
 // build the list of regions/polygons
 //
@@ -113,9 +127,8 @@ int wedge_comparison(const void *p1, const void *p2) {
 //     4. Search for matching continuing wedge. E.g. if initial wedge is c(1, 4, 7), look for wedge c(4, 7, x). Add to region
 //     5. If new wedge matches original wedge, then: region is extracted. Go to 3 else: go to 4
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2) {
+poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2, int *npolysp) {
   
-  int nprotect = 0;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // How many bounded edges are there - with neither vertex index being NA
@@ -289,16 +302,11 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   // Current polygons in C form: pointer to arrays of integer vertex indices
-  int **polys;
+  poly_t *polys;
   int poly_capacity = 32;
-  int poly_idx = 0;
-  polys = calloc((unsigned long)poly_capacity, sizeof(int *));
+  int npolys = 0;
+  polys = calloc((unsigned long)poly_capacity, sizeof(poly_t));
   if (polys == NULL) error("Couldn't allocate polys");
-  
-  // Keep track of the number of vertices within each polygon
-  int *nverts;
-  nverts = calloc((unsigned long)poly_capacity, sizeof(int));
-  if (nverts == NULL) error("Couldn't allocate nverts");
   
   // Temp storage for the current set of vertex indices
   int vidx[1024];
@@ -404,18 +412,18 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // record this set of temporary verts as a polygon
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (poly_idx == poly_capacity) {
+    if (npolys == poly_capacity) {
       // Exaand storage if we've reached capacity
       poly_capacity *= 2;
-      polys  = realloc(polys , (unsigned long)poly_capacity * sizeof(int *));
-      nverts = realloc(nverts, (unsigned long)poly_capacity * sizeof(int));
+      polys  = realloc(polys , (unsigned long)poly_capacity * sizeof(poly_t));
     } 
-    polys[poly_idx] = malloc((unsigned long)nvert * sizeof(int));
-    if (polys[poly_idx] == NULL) error("polys[poly_idx] failed allocation");
-    memcpy(polys[poly_idx], &vidx, (unsigned long)nvert * sizeof(int));
-    nverts[poly_idx] = nvert;
     
-    poly_idx++;
+    polys[npolys].v = malloc((unsigned long)nvert * sizeof(int));
+    if (polys[npolys].v == NULL) error("polys[npolys] failed allocation");
+    memcpy(polys[npolys].v, &vidx, (unsigned long)nvert * sizeof(int));
+    polys[npolys].nvert = nvert;
+    
+    npolys++;
   
   } // while(1): Find next unused wedge
   
@@ -423,7 +431,7 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Dump info about all polygons
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // for (int i = 0; i < poly_idx; i++) {
+  // for (int i = 0; i < npolys; i++) {
   //   int nvert = nverts[i];
   //   int *vidx = polys[i];
   //   
@@ -435,120 +443,207 @@ SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_
   //   
   // }
   
-  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Convert C polygons to an R list of lists of coordinates:
-  //  list(list(x = ..., y = ...), list(x = ..., y = ...))
+  // Calculate polygon coordinates, bbox etc
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, poly_idx)); nprotect++;
-  double *bbox;
-  bbox = malloc((unsigned long)poly_idx * sizeof(double));
-  if (bbox == NULL) error("Couldn't allocate bbox");
-  
-  for (int i = 0; i < poly_idx; i++) {
-    int nvert = nverts[i];
-    int *vidx = polys[i];
+  for (int i = 0; i < npolys; i++) {
+    int nvert = polys[i].nvert;
+    int *vidx = polys[i].v;
     
-    SEXP ll_  = PROTECT(allocVector(VECSXP, 2)); 
-    SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); 
+    polys[i].polygon_idx = i;
+    polys[i].taken = 0;
+    polys[i].deleted = 0;
+    polys[i].point_idx = -1;
+    polys[i].cx = 0;
+    polys[i].cy = 0;
     
-    SEXP x_ = PROTECT(allocVector(REALSXP, nvert)); 
-    SEXP y_ = PROTECT(allocVector(REALSXP, nvert)); 
+    polys[i].bbox.xmin =  INFINITY;
+    polys[i].bbox.xmax = -INFINITY;
+    polys[i].bbox.ymin =  INFINITY;
+    polys[i].bbox.ymax = -INFINITY;
     
-    SET_STRING_ELT(nms_, 0, mkChar("x"));
-    SET_STRING_ELT(nms_, 1, mkChar("y"));
-    
-    SET_VECTOR_ELT(ll_, 0, x_);
-    SET_VECTOR_ELT(ll_, 1, y_);
-    
-    setAttrib(ll_, R_NamesSymbol, nms_);
-    
-    SET_VECTOR_ELT(res_, i, ll_);
-    
-    double *x = REAL(x_);
-    double *y = REAL(y_);
-    
-    double xmin =  INFINITY;
-    double xmax = -INFINITY;
-    double ymin =  INFINITY;
-    double ymax = -INFINITY;
+    polys[i].x = malloc(nvert * sizeof(double));
+    polys[i].y = malloc(nvert * sizeof(double));
+    if (polys[i].x == NULL || polys[i].y == NULL) {
+      error("Could not allocate mem for polys[i].x and .y");
+    }
     
     for (int j = 0; j < nvert; j++) {
-      x[j] = vert_x[ vidx[j] ];
-      y[j] = vert_y[ vidx[j] ];
+      polys[i].x[j] = vert_x[ vidx[j] ];
+      polys[i].y[j] = vert_y[ vidx[j] ];
       
-      xmin = x[j] < xmin ? x[j] : xmin;
-      xmax = x[j] > xmax ? x[j] : xmax;
-      ymin = y[j] < ymin ? y[j] : ymin;
-      ymax = y[j] > ymax ? y[j] : ymax;
+      polys[i].cx += polys[i].x[j];
+      polys[i].cy += polys[i].y[j];
+      
+      polys[i].bbox.xmin = polys[i].x[j] < polys[i].bbox.xmin ? polys[i].x[j] : polys[i].bbox.xmin;
+      polys[i].bbox.xmax = polys[i].x[j] > polys[i].bbox.xmax ? polys[i].x[j] : polys[i].bbox.xmax;
+      polys[i].bbox.ymin = polys[i].y[j] < polys[i].bbox.ymin ? polys[i].y[j] : polys[i].bbox.ymin;
+      polys[i].bbox.ymax = polys[i].y[j] > polys[i].bbox.ymax ? polys[i].y[j] : polys[i].bbox.ymax;
       
     }
     
-    bbox[i] = (xmax - xmin) * (ymax - ymin);
     
-    UNPROTECT(4);
+    // compute centroid
+    polys[i].cx /= nvert;
+    polys[i].cy /= nvert;
+    
+    // compute bbox area
+    polys[i].bbox_area = (polys[i].bbox.xmax - polys[i].bbox.xmin) * (polys[i].bbox.ymax - polys[i].bbox.ymin);
   }
   
   
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Find max bounding box areas so we can remove the largest bounded region
-  // The largest bounded region is the boundary around the outside, and
-  // does represent an interior polygon
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_filtered_ = res_;
-  if (poly_idx > 1) {
-    int largest_bbox_idx = -1;
-    double largest_bbox  = -1;
-    
-    for (int i = 0; i < poly_idx; i++) {
-      // Rprintf("%i -> %.5f\n", i, bbox[i]);
-      if (bbox[i] > largest_bbox) {
-        largest_bbox     = bbox[i];
-        largest_bbox_idx = i;
-      }
-    }
-    
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Create a filtered version of the result with the polygon with largest
-    // bounding box removed
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    res_filtered_ = PROTECT(allocVector(VECSXP, poly_idx - 1)); nprotect++;
-    
-    int out_idx = 0;
-    for (int i = 0; i < poly_idx; i++) {
-      if (i == largest_bbox_idx) {
-        // do nothing
-      } else {
-        SET_VECTOR_ELT(res_filtered_, out_idx, VECTOR_ELT(res_, i));
-        out_idx++;
-      }
-    }
-  }
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  free(bbox);
-  for (int i = 0; i < poly_idx; i++) {
-    free(polys[i]);
-  }
-  free(polys);
-  free(nverts);
   free(bounds);
-  
   free(wedge);
   free(edge);
+  
+  *npolysp = npolys;
+  return polys;
+}
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Create 'poly_t *polys' object and then translate into final 
+// R SEXP nested list representation
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y, 
+                               int seg_n, int *seg_v1, int *seg_v2,
+                               int seed_n, double *seed_x, double *seed_y) {
+  
+  int nprotect = 0;
+  int npolys = 0;
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Extract polygons
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  poly_t *polys = extract_polygons_core(vert_n, vert_x, vert_y, seg_n, seg_v1, seg_v2, &npolys);
+  
+  if (npolys == 0) {
+    return R_NilValue;
+  }
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find largest polygon by bbox
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int max_bbox_area_idx = -1;
+  double max_bbox_area  = -1;
+  for (int i = 0; i < npolys; i++) {
+    if (polys[i].bbox_area > max_bbox_area) {
+      max_bbox_area = polys[i].bbox_area;
+      max_bbox_area_idx = i;
+    }
+  }
+  polys[max_bbox_area_idx].deleted = true;
+  int n_valid_polys = npolys - 1;  
+  
+  SEXP polys_ = R_NilValue;
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // If seed points given then reorganise polygons in the same order as 
+  // the seed points.  Otherwise a generic compact representation is used
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (seed_n > 0) {
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Seed / Polygon matching
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Rprintf("extract_polygons_internal: n seeds = %i\n", seed_n);
+    for (int i = 0; i < seed_n; i++) {
+      match_polygons_to_seed_points(i, seed_x[i], seed_y[i], npolys, polys);
+    }
+    
+    polys_ = PROTECT(allocVector(VECSXP, seed_n)); nprotect++;
+    
+    for (int i = 0; i < npolys; i++) {
+      if (polys[i].deleted) continue;
+      
+      SEXP ll_  = PROTECT(allocVector(VECSXP, 2)); 
+      SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); 
+      
+      SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      
+      SET_STRING_ELT(nms_, 0, mkChar("x"));
+      SET_STRING_ELT(nms_, 1, mkChar("y"));
+      
+      SET_VECTOR_ELT(ll_, 0, x_);
+      SET_VECTOR_ELT(ll_, 1, y_);
+      
+      setAttrib(ll_, R_NamesSymbol, nms_);
+      
+      SET_VECTOR_ELT(polys_, polys[i].point_idx, ll_);
+      
+      // Copy from the poly_t struct
+      memcpy(REAL(x_), polys[i].x, polys[i].nvert * sizeof(double));
+      memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
+      
+      
+      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
+    }
+    
+  } else {
+    // No seed points. Just a compact list of polygons
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Convert C polygons to an R list of lists of coordinates:
+    //  list(list(x = ..., y = ...), list(x = ..., y = ...))
+    // 
+    // Remove any deleted polygons while doing this.
+    //  e.g. may have been deleted for being the bounding region rather than a
+    //       single polygon
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    polys_ = PROTECT(allocVector(VECSXP, n_valid_polys)); nprotect++;
+    
+    int llidx = 0;  
+    for (int i = 0; i < npolys; i++) {
+      if (polys[i].deleted) continue;
+      
+      SEXP ll_  = PROTECT(allocVector(VECSXP, 2)); 
+      SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); 
+      
+      SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      
+      SET_STRING_ELT(nms_, 0, mkChar("x"));
+      SET_STRING_ELT(nms_, 1, mkChar("y"));
+      
+      SET_VECTOR_ELT(ll_, 0, x_);
+      SET_VECTOR_ELT(ll_, 1, y_);
+      
+      setAttrib(ll_, R_NamesSymbol, nms_);
+      
+      SET_VECTOR_ELT(polys_, llidx, ll_);
+      
+      // Copy from the poly_t struct
+      memcpy(REAL(x_), polys[i].x, polys[i].nvert * sizeof(double));
+      memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
+      
+      
+      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
+      llidx++;
+    }
+  }
+
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Tidy and return
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  free_polys(npolys, polys);
   UNPROTECT(nprotect);
-  return res_filtered_;
+  return polys_;
 }
 
 
 
 
 
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// R shimx`
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
 
   if (length(x_) == 0 || length(x_) != length(y_)) {
@@ -576,10 +671,11 @@ SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
   }
   
   
-  // SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2)
-  return extract_polygons_core_(
-    length(x_), REAL(x_), REAL(y_),
-    length(v1_), v1, v2
+  // SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2)
+  return extract_polygons_internal(
+    length(x_), REAL(x_), REAL(y_), // voronoi vertices
+    length(v1_), v1, v2,            // voronoi edges
+    0, NULL, NULL                   // seed points 
   );
 }
 

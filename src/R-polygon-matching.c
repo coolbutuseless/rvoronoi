@@ -9,6 +9,8 @@
 #include <Rinternals.h>
 #include <Rdefines.h>
 
+#include "R-polygon-matching.h"
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // is the given point to the left of the line?
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,27 +40,6 @@ bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp) {
   if (new_status != status) return false;
   
   return true;
-}
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// R shim for point in polygon test
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP point_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
-  
-  
-  if (length(xp_) != length(yp_)) {
-    error("points_in_convex_polygon_(): xp and yp must be same length");
-  }
-  if (length(xp_) < 3) {
-    error("points_in_convex_polygon_(): not a polygon");
-  }
-  
-  return ScalarLogical(
-    point_in_polygon_core_(asReal(x_), asReal(y_), 
-                           length(xp_), REAL(xp_), REAL(yp_))
-  );
-  
 }
 
 
@@ -95,3 +76,57 @@ SEXP points_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
   UNPROTECT(1);
   return res_;
 }
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Match a point to a polygon
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int match_polygons_to_seed_points(int point_idx, double x, double y, int npolys, poly_t *polys) {
+  
+  // Rprintf("PIP ---------------------------------\n");
+  
+  // loop over all polygons
+  for (int i = 0; i < npolys; i++) {
+    
+    // Rprintf("PIP: %i in %i [%i]\n", point_idx, poly.polygon_idx, poly.deleted);
+    
+    if (polys[i].deleted) continue;
+    
+    bbox_t bbox = polys[i].bbox;
+    
+    if (x > bbox.xmin && x < bbox.xmax && y > bbox.ymin && y < bbox.ymax) {
+      // point intersects bounding box for this polygon
+      // bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp)
+      bool pip = point_in_polygon_core_(x, y, polys[i].nvert, polys[i].x, polys[i].y);
+      if (pip) {
+        // point is in this polygon!
+        if (polys[i].taken) {
+          error("match_polygons_to_seed_points(): Point (%f, %f) matched polygon [%i] already taken by point [%i]", 
+                x, y, polys[i].polygon_idx, polys[i].point_idx);
+        }
+        polys[i].taken = true;
+        polys[i].point_idx = point_idx;
+        // Rprintf("Point %3i => Polygon %3i\n", point_idx, polys[i].polygon_idx);
+        return polys[i].polygon_idx;
+      }
+    }
+    
+  } // next polygon
+  
+  // Rprintf("match_polygons_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", point_idx, x, y);
+  return -1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

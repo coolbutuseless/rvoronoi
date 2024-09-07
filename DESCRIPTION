@@ -1,7 +1,7 @@
 Package: rvoronoi
 Type: Package
 Title: Fast Voronoi Tesselation and Delaunty Triangulation using Fortune's Algorithm
-Version: 0.1.0.9003
+Version: 0.1.0.9004
 Authors@R: c(
     person("Mike", "Cheng", role = c("aut", "cre", 'cph'), email = "mikefc@coolbutuseless.com"),
     person("Steven", "Fortune", role = c("aut"), comment = "Author of included code for sweep algorithm"),

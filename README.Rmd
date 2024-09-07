@@ -115,7 +115,7 @@ x <- runif(N)
 y <- runif(N)
 
 del_rtriangle <- RTriangle::triangulate(RTriangle::pslg(P = cbind(x, y)))$T
-del_new       <- delaunay(x, y)
+del_new       <- delaunay(x, y)$segment
 
 identical(
   rvoronoi:::normalise_del(del_new),
@@ -263,7 +263,22 @@ plot_vor(vor) |>
   draw_inf_segments(col = 'hotpink') |>
   draw_bounded_polygons(border = 'red') |>
   draw_vertices()
-# points(x, y, pch = '+')
+points(x, y, pch = '+')
+
+if (FALSE) {
+  plot(x, y, ann = F, axes = F, asp = 1)
+  
+  cols <- rainbow(length(vor$polygons))
+  
+  for (i in seq_along(vor$polygons)) {
+  polygon(vor$polygons[[i]], col = cols[i])  
+  text(x[i], y[i], labels = i)
+  # points(x[i], y[i], col = 'black', pch = '+')
+  }
+  
+}
+
+
 ```
 
 
@@ -310,6 +325,24 @@ plot_vor(vor, buffer = 1) |>
 points(x, y, pch = '+')
 ```
 
+
+# Algorithms
+
+* Fortune's Sweep Algorithm for Delaunay
+    * Adapted original source code to call from R
+* Polygon reconstruction
+    * Use voronoi vertices and edge connectivity to reconstruct polygonal voronoi tiles
+    * Using "An optimal algorithm for extracting the regions of a plane graph" by
+      Jiang & Bunke, Pattern Recognition Letters 14 (1993) pp553-558.
+    * Adapted algorithm from binary search to instead use pre-indexed search bounds.
+* Point in polygon (to match seed points to voronoi polygons)
+    * **TODO** Use STR to bulk load an R-tree for optimized point-in-bounding-box search
+    * Search for bounding box collision to filter polygon candidates for 
+      exhaustive testing
+    * Optimised point-in-polygon search with early termination as voronoi 
+      polygons are **always** convex.
+      Test edges using the "leftOf()" operator, and exit as soon as any 
+      vertices are right of a polygon edge.
 
 
 ## Related 

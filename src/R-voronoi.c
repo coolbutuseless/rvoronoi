@@ -129,11 +129,18 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract the polygons using the (temporary) merged vertices
   // 
-  // SEXP extract_polygons_core_(int vert_n, double *vert_x, double *vert_y,
-  //                                      int seg_n, int *seg_v1, int *seg_v2)
+  // SEXP extract_polygons_core(
+  //    int vert_n, double *vert_x, double *vert_y,  // The voronoi vertices
+  //    int seg_n, int *seg_v1, int *seg_v2,         // Voronoi edges
+  //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
+  //  )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP polys_ = PROTECT(
-    extract_polygons_core_(ctx.nverts, ctx.vert_x, ctx.vert_y, fnedges, v1m, v2m)
+    extract_polygons_internal(
+      ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
+      fnedges, v1m, v2m,                  // Voronoi edges
+      length(x_), REAL(x_), REAL(y_)      // Seed points
+    )
   ); nprotect++;
 
   

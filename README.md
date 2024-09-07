@@ -76,7 +76,7 @@ set.seed(2024)
 x <- runif(10)
 y <- runif(10)
 
-del <- delaunay(x, y) 
+del <- delaunay(x, y)$segment
 
 # Plot the seed points
 plot(x, y, asp = 1, col = 'red')
@@ -105,7 +105,7 @@ x <- runif(N)
 y <- runif(N)
 
 del_rtriangle <- RTriangle::triangulate(RTriangle::pslg(P = cbind(x, y)))$T
-del_new       <- delaunay(x, y)
+del_new       <- delaunay(x, y)$segment
 
 identical(
   rvoronoi:::normalise_del(del_new),
@@ -114,10 +114,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |     min |  median |   itr/sec | mem_alloc |
-|:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 49.36µs | 59.82µs |  15992.03 |    5.76KB |
-| del_new       |  4.39µs |  5.21µs | 181147.02 |      624B |
+| expression    |    min |  median |  itr/sec | mem_alloc |
+|:--------------|-------:|--------:|---------:|----------:|
+| del_rtriangle | 49.1µs | 51.37µs |  18818.0 |    5.76KB |
+| del_new       |  4.8µs |  5.25µs | 179546.7 |    2.57KB |
 
 ## Debug plotting
 
@@ -249,13 +249,10 @@ plot_vor(vor) |>
   draw_inf_segments(col = 'hotpink') |>
   draw_bounded_polygons(border = 'red') |>
   draw_vertices()
+points(x, y, pch = '+')
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
-
-``` r
-# points(x, y, pch = '+')
-```
 
 ``` r
 library(RTriangle)
@@ -301,6 +298,28 @@ points(x, y, pch = '+')
 ```
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+
+# Algorithms
+
+- Fortune’s Sweep Algorithm for Delaunay
+  - Adapted original source code to call from R
+- Polygon reconstruction
+  - Use voronoi vertices and edge connectivity to reconstruct polygonal
+    voronoi tiles
+  - Using “An optimal algorithm for extracting the regions of a plane
+    graph” by Jiang & Bunke, Pattern Recognition Letters 14 (1993)
+    pp553-558.
+  - Adapted algorithm from binary search to instead use pre-indexed
+    search bounds.
+- Point in polygon (to match seed points to voronoi polygons)
+  - **TODO** Use STR to bulk load an R-tree for optimized
+    point-in-bounding-box search
+  - Search for bounding box collision to filter polygon candidates for
+    exhaustive testing
+  - Optimised point-in-polygon search with early termination as voronoi
+    polygons are **always** convex. Test edges using the “leftOf()”
+    operator, and exit as soon as any vertices are right of a polygon
+    edge.
 
 ## Related
 
