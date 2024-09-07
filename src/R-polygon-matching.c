@@ -9,6 +9,7 @@
 #include <Rinternals.h>
 #include <Rdefines.h>
 
+#include "utils-bbox.h"
 #include "R-polygon-matching.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

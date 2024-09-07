@@ -15,6 +15,7 @@
 #include "voronoi.h"
 
 #include "utils.h"
+#include "utils-bbox.h"
 #include "R-common.h"
 #include "R-merge-vertices.h"
 #include "R-extract-polygons.h"
@@ -23,7 +24,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Voronoi Tesselation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP voronoi_(SEXP x_, SEXP y_) {
+SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
@@ -47,6 +48,12 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   ctx.alloc_count    = 0;
   ctx.alloc_capacity = 1024;
   ctx.allocs = (void **)calloc((unsigned long)ctx.alloc_capacity, sizeof(void *));
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // bbox for bounding the unbounded polygos
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  bbox_t bounds = bbox_new();
+  bbox_add(&bounds, length(x_), REAL(x_), REAL(y_));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Space for vertices
@@ -135,14 +142,25 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
   //  )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP polys_ = PROTECT(
-    extract_polygons_internal(
-      ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
-      fnedges, v1m, v2m,                  // Voronoi edges
-      length(x_), REAL(x_), REAL(y_)      // Seed points
-    )
-  ); nprotect++;
-
+  SEXP polys_ = R_NilValue;
+  
+  if (asLogical(match_polygons_)) {
+    polys_ = PROTECT(
+      extract_polygons_internal(
+        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
+        fnedges, v1m, v2m,                  // Voronoi edges
+        length(x_), REAL(x_), REAL(y_)      // Seed points
+      )
+    ); nprotect++;
+  } else {
+    polys_ = PROTECT(
+      extract_polygons_internal(
+        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
+        fnedges, v1m, v2m,                  // Voronoi edges
+        0, NULL, NULL                       // Seed points
+      )
+    ); nprotect++;
+  }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Trim the merged indices to size 
@@ -210,30 +228,34 @@ SEXP voronoi_(SEXP x_, SEXP y_) {
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
   // Covers all seed points and voronoi vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  double xmin =  INFINITY;
-  double xmax = -INFINITY;
-  double ymin =  INFINITY;
-  double ymax = -INFINITY;
-  for (int i = 0; i < ctx.nverts; i++) {
-    if (ctx.vert_x[i] > xmax) xmax = ctx.vert_x[i];
-    if (ctx.vert_x[i] < xmin) xmin = ctx.vert_x[i];
-    if (ctx.vert_y[i] > ymax) ymax = ctx.vert_y[i];
-    if (ctx.vert_y[i] < ymin) ymin = ctx.vert_y[i];
-  }
+  // double xmin =  INFINITY;
+  // double xmax = -INFINITY;
+  // double ymin =  INFINITY;
+  // double ymax = -INFINITY;
+  // for (int i = 0; i < ctx.nverts; i++) {
+  //   if (ctx.vert_x[i] > xmax) xmax = ctx.vert_x[i];
+  //   if (ctx.vert_x[i] < xmin) xmin = ctx.vert_x[i];
+  //   if (ctx.vert_y[i] > ymax) ymax = ctx.vert_y[i];
+  //   if (ctx.vert_y[i] < ymin) ymin = ctx.vert_y[i];
+  // }
+  // 
+  // double *x = REAL(x_);
+  // double *y = REAL(y_);
+  // for (int i = 0; i < length(x_); i++) {
+  //   if (x[i] > xmax) xmax = x[i];
+  //   if (x[i] < xmin) xmin = x[i];
+  //   if (y[i] > ymax) ymax = y[i];
+  //   if (y[i] < ymin) ymin = y[i];
+  // }
   
-  double *x = REAL(x_);
-  double *y = REAL(y_);
-  for (int i = 0; i < length(x_); i++) {
-    if (x[i] > xmax) xmax = x[i];
-    if (x[i] < xmin) xmin = x[i];
-    if (y[i] > ymax) ymax = y[i];
-    if (y[i] < ymin) ymin = y[i];
-  }
+  bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
+  bbox_expand(&bounds, 0.10);
   
-  SEXP xmin_ = PROTECT(ScalarReal(xmin)); nprotect++;
-  SEXP xmax_ = PROTECT(ScalarReal(xmax)); nprotect++;
-  SEXP ymin_ = PROTECT(ScalarReal(ymin)); nprotect++;
-  SEXP ymax_ = PROTECT(ScalarReal(ymax)); nprotect++;
+  
+  SEXP xmin_ = PROTECT(ScalarReal(bounds.xmin)); nprotect++;
+  SEXP xmax_ = PROTECT(ScalarReal(bounds.xmax)); nprotect++;
+  SEXP ymin_ = PROTECT(ScalarReal(bounds.ymin)); nprotect++;
+  SEXP ymax_ = PROTECT(ScalarReal(bounds.ymax)); nprotect++;
   
   SEXP ext_ = PROTECT(allocVector(VECSXP, 4)); nprotect++;
   nms_      = PROTECT(allocVector(STRSXP, 4)); nprotect++;

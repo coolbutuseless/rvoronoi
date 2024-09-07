@@ -15,6 +15,7 @@
 #include "voronoi.h"
 
 #include "utils.h"
+#include "utils-bbox.h"
 #include "R-extract-polygons.h"
 #include "R-polygon-matching.h"
 
@@ -457,10 +458,7 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
     polys[i].cx = 0;
     polys[i].cy = 0;
     
-    polys[i].bbox.xmin =  INFINITY;
-    polys[i].bbox.xmax = -INFINITY;
-    polys[i].bbox.ymin =  INFINITY;
-    polys[i].bbox.ymax = -INFINITY;
+    polys[i].bbox = bbox_new();
     
     polys[i].x = malloc(nvert * sizeof(double));
     polys[i].y = malloc(nvert * sizeof(double));
@@ -475,12 +473,14 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       polys[i].cx += polys[i].x[j];
       polys[i].cy += polys[i].y[j];
       
-      polys[i].bbox.xmin = polys[i].x[j] < polys[i].bbox.xmin ? polys[i].x[j] : polys[i].bbox.xmin;
-      polys[i].bbox.xmax = polys[i].x[j] > polys[i].bbox.xmax ? polys[i].x[j] : polys[i].bbox.xmax;
-      polys[i].bbox.ymin = polys[i].y[j] < polys[i].bbox.ymin ? polys[i].y[j] : polys[i].bbox.ymin;
-      polys[i].bbox.ymax = polys[i].y[j] > polys[i].bbox.ymax ? polys[i].y[j] : polys[i].bbox.ymax;
-      
+      // polys[i].bbox.xmin = polys[i].x[j] < polys[i].bbox.xmin ? polys[i].x[j] : polys[i].bbox.xmin;
+      // polys[i].bbox.xmax = polys[i].x[j] > polys[i].bbox.xmax ? polys[i].x[j] : polys[i].bbox.xmax;
+      // polys[i].bbox.ymin = polys[i].y[j] < polys[i].bbox.ymin ? polys[i].y[j] : polys[i].bbox.ymin;
+      // polys[i].bbox.ymax = polys[i].y[j] > polys[i].bbox.ymax ? polys[i].y[j] : polys[i].bbox.ymax;
     }
+    
+    bbox_add(&polys[i].bbox, nvert, polys[i].x, polys[i].y);
+    
     
     
     // compute centroid
@@ -575,7 +575,11 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       
       setAttrib(ll_, R_NamesSymbol, nms_);
       
-      SET_VECTOR_ELT(polys_, polys[i].point_idx, ll_);
+      if (polys[i].point_idx < 0) {
+        warning("Poly [%i] has a point index of %i\n", i, polys[i].point_idx);  
+      } else {
+        SET_VECTOR_ELT(polys_, polys[i].point_idx, ll_);
+      }
       
       // Copy from the poly_t struct
       memcpy(REAL(x_), polys[i].x, polys[i].nvert * sizeof(double));

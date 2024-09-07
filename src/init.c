@@ -3,7 +3,7 @@
 #include <R.h>
 #include <Rinternals.h>
 
-extern SEXP voronoi_ (SEXP x_, SEXP y_);
+extern SEXP voronoi_ (SEXP x_, SEXP y_, SEXP match_polygons_);
 extern SEXP delaunay_(SEXP x_, SEXP y_);
 
 extern SEXP merge_vertices_  (SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP tol_, SEXP verbosity_);
@@ -13,7 +13,7 @@ extern SEXP points_in_convex_polygon_ (SEXP x_, SEXP y_, SEXP xp_, SEXP yp_);
 
 static const R_CallMethodDef CEntries[] = {
   
-  {"voronoi_" , (DL_FUNC) &voronoi_ , 2},
+  {"voronoi_" , (DL_FUNC) &voronoi_ , 3},
   {"delaunay_", (DL_FUNC) &delaunay_, 2},
   
   {"merge_vertices_"  , (DL_FUNC) &merge_vertices_  , 6},

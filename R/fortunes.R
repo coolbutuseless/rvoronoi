@@ -2,6 +2,8 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Voronoi tesselation on an infinite plane
 #' @param x,y coordinates of seed points
+#' @param match_polygons logical. SHould the polygons be re-ordered to match 
+#'        the seed points? Default: TRUE
 #' @return named list of data.frames.
 #' \describe{
 #'   \item{vertex}{data.frame of vertex coordinates in the tesselation}
@@ -19,8 +21,8 @@
 #' voronoi(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-voronoi <- function(x, y) {
-  .Call(voronoi_, x, y)
+voronoi <- function(x, y, match_polygons = TRUE) {
+  .Call(voronoi_, x, y, match_polygons)
 }
 
 
