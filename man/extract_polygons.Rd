@@ -4,12 +4,15 @@
 \alias{extract_polygons}
 \title{Extract polygons}
 \usage{
-extract_polygons(x, y, v1, v2, verbosity = 0L)
+extract_polygons(x, y, v1, v2, xseed = NULL, yseed = NULL, verbosity = 0L)
 }
 \arguments{
 \item{x, y}{vertex coordinates}
 
 \item{v1, v2}{edges defined by two indices into the x, y coordinates}
+
+\item{xseed, yseed}{coorindates of the vornoi seed points.  If given then 
+the polygons will align with the seed points}
 
 \item{verbosity}{verbosity level. Default: 0}
 }

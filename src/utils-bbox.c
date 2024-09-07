@@ -34,18 +34,10 @@ void bbox_add(bbox_t *bbox, int n, double *x, double *y) {
   
   for (int i = 0; i < n; i++) {
     
-    if (x[i] < bbox->xmin) {
-      bbox->xmin = x[i];
-    } else if (x[i] > bbox->xmax) {
-      bbox->xmax = x[i];
-    }
-    
-    
-    if (y[i] < bbox->ymin) {
-      bbox->ymin = y[i];
-    } else if (y[i] > bbox->ymax) {
-      bbox->ymax = y[i];
-    }
+    if (x[i] < bbox->xmin) bbox->xmin = x[i];
+    if (x[i] > bbox->xmax) bbox->xmax = x[i];
+    if (y[i] < bbox->ymin) bbox->ymin = y[i];
+    if (y[i] > bbox->ymax) bbox->ymax = y[i];
   }
   
 }

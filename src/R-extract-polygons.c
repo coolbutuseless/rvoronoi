@@ -648,7 +648,7 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // R shimx`
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
+SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP xseed_, SEXP yseed_, SEXP verbosity_) {
 
   if (length(x_) == 0 || length(x_) != length(y_)) {
     error("merge_vertices_() x & y must be equal length");
@@ -673,14 +673,20 @@ SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_) {
     v1[i] = v1_p[i] - 1;
     v2[i] = v2_p[i] - 1;
   }
-  
-  
-  // SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2)
-  return extract_polygons_internal(
-    length(x_), REAL(x_), REAL(y_), // voronoi vertices
-    length(v1_), v1, v2,            // voronoi edges
-    0, NULL, NULL                   // seed points 
-  );
+
+  if (isNull(xseed_) || isNull(yseed_)) {  
+    return extract_polygons_internal(
+      length(x_), REAL(x_), REAL(y_), // voronoi vertices
+      length(v1_), v1, v2,            // voronoi edges
+      0, NULL, NULL                   // seed points 
+    );
+  } else {
+    return extract_polygons_internal(
+      length(x_), REAL(x_), REAL(y_),            // voronoi vertices
+      length(v1_), v1, v2,                       // voronoi edges
+      length(xseed_), REAL(xseed_), REAL(yseed_) // seed points 
+    );
+  }
 }
 
 
