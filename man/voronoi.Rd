@@ -4,10 +4,13 @@
 \alias{voronoi}
 \title{Voronoi tesselation on an infinite plane}
 \usage{
-voronoi(x, y)
+voronoi(x, y, match_polygons = TRUE)
 }
 \arguments{
 \item{x, y}{coordinates of seed points}
+
+\item{match_polygons}{logical. SHould the polygons be re-ordered to match 
+the seed points? Default: TRUE}
 }
 \value{
 named list of data.frames.

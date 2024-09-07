@@ -70,7 +70,7 @@ polygon(mypoly)
 
 
 
-vor <- voronoi(xs, ys)
+vor <- voronoi(xs, ys, match_polygons = FALSE)
 segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$v1, vor$segment$v2, verbosity = 0)
 polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
 
