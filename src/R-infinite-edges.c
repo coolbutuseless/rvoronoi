@@ -253,19 +253,9 @@ SEXP bound_infinite_edges_(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert R 1-indexing to C 0-indexing
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *v1 = malloc(length(v1_) * sizeof(int));
-  int *v2 = malloc(length(v2_) * sizeof(int));
-  int *li = malloc(length(li_) * sizeof(int));
-  if (v1 == NULL || v2 == NULL || li == NULL) {
-    error("bound_infinite_edges_(): li/v1/v2 allocation failed");
-  }
-  
-  int *v1p = INTEGER(v1_);
-  int *v2p = INTEGER(v2_);
-  int *lip = INTEGER(li_);
-  for (int i = 0; i < length(v1_); i++) v1[i] = v1p[i] - 1;
-  for (int i = 0; i < length(v1_); i++) v2[i] = v2p[i] - 1;
-  for (int i = 0; i < length(v1_); i++) li[i] = lip[i] - 1;
+  int *v1 = create_c_index(v1_);
+  int *v2 = create_c_index(v2_);
+  int *li = create_c_index(li_);
 
   
   bound_infinite_edges(
@@ -293,11 +283,9 @@ SEXP bound_infinite_edges_(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Segment
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *rv1 = INTEGER(rv1_);
-  int *rv2 = INTEGER(rv2_);
-  for (int i = 0; i < nbsegs; i++) rv1[i]++; // convert to R 1-indexing
-  for (int i = 0; i < nbsegs; i++) rv2[i]++;
-  
+  convert_indexing_c_to_r(rv1_);
+  convert_indexing_c_to_r(rv2_);
+
   
   SEXP segments_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
   SEXP snms_     = PROTECT(allocVector(STRSXP, 3)); nprotect++;
@@ -329,6 +317,7 @@ SEXP bound_infinite_edges_(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   free(v1);
   free(v2);
+  free(li);
   
   UNPROTECT(nprotect);
   return res_;

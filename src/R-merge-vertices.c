@@ -203,18 +203,17 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   int *fv2   = INTEGER(fv2_);
   int *fline = INTEGER(fline_);
   
-  int *v1   = INTEGER(v1_);
-  int *v2   = INTEGER(v2_);
-  int *line = INTEGER(line_);
+  // These are initially copies of the input vectors 
+  memcpy(INTEGER(fv1_)  , INTEGER(v1_)  , nedges);
+  memcpy(INTEGER(fv2_)  , INTEGER(v2_)  , nedges);
+  memcpy(INTEGER(fline_), INTEGER(line_), nedges);
   
-  // Convert from R 1-indexing to C 0-indexing
-  for (int i = 0; i < nedges; i++) {
-    fv1[i]   = v1[i] - 1;
-    fv2[i]   = v2[i] - 1;
-    fline[i] = line[i] - 1;
-  }
-  
-  
+  // Convert them to C 0-indexing for processing
+  convert_indexing_r_to_c(fv1_);
+  convert_indexing_r_to_c(fv2_);
+  convert_indexing_r_to_c(fline_);
+
+  // This will contain the final number of vertices after merging  
   int fnedges = 0;
   
   merge_vertices_core_(asReal(tol_), 
@@ -226,13 +225,9 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   trim_vec(fv2_  , fnedges, nedges);
   trim_vec(fline_, fnedges, nedges);
   
-  // Convert from C 0-indexing to R 1-indexing
-  for (int i = 0; i < fnedges; i++) {
-    fv1[i]   = fv1[i] + 1;
-    fv2[i]   = fv2[i] + 1;
-    fline[i] = fline[i] + 1;
-  }
-  
+  convert_indexing_c_to_r(fv1_);
+  convert_indexing_c_to_r(fv2_);
+  convert_indexing_c_to_r(fline_);
   
   SEXP res_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
   SEXP nms_ = PROTECT(allocVector(STRSXP, 3)); nprotect++;

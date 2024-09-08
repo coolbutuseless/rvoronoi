@@ -160,9 +160,9 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert C 0-indexing to R 1-indexing
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-  for (int i = 0; i < ctx.ntris; i++) v1[i]++;
-  for (int i = 0; i < ctx.ntris; i++) v2[i]++;
-  for (int i = 0; i < ctx.ntris; i++) v3[i]++;
+  convert_indexing_c_to_r(v1_);
+  convert_indexing_c_to_r(v2_);
+  convert_indexing_c_to_r(v3_);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return

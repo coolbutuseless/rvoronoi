@@ -168,7 +168,7 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       error("dupe vertex at C index %i. Use `merge_vertices()`", i);
     }
     
-    int v1 = seg_v1[i]; // Convert from Rs 1-index to C's 0-indexing
+    int v1 = seg_v1[i]; 
     int v2 = seg_v2[i];
     
     double x1 = vert_x[v1];
@@ -669,32 +669,31 @@ SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP xseed_, SEXP y
     error("merge_vertices_(): v1 & v2 must be equal length");
   }
   
-  int *v1 = malloc((unsigned long)length(v1_) * sizeof(int));
-  int *v2 = malloc((unsigned long)length(v2_) * sizeof(int));
-  if (v1 == NULL || v2 == NULL) error("extract_polygons_() v1/v2 failed allocation");
-  
-  int *v1_p = INTEGER(v1_);
-  int *v2_p = INTEGER(v2_);
-  
-  // Convert from R 1-indexing to C 0-indexing
-  for (int i = 0; i < length(v1_); i++) {
-    v1[i] = v1_p[i] - 1;
-    v2[i] = v2_p[i] - 1;
-  }
+  int *v1 = create_c_index(v1_);
+  int *v2 = create_c_index(v2_);
 
+  SEXP polys_ = R_NilValue;
+  
   if (isNull(xseed_) || isNull(yseed_)) {  
-    return extract_polygons_internal(
+    // Calculate compact unordered polygons
+    polys_ = extract_polygons_internal(
       length(x_), REAL(x_), REAL(y_), // voronoi vertices
       length(v1_), v1, v2,            // voronoi edges
       0, NULL, NULL                   // seed points 
     );
   } else {
-    return extract_polygons_internal(
+    // Calculate polygons to match the seed points
+    polys_ = extract_polygons_internal(
       length(x_), REAL(x_), REAL(y_),            // voronoi vertices
       length(v1_), v1, v2,                       // voronoi edges
       length(xseed_), REAL(xseed_), REAL(yseed_) // seed points 
     );
   }
+  
+  
+  free(v1);
+  free(v2);
+  return polys_;
 }
 
 

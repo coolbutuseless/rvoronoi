@@ -72,3 +72,56 @@ void set_df_attributes(SEXP df_, int visible_length, int allocated_length) {
   
   UNPROTECT(nprotect);
 } 
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Increment integer values by 1 to convert from C 0-indexing to
+// R 1-indexing
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void convert_indexing_c_to_r(SEXP ivec_) {
+  int *ivec = INTEGER(ivec_);
+  
+  for (int i = 0; i < length(ivec_); i++) {
+    ivec[i]++;
+  }
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Decrement integer values by 1 to convert from R 1-indexing to
+// C 0-indexing
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void convert_indexing_r_to_c(SEXP ivec_) {
+  int *ivec = INTEGER(ivec_);
+  
+  for (int i = 0; i < length(ivec_); i++) {
+    ivec[i]--;
+  }
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocate and create a C integer array containing a 0-indexed version
+// of the R 1-indexed vector
+// The caller is responsible for freeing the returned memory
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int *create_c_index(SEXP ivec_) {
+  
+  int *ivec = malloc(length(ivec_) * sizeof(int));
+  if (ivec == NULL) {
+    error("create_c_index(): Couldn't allocate %i members", length(ivec_));
+  }
+  
+  int *ivecp = INTEGER(ivec_);
+  for (int i = 0; i < length(ivec_); i++) {
+    ivec[i] = ivecp[i] - 1;
+  }
+  
+  return ivec;
+}
+
+
+
+
+
+

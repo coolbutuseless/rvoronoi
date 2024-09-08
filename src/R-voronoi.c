@@ -319,21 +319,13 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert C 0-indexing to R 1-indexing
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int *seg_line = INTEGER(seg_line_);
-  int *seg_v1   = INTEGER(seg_v1_);
-  int *seg_v2   = INTEGER(seg_v2_);
-  for (int i = 0; i < length(seg_line_); i++) seg_line[i]++;
-  for (int i = 0; i < length(seg_v1_  ); i++) seg_v1  [i]++;
-  for (int i = 0; i < length(seg_v2_  ); i++) seg_v2  [i]++;
+  convert_indexing_c_to_r(seg_line_);
+  convert_indexing_c_to_r(seg_v1_);
+  convert_indexing_c_to_r(seg_v2_);
   
-  // Convert indexing for merged segments
-  seg_line = INTEGER(linem_);
-  seg_v1   = INTEGER(v1m_);
-  seg_v2   = INTEGER(v2m_);
-  for (int i = 0; i < length(linem_); i++) seg_line[i]++;
-  for (int i = 0; i < length(v1m_  ); i++) seg_v1  [i]++;
-  for (int i = 0; i < length(v2m_  ); i++) seg_v2  [i]++;
-  
+  convert_indexing_c_to_r(linem_);
+  convert_indexing_c_to_r(v1m_);
+  convert_indexing_c_to_r(v2m_);
   
   
   
