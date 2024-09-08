@@ -79,17 +79,11 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Indices = data.frame(v1 = integer(), v2 = integer(), v3 = integer())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP idx_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("v1"));
-  SET_STRING_ELT(nms_, 1, mkChar("v2"));
-  SET_STRING_ELT(nms_, 2, mkChar("v3"));
-  
+  const char *idx_nms[3] = {"v1", "v2", "v3"};
+  SEXP idx_ = PROTECT(create_named_list(3, idx_nms)); nprotect++;
   SET_VECTOR_ELT(idx_, 0, v1_);
   SET_VECTOR_ELT(idx_, 1, v2_);
   SET_VECTOR_ELT(idx_, 2, v3_);
-  
-  setAttrib(idx_, R_NamesSymbol, nms_);
   set_df_attributes(idx_, ctx.ntris, max_tris);
   
   

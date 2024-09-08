@@ -121,6 +121,26 @@ int *create_c_index(SEXP ivec_) {
 }
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Create a named list
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SEXP create_named_list(int n, const char **nms) {
+  
+  int nprotect = 0;
+  SEXP res_ = PROTECT(allocVector(VECSXP, n)); nprotect++;
+  SEXP nms_ = PROTECT(allocVector(STRSXP, n)); nprotect++;
+  
+  for (int i = 0; i < n; i++) {
+    SET_STRING_ELT(nms_, i, mkChar(nms[i]));
+  }
+  
+  setAttrib(res_, R_NamesSymbol, nms_);
+  
+  UNPROTECT(nprotect);
+  return res_;
+}
+
+
 
 
 
