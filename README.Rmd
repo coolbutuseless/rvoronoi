@@ -251,7 +251,7 @@ points(x, y, pch = '+')
 * 1 point at the centre
 
 ```{r}
-theta <- seq(0, 2*pi, length.out = 6)[-1]
+theta <- seq(0, 2*pi, length.out = 4)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 

@@ -118,20 +118,25 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set up the "working area" for the merging of vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP v1m_ = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
-  SEXP v2m_ = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
+  SEXP v1m_   = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
+  SEXP v2m_   = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
+  SEXP linem_ = PROTECT(allocVector(INTSXP, ctx.nsegs)); nprotect++;
   
-  int *v1m = INTEGER(v1m_);
-  int *v2m = INTEGER(v2m_);
+  int *v1m   = INTEGER(v1m_);
+  int *v2m   = INTEGER(v2m_);
+  int *linem = INTEGER(linem_);
   
-  memcpy(v1m, ctx.seg_v1, ctx.nsegs * sizeof(int));
-  memcpy(v2m, ctx.seg_v2, ctx.nsegs * sizeof(int));
+  memcpy(v1m  , ctx.seg_v1  , ctx.nsegs * sizeof(int));
+  memcpy(v2m  , ctx.seg_v2  , ctx.nsegs * sizeof(int));
+  memcpy(linem, ctx.seg_line, ctx.nsegs * sizeof(int));
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge close vertices which are an artefact of the tessellation
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  merge_vertices_core_(1e-5, ctx.nverts, ctx.vert_x, ctx.vert_y,
-                       ctx.nsegs, v1m, v2m, &fnedges, 0);
+  merge_vertices_core_(1e-5, 
+                       ctx.nverts, ctx.vert_x, ctx.vert_y,
+                       ctx.nsegs, linem, v1m, v2m, 
+                       &fnedges, 0);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract the polygons using the (temporary) merged vertices
@@ -165,14 +170,16 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Trim the merged indices to size 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP msegs_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP mnms_  = PROTECT(allocVector(STRSXP, 2)); nprotect++;  
-  SET_STRING_ELT(mnms_, 0, mkChar("v1"));
-  SET_STRING_ELT(mnms_, 1, mkChar("v2"));
+  SEXP msegs_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
+  SEXP mnms_  = PROTECT(allocVector(STRSXP, 3)); nprotect++;  
+  SET_STRING_ELT(mnms_, 0, mkChar("line"));
+  SET_STRING_ELT(mnms_, 1, mkChar("v1"));
+  SET_STRING_ELT(mnms_, 2, mkChar("v2"));
   setAttrib(msegs_, R_NamesSymbol, mnms_);
   
-  SET_VECTOR_ELT(msegs_, 0, v1m_);
-  SET_VECTOR_ELT(msegs_, 1, v2m_);
+  SET_VECTOR_ELT(msegs_, 0, linem_);
+  SET_VECTOR_ELT(msegs_, 1, v1m_);
+  SET_VECTOR_ELT(msegs_, 2, v2m_);
   
   set_df_attributes(msegs_, fnedges, length(v1m_));
   
@@ -318,6 +325,17 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   for (int i = 0; i < length(seg_line_); i++) seg_line[i]++;
   for (int i = 0; i < length(seg_v1_  ); i++) seg_v1  [i]++;
   for (int i = 0; i < length(seg_v2_  ); i++) seg_v2  [i]++;
+  
+  // Convert indexing for merged segments
+  seg_line = INTEGER(linem_);
+  seg_v1   = INTEGER(v1m_);
+  seg_v2   = INTEGER(v2m_);
+  for (int i = 0; i < length(linem_); i++) seg_line[i]++;
+  for (int i = 0; i < length(v1m_  ); i++) seg_v1  [i]++;
+  for (int i = 0; i < length(v2m_  ); i++) seg_v2  [i]++;
+  
+  
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return

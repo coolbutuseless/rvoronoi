@@ -4,19 +4,21 @@
 \alias{merge_vertices}
 \title{Merge vertices}
 \usage{
-merge_vertices(x, y, v1, v2, tol = 1e-05, verbosity = 0L)
+merge_vertices(x, y, line, v1, v2, tol = 1e-05, verbosity = 0L)
 }
 \arguments{
 \item{x, y}{vertex coordinates}
 
-\item{v1, v2}{edges defined by two indices into the x, y coordinates}
+\item{line}{edges defined by line two indices into the x, y coordinates}
+
+\item{v1, v2}{edges defined by line two indices into the x, y coordinates}
 
 \item{tol}{tolerance for merging close vertices.}
 
 \item{verbosity}{verbosity level. Default: 0}
 }
 \value{
-\code{list(v1, v2)}
+\code{list(line, v1, v2)}
 }
 \description{
 Merge vertices

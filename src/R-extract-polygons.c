@@ -138,8 +138,16 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
   for (int i = 0; i < seg_n; i++) {
     n_undir_edges += seg_v1[i] >= 0 && seg_v2[i] >= 0;
   }
-  // Rprintf("poly: %i/%i edges are bounded\n", n_undir_edges, seg_n);
+  
+  if (n_undir_edges == 0) {
+    // No finite edges to process. i.e. no polygons are possible!
+    *npolysp = 0;
+    return NULL;
+  }
+    
+    
   int n_dir_edges = 2 * n_undir_edges;
+
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Allocate space for TWICE the number of bounded edges (undirected)
@@ -260,7 +268,7 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
 
   // Allocate the 'bounds'
   bounds = calloc(nbounds, sizeof(bounds_t));
-  if (bounds == NULL) error("Failed to allocate 'bounds'");
+  if (bounds == NULL) error("Failed to allocate %i 'bounds' for %i undirected edges", nbounds, n_dir_edges);
 
   // Initialise the cvert (current vertex) to be the first seen vertex
   int cvert = wedge[0].v1;

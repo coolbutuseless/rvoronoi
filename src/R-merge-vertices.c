@@ -24,7 +24,10 @@
 // 
 // Caller is responsible for freeing fv1, fv2
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedges, int *v1, int *v2, int *fnedges,
+void merge_vertices_core_(double tol, 
+                          int nverts, double *x, double *y, 
+                          int nedges, int *line, int *v1, int *v2, 
+                          int *fnedges,
                           int verbosity) {
   
   
@@ -137,8 +140,9 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
       src++;
     }
     // src += discard[src];
-    v1[dst] = v1[src];
-    v2[dst] = v2[src];
+    v1[dst]   = v1[src];
+    v2[dst]   = v2[src];
+    line[dst] = line[src];
     if (verbosity > 1) {
       Rprintf("src %02i  ->  dst %02i\n", src, dst);
     }
@@ -147,8 +151,9 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
   // Mark discarded edges with a sentinel value so it's easy to see
   // when something's not right.
   for (; dst < nedges; dst++) {
-    v1[dst] = 998;
-    v2[dst] = 998;
+    v1[dst]   = 998;
+    v2[dst]   = 998;
+    line[dst] = 998;
   }
   
   if (verbosity > 0) {  
@@ -168,7 +173,9 @@ void merge_vertices_core_(double tol, int nverts, double *x, double *y, int nedg
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP merge_vertices_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP tol_, SEXP verbosity_) {
+SEXP merge_vertices_(SEXP x_, SEXP y_, 
+                     SEXP line_, SEXP v1_, SEXP v2_, 
+                     SEXP tol_, SEXP verbosity_) {
   
   int nprotect = 0;
   
@@ -189,43 +196,54 @@ SEXP merge_vertices_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP tol_, SEXP verbo
   int nverts = length(x_);
   int nedges = length(v1_);
   
-  SEXP fv1_ = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
-  SEXP fv2_ = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
-  int *fv1 = INTEGER(fv1_);
-  int *fv2 = INTEGER(fv2_);
+  SEXP fv1_   = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
+  SEXP fv2_   = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
+  SEXP fline_ = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
+  int *fv1   = INTEGER(fv1_);
+  int *fv2   = INTEGER(fv2_);
+  int *fline = INTEGER(fline_);
   
-  int *v1 = INTEGER(v1_);
-  int *v2 = INTEGER(v2_);
+  int *v1   = INTEGER(v1_);
+  int *v2   = INTEGER(v2_);
+  int *line = INTEGER(line_);
   
   // Convert from R 1-indexing to C 0-indexing
   for (int i = 0; i < nedges; i++) {
-    fv1[i] = v1[i] - 1;
-    fv2[i] = v2[i] - 1;
+    fv1[i]   = v1[i] - 1;
+    fv2[i]   = v2[i] - 1;
+    fline[i] = line[i] - 1;
   }
   
   
   int fnedges = 0;
   
-  merge_vertices_core_(asReal(tol_), nverts, x, y, nedges, fv1, fv2, &fnedges, asInteger(verbosity_));
+  merge_vertices_core_(asReal(tol_), 
+                       nverts, x, y, 
+                       nedges, fline, fv1, fv2, 
+                       &fnedges, asInteger(verbosity_));
   
-  trim_vec(fv1_, fnedges, nedges);
-  trim_vec(fv2_, fnedges, nedges);
+  trim_vec(fv1_  , fnedges, nedges);
+  trim_vec(fv2_  , fnedges, nedges);
+  trim_vec(fline_, fnedges, nedges);
   
   // Convert from C 0-indexing to R 1-indexing
   for (int i = 0; i < fnedges; i++) {
-    fv1[i] = fv1[i] + 1;
-    fv2[i] = fv2[i] + 1;
+    fv1[i]   = fv1[i] + 1;
+    fv2[i]   = fv2[i] + 1;
+    fline[i] = fline[i] + 1;
   }
   
   
-  SEXP res_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); nprotect++;
+  SEXP res_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
+  SEXP nms_ = PROTECT(allocVector(STRSXP, 3)); nprotect++;
   
-  SET_VECTOR_ELT(res_, 0, fv1_);
-  SET_VECTOR_ELT(res_, 1, fv2_);
+  SET_VECTOR_ELT(res_, 0, fline_);
+  SET_VECTOR_ELT(res_, 1, fv1_);
+  SET_VECTOR_ELT(res_, 2, fv2_);
   
-  SET_STRING_ELT(nms_, 0, mkChar("v1"));
-  SET_STRING_ELT(nms_, 1, mkChar("v2"));
+  SET_STRING_ELT(nms_, 0, mkChar("line"));
+  SET_STRING_ELT(nms_, 1, mkChar("v1"));
+  SET_STRING_ELT(nms_, 2, mkChar("v2"));
   
   setAttrib(res_, R_NamesSymbol, nms_);
   

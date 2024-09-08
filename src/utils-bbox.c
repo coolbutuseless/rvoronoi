@@ -56,11 +56,28 @@ void bbox_expand(bbox_t *bbox, double factor) {
   double w = bbox->xmax - bbox->xmin;
   double h = bbox->ymax - bbox->ymin;
   
-  bbox->xmin -= w * factor / 2;
-  bbox->xmax += w * factor / 2;
+  double maxd = w > h ? w : h;
+  if (maxd == 0) {
+    // bbox has no area!
+    warning("bbox has zero area\n");
+  }
   
-  bbox->ymin -= h * factor / 2;
-  bbox->ymax += h * factor / 2;
+  if (w == 0) {
+    bbox->xmin = -maxd / 2;
+    bbox->xmax =  maxd / 2;
+  } else {
+    bbox->xmin -= w * factor / 2;
+    bbox->xmax += w * factor / 2;
+  }
+  
+  if (h == 0) {
+    bbox->ymin = -maxd / 2;
+    bbox->ymax =  maxd / 2;
+  } else {
+    bbox->ymin -= h * factor / 2;
+    bbox->ymax += h * factor / 2;
+  }
+  
 }
 
 

@@ -99,8 +99,6 @@ draw_inf_lines <- function(vor, lty = 1, col = 'grey90', ...) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 draw_bounded_polygons <- function(vor, ...) {
   
-  # segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$v1, vor$segment$v2)
-  # ps <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
   ps <- vor$polygons
   
   cols <- rainbow(length(ps))

@@ -116,8 +116,8 @@ identical(
 
 | expression    |    min |  median |  itr/sec | mem_alloc |
 |:--------------|-------:|--------:|---------:|----------:|
-| del_rtriangle | 49.1µs | 51.37µs |  18818.0 |    5.76KB |
-| del_new       |  4.8µs |  5.25µs | 179546.7 |    2.57KB |
+| del_rtriangle | 49.3µs | 56.64µs |  17456.8 |    5.76KB |
+| del_new       |  4.8µs |  5.33µs | 170256.3 |    2.57KB |
 
 ## Debug plotting
 
@@ -237,7 +237,7 @@ points(x, y, pch = '+')
 - 1 point at the centre
 
 ``` r
-theta <- seq(0, 2*pi, length.out = 6)[-1]
+theta <- seq(0, 2*pi, length.out = 4)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
@@ -253,6 +253,22 @@ points(x, y, pch = '+')
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
+``` r
+
+if (FALSE) {
+  plot(x, y, ann = F, axes = F, asp = 1)
+  
+  cols <- rainbow(length(vor$polygons))
+  
+  for (i in seq_along(vor$polygons)) {
+  polygon(vor$polygons[[i]], col = cols[i])  
+  text(x[i], y[i], labels = i)
+  # points(x[i], y[i], col = 'black', pch = '+')
+  }
+  
+}
+```
 
 ``` r
 library(RTriangle)
