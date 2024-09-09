@@ -10,4 +10,14 @@ test_that("duplicate seeds points are detected", {
     "duplicate"
   )
   
+  
+  x <- c(3, 0, 1, 2, 3, 4)
+  y <- c(3, 0, 1, 2, 3, 4)
+  
+  expect_error(
+    voronoi(x, y),
+    "duplicate"
+  )
+  
+  
 })
