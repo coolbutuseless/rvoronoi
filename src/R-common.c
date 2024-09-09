@@ -62,6 +62,12 @@ void init_sites(context_t *ctx, double *x, double *y, int n) {
       ctx->xmin = ctx->sites[i].coord.x;
     if (ctx->sites[i].coord.x > ctx->xmax)
       ctx->xmax = ctx->sites[i].coord.x;
+    
+    if (ctx->sites[i].coord.x == ctx->sites[i - 1].coord.x &&
+        ctx->sites[i].coord.y == ctx->sites[i - 1].coord.y) {
+      error("Input points contain duplicates. Not allowed");
+    }
+    
   };
   
   ctx->ymin = ctx->sites[0].coord.y;
