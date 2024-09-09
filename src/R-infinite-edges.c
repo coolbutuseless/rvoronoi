@@ -19,12 +19,60 @@
 #include "utils-bbox.h"
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Struct for organising points along the perimeter 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+typedef struct {
+  double x; 
+  double y;
+  int v;
+} point_t;
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Helper function used with sort()
+// sort point_t along y-direction only
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int horizontal_comparison(const void *v1, const void *v2) {
+  
+  point_t *s1 = (point_t *)v1;
+  point_t *s2 = (point_t *)v2;
+
+  if (s1->x < s2->x)
+    return (-1);
+  if (s1->x > s2->x)
+    return (1);
+  return (0);
+}
+
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Helper function used with sort()
+// sort point_t along y-direction only
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int vertical_comparison(const void *v1, const void *v2) {
+  
+  point_t *s1 = (point_t *)v1;
+  point_t *s2 = (point_t *)v2;
+  
+  if (s1->y < s2->y)
+    return (-1);
+  if (s1->y > s2->y)
+    return (1);
+  return (0);
+}
+
+
+
+
+
 void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbverts, int *nbsegs) {
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Count the number of unbound rays and setup storage
-  //
-  // TODO: add corner vertices and perimeter segments
+  // Count the number of unbound rays
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *nbsegs  = 0;
   *nbverts = 0;
@@ -36,8 +84,21 @@ void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbver
       // double unbounded edge adds 2 vertices
       (*nbverts)++;
     }
-    
   }
+  
+  
+  Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Around the perimeter, need to add 
+  //   -  4 vertices for each of the corners of the boundary
+  //   -  (4 + nbverts) new segments around the boundary
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  (*nbsegs)  += 4 + *nbverts;
+  (*nbverts) += 4;
+  
+  
+  Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
   
 }
 
@@ -54,7 +115,6 @@ void bound_infinite_edges(
     int nbsegs, int *rv1, int *rv2) {
   
   
-  Rprintf("Found %i rays to bound. Needing %i vertices\n", nbsegs, nbverts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Hold info about the two intercepts between rays and rectangle
@@ -160,49 +220,166 @@ void bound_infinite_edges(
       }
     }
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Depending on how the ray is anchored (i.e. left, right or both)
+    // add vertex/vertices for boundary intersection and add segment
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Rprintf("Ray: %i   Vert: %i\n", ray_idx, vert_idx);
     if (type == 0) {
       // double ended unbounded ray. 
-      // Add vertices
+      // Add vertices for two interesections with boundary
       xb[vert_idx] = intercept[0].x;
       yb[vert_idx] = intercept[0].y;
       vert_idx++;
       xb[vert_idx] = intercept[1].x;
       yb[vert_idx] = intercept[1].y;
       vert_idx++;
-      // Add segment
+      // Add segment between these two intersections
       rv1[ray_idx] = nverts + vert_idx - 2;
       rv2[ray_idx] = nverts + vert_idx - 1;
       ray_idx++;
     } else if (type == 1) {
       // ray now bounded on the left
-      // Add vertex
+      // Add vertex for boundary intersection
       xb[vert_idx] = intercept[0].x;
       yb[vert_idx] = intercept[0].y;
       vert_idx++;
-      // Add segment
+      // Add segment between anchor point and intersection
       rv1[ray_idx] = v1_anchor;
       rv2[ray_idx] = nverts + vert_idx - 1;
       ray_idx++;
     } else if (type == 2) {
       // ray not bounded on the right
-      // Add vertex
+      // Add vertex for boundary intersection
       xb[vert_idx] = intercept[1].x;
       yb[vert_idx] = intercept[1].y;
       vert_idx++;
-      // Add segment
+      // Add segment between anchor point and intersection
       rv1[ray_idx] = v1_anchor;
       rv2[ray_idx] = nverts + vert_idx - 1;
       ray_idx++;
     } else {
       error("Impossible 12");
     }
-    
-    
-    
-    
+  } // next seg
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Add vertices for boundary 
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymin; vert_idx++;
+  xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymin; vert_idx++;
+  xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymax; vert_idx++;
+  xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymax; vert_idx++;
+  
+  if (vert_idx != nbverts) {
+    error("Expecting vert_idx == nbverts :: %i == %i", vert_idx, nbverts);
   }
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find all points along top edge
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int npoints = 0;
+  point_t points[nbverts];
+  
+  for (int i = 0; i < nbverts; i++) {
+    if (yb[i] == bounds->ymax) {
+      points[npoints].x = xb[i];
+      points[npoints].y = yb[i];
+      points[npoints].v = nverts + i;
+      npoints++;
+    }
+  }
+  Rprintf("Points on top perimeter: %i\n", npoints);
+  qsort(points, npoints, sizeof(point_t), horizontal_comparison);
+  
+  // Add segments
+  for (int i = 0; i < npoints - 1; i++) {
+    rv1[ray_idx] = points[i    ].v;
+    rv2[ray_idx] = points[i + 1].v;
+    ray_idx++;
+  }
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find all points along bottom edge
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  npoints = 0;
+  
+  for (int i = 0; i < nbverts; i++) {
+    if (yb[i] == bounds->ymin) {
+      points[npoints].x = xb[i];
+      points[npoints].y = yb[i];
+      points[npoints].v = nverts + i;
+      npoints++;
+    }
+  }
+  Rprintf("Points on bottom perimeter: %i\n", npoints);
+  qsort(points, npoints, sizeof(point_t), horizontal_comparison);
+  
+  // Add segments
+  for (int i = 0; i < npoints - 1; i++) {
+    rv1[ray_idx] = points[i    ].v;
+    rv2[ray_idx] = points[i + 1].v;
+    ray_idx++;
+  }
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find all points along left edge
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  npoints = 0;
+  
+  for (int i = 0; i < nbverts; i++) {
+    if (xb[i] == bounds->xmin) {
+      points[npoints].x = xb[i];
+      points[npoints].y = yb[i];
+      points[npoints].v = nverts + i;
+      npoints++;
+    }
+  }
+  Rprintf("Points on left perimeter: %i\n", npoints);
+  qsort(points, npoints, sizeof(point_t), vertical_comparison);
+  
+  // Add segments
+  for (int i = 0; i < npoints - 1; i++) {
+    rv1[ray_idx] = points[i    ].v;
+    rv2[ray_idx] = points[i + 1].v;
+    ray_idx++;
+  }
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find all points along right edge
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  npoints = 0;
+  
+  for (int i = 0; i < nbverts; i++) {
+    if (xb[i] == bounds->xmax) {
+      points[npoints].x = xb[i];
+      points[npoints].y = yb[i];
+      points[npoints].v = nverts + i;
+      npoints++;
+    }
+  }
+  Rprintf("Points on right perimeter: %i\n", npoints);
+  qsort(points, npoints, sizeof(point_t), vertical_comparison);
+  
+  // Add segments
+  for (int i = 0; i < npoints - 1; i++) {
+    rv1[ray_idx] = points[i    ].v;
+    rv2[ray_idx] = points[i + 1].v;
+    ray_idx++;
+  }
+  
+  
+  if (ray_idx != nbsegs) {
+    error("Expecting ray_idx == nbsegs :: %i == %i", ray_idx, nbsegs);
+  }
   
 }
 
