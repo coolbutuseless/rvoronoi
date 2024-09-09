@@ -234,19 +234,10 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   convert_indexing_c_to_r(fv2_);
   convert_indexing_c_to_r(fline_);
   
-  SEXP res_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, 3)); nprotect++;
   
-  SET_VECTOR_ELT(res_, 0, fline_);
-  SET_VECTOR_ELT(res_, 1, fv1_);
-  SET_VECTOR_ELT(res_, 2, fv2_);
-  
-  SET_STRING_ELT(nms_, 0, mkChar("line"));
-  SET_STRING_ELT(nms_, 1, mkChar("v1"));
-  SET_STRING_ELT(nms_, 2, mkChar("v2"));
-  
-  setAttrib(res_, R_NamesSymbol, nms_);
-  
+  SEXP res_ = PROTECT(
+    create_named_list(3, "line", fline_, "v1", fv1_, "v2", fv2_)
+  ); nprotect++;
   set_df_attributes(res_, fnedges, fnedges);
   
   

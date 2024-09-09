@@ -114,10 +114,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |    min |  median |   itr/sec | mem_alloc |
-|:--------------|-------:|--------:|----------:|----------:|
-| del_rtriangle |  121µs | 127.7µs |  7441.047 |    5.76KB |
-| del_new       | 10.6µs |  12.8µs | 78030.642 |    2.57KB |
+| expression    |     min | median |   itr/sec | mem_alloc |
+|:--------------|--------:|-------:|----------:|----------:|
+| del_rtriangle | 120.8µs |  128µs |  7472.832 |    5.76KB |
+| del_new       |  9.69µs |   12µs | 73351.237 |    2.57KB |
 
 ## Debug plotting
 
@@ -271,28 +271,30 @@ if (FALSE) {
 ```
 
 ``` r
-# library(RTriangle)
-# theta <- seq(0, 2*pi, length.out = 6)[-1]
-# x <- c(0, cos(theta), 2 * cos(theta))
-# y <- c(0, sin(theta), 2 * sin(theta))
-# 
-# tri <- triangulate(pslg(P = cbind(x, y)))
-# 
-# v1 <- tri$VE[,1]
-# v2 <- tri$VE[,2]
-# 
-# line <- rep(1L, length(v1))
-# 
-# seg <- merge_vertices(tri$VP[,1], tri$VP[,2], line, v1, v2)
-# 
-# polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
-# 
-# cols <- rainbow(length(polys))
-# plot(tri$VP, asp = 1, ann = F, axes = FALSE)
-# for (i in seq_along(polys)) {
-#   polygon(polys[[i]], col = cols[i])
-# }
+library(RTriangle)
+theta <- seq(0, 2*pi, length.out = 6)[-1]
+x <- c(0, cos(theta), 2 * cos(theta))
+y <- c(0, sin(theta), 2 * sin(theta))
+
+tri <- triangulate(pslg(P = cbind(x, y)))
+
+v1 <- tri$VE[,1]
+v2 <- tri$VE[,2]
+
+line <- rep(1L, length(v1))
+
+seg <- merge_vertices(tri$VP[,1], tri$VP[,2], line, v1, v2)
+
+polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
+
+cols <- rainbow(length(polys))
+plot(tri$VP, asp = 1, ann = F, axes = FALSE)
+for (i in seq_along(polys)) {
+  polygon(polys[[i]], col = cols[i])
+}
 ```
+
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
 
 ## Random
 

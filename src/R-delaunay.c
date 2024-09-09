@@ -117,30 +117,18 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
     *pidx++ = i + 1;
   }
   
-  SEXP polys_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP pnms_  = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(pnms_, 0, mkChar("idx"));
-  SET_STRING_ELT(pnms_, 1, mkChar("x"));
-  SET_STRING_ELT(pnms_, 2, mkChar("y"));
-  setAttrib(polys_, R_NamesSymbol, pnms_);
   
-  SET_VECTOR_ELT(polys_, 0, pidx_);
-  SET_VECTOR_ELT(polys_, 1, xs_);
-  SET_VECTOR_ELT(polys_, 2, ys_);
-  
+  SEXP polys_ = PROTECT(
+    create_named_list(3, "idx", pidx_, "x", xs_, "y", ys_)
+  ); nprotect++;
   set_df_attributes(polys_, 3 * ctx.ntris, 3 * ctx.ntris);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // List of delaunay results: list(vertex = data.frame(), coords = data.frame())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP lnm_ = PROTECT(allocVector(STRSXP, 2)); nprotect++;
-  SET_STRING_ELT(lnm_, 0, mkChar("segment")); 
-  SET_STRING_ELT(lnm_, 1, mkChar("polygon"));
-  setAttrib(res_, R_NamesSymbol, lnm_);
-  
-  SET_VECTOR_ELT(res_, 0, idx_);
-  SET_VECTOR_ELT(res_, 1, polys_);
+  SEXP res_ = PROTECT(
+    create_named_list(2, "segment", idx_, "polygon", polys_)
+  ); nprotect++;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations

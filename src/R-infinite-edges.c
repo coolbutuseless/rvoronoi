@@ -270,14 +270,9 @@ SEXP bound_infinite_edges_(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP verts_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP vnms_  = PROTECT(allocVector(STRSXP, 2)); nprotect++;
-  SET_STRING_ELT(vnms_, 0, mkChar("x"));
-  SET_STRING_ELT(vnms_, 1, mkChar("y"));
-  setAttrib(verts_, R_NamesSymbol, vnms_);
-
-  SET_VECTOR_ELT(verts_, 0, xb_);
-  SET_VECTOR_ELT(verts_, 1, yb_);
+  SEXP verts_ = PROTECT(
+    create_named_list(2, "x", xb_, "y", yb_)
+  ); nprotect++;
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -287,29 +282,17 @@ SEXP bound_infinite_edges_(
   convert_indexing_c_to_r(rv2_);
 
   
-  SEXP segments_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP snms_     = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(snms_, 0, mkChar("line"));
-  SET_STRING_ELT(snms_, 1, mkChar("v1"));
-  SET_STRING_ELT(snms_, 2, mkChar("v2"));
-  setAttrib(segments_, R_NamesSymbol, snms_);
-  
-  SET_VECTOR_ELT(segments_, 0, R_NilValue);
-  SET_VECTOR_ELT(segments_, 1, rv1_);
-  SET_VECTOR_ELT(segments_, 2, rv2_);
+  SEXP segments_ = PROTECT(
+    create_named_list(3, "line", R_NilValue, "v1", rv1_, "v2", rv2_)
+  ); nprotect++;
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // list result
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("vertex"));
-  SET_STRING_ELT(nms_, 1, mkChar("segment"));
-  setAttrib(res_, R_NamesSymbol, nms_);
-  
-  SET_VECTOR_ELT(res_, 0, verts_);
-  SET_VECTOR_ELT(res_, 1, segments_);
+  SEXP res_ = PROTECT(
+    create_named_list(2, "vertex", verts_, "segment", segments_)
+  ); nprotect++;
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

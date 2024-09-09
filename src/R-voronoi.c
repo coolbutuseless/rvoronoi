@@ -170,91 +170,41 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Trim the merged indices to size 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP msegs_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  SEXP mnms_  = PROTECT(allocVector(STRSXP, 3)); nprotect++;  
-  SET_STRING_ELT(mnms_, 0, mkChar("line"));
-  SET_STRING_ELT(mnms_, 1, mkChar("v1"));
-  SET_STRING_ELT(mnms_, 2, mkChar("v2"));
-  setAttrib(msegs_, R_NamesSymbol, mnms_);
-  
-  SET_VECTOR_ELT(msegs_, 0, linem_);
-  SET_VECTOR_ELT(msegs_, 1, v1m_);
-  SET_VECTOR_ELT(msegs_, 2, v2m_);
-  
+  SEXP msegs_ = PROTECT(
+    create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
+  ); nprotect++;
   set_df_attributes(msegs_, fnedges, length(v1m_));
   
     
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP vert_ = PROTECT(allocVector(VECSXP, 2)); nprotect++;
-  SEXP nms_  = PROTECT(allocVector(STRSXP, 2)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("x"));
-  SET_STRING_ELT(nms_, 1, mkChar("y"));
-  
-  SET_VECTOR_ELT(vert_, 0, vert_x_);
-  SET_VECTOR_ELT(vert_, 1, vert_y_);
-  
-  setAttrib(vert_, R_NamesSymbol, nms_);
+  SEXP vert_ = PROTECT(
+    create_named_list(2, "x", vert_x_, "y", vert_y_)
+  ); nprotect++;
   set_df_attributes(vert_, ctx.nverts, max_verts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP line_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  nms_       = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("a"));
-  SET_STRING_ELT(nms_, 1, mkChar("b"));
-  SET_STRING_ELT(nms_, 2, mkChar("c"));
-  
-  SET_VECTOR_ELT(line_, 0, line_a_);
-  SET_VECTOR_ELT(line_, 1, line_b_);
-  SET_VECTOR_ELT(line_, 2, line_c_);
-  
-  setAttrib(line_, R_NamesSymbol, nms_);
+  SEXP line_ = PROTECT(
+    create_named_list(3, "a", line_a_, "b", line_b_, "c", line_c_)
+  ); nprotect++;
   set_df_attributes(line_, ctx.nlines, max_edges);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Segments: data.frame(line = integer(), v1 = integer(), v2 = integer())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP seg_ = PROTECT(allocVector(VECSXP, 3)); nprotect++;
-  nms_      = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("line"));
-  SET_STRING_ELT(nms_, 1, mkChar("v1"));
-  SET_STRING_ELT(nms_, 2, mkChar("v2"));
-  
-  SET_VECTOR_ELT(seg_, 0, seg_line_);
-  SET_VECTOR_ELT(seg_, 1, seg_v1_);
-  SET_VECTOR_ELT(seg_, 2, seg_v2_);
-  
-  setAttrib(seg_, R_NamesSymbol, nms_);
+  SEXP seg_ = PROTECT(
+    create_named_list(3, "line", seg_line_, "v1", seg_v1_, "v2", seg_v2_)
+  ); nprotect++;
   set_df_attributes(seg_, ctx.nsegs, max_edges);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
   // Covers all seed points and voronoi vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // double xmin =  INFINITY;
-  // double xmax = -INFINITY;
-  // double ymin =  INFINITY;
-  // double ymax = -INFINITY;
-  // for (int i = 0; i < ctx.nverts; i++) {
-  //   if (ctx.vert_x[i] > xmax) xmax = ctx.vert_x[i];
-  //   if (ctx.vert_x[i] < xmin) xmin = ctx.vert_x[i];
-  //   if (ctx.vert_y[i] > ymax) ymax = ctx.vert_y[i];
-  //   if (ctx.vert_y[i] < ymin) ymin = ctx.vert_y[i];
-  // }
-  // 
-  // double *x = REAL(x_);
-  // double *y = REAL(y_);
-  // for (int i = 0; i < length(x_); i++) {
-  //   if (x[i] > xmax) xmax = x[i];
-  //   if (x[i] < xmin) xmin = x[i];
-  //   if (y[i] > ymax) ymax = y[i];
-  //   if (y[i] < ymin) ymin = y[i];
-  // }
-  
   bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
   bbox_expand(&bounds, 0.10);
   
@@ -264,19 +214,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   SEXP ymin_ = PROTECT(ScalarReal(bounds.ymin)); nprotect++;
   SEXP ymax_ = PROTECT(ScalarReal(bounds.ymax)); nprotect++;
   
-  SEXP ext_ = PROTECT(allocVector(VECSXP, 4)); nprotect++;
-  nms_      = PROTECT(allocVector(STRSXP, 4)); nprotect++;
-  SET_STRING_ELT(nms_, 0, mkChar("xmin"));
-  SET_STRING_ELT(nms_, 1, mkChar("xmax"));
-  SET_STRING_ELT(nms_, 2, mkChar("ymin"));
-  SET_STRING_ELT(nms_, 3, mkChar("ymax"));
-  
-  SET_VECTOR_ELT(ext_, 0, xmin_);
-  SET_VECTOR_ELT(ext_, 1, xmax_);
-  SET_VECTOR_ELT(ext_, 2, ymin_);
-  SET_VECTOR_ELT(ext_, 3, ymax_);
-  
-  setAttrib(ext_, R_NamesSymbol, nms_);
+  SEXP ext_ = PROTECT(
+    create_named_list(4, "xmin", xmin_, "xmax", xmax_, "ymin", ymin_, "ymax", ymax_)
+  ); nprotect++;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Final result: named list of data.frames
@@ -287,24 +227,10 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //     extents = list()
   // )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(allocVector(VECSXP, 6)); nprotect++;
-  nms_      = PROTECT(allocVector(STRSXP, 6)); nprotect++;
-  
-  SET_STRING_ELT(nms_, 0, mkChar("vertex"));
-  SET_STRING_ELT(nms_, 1, mkChar("line"));
-  SET_STRING_ELT(nms_, 2, mkChar("segment"));
-  SET_STRING_ELT(nms_, 3, mkChar("extents"));
-  SET_STRING_ELT(nms_, 4, mkChar("polygons"));
-  SET_STRING_ELT(nms_, 5, mkChar("msegments"));
-  
-  SET_VECTOR_ELT(res_, 0, vert_);
-  SET_VECTOR_ELT(res_, 1, line_);
-  SET_VECTOR_ELT(res_, 2, seg_);
-  SET_VECTOR_ELT(res_, 3, ext_);
-  SET_VECTOR_ELT(res_, 4, polys_);
-  SET_VECTOR_ELT(res_, 5, msegs_);
-  
-  setAttrib(res_, R_NamesSymbol, nms_);
+  SEXP res_ = PROTECT(
+    create_named_list(6, "vertex", vert_, "line", line_, "segment", seg_, 
+                      "extents", ext_, "polygons", polys_, "msegments", msegs_)
+  ); nprotect++;
   setAttrib(res_, R_ClassSymbol, mkString("vor"));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -569,19 +569,12 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
     for (int i = 0; i < npolys; i++) {
       if (polys[i].deleted) continue;
       
-      SEXP ll_  = PROTECT(allocVector(VECSXP, 2)); 
-      SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); 
-      
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       
-      SET_STRING_ELT(nms_, 0, mkChar("x"));
-      SET_STRING_ELT(nms_, 1, mkChar("y"));
-      
-      SET_VECTOR_ELT(ll_, 0, x_);
-      SET_VECTOR_ELT(ll_, 1, y_);
-      
-      setAttrib(ll_, R_NamesSymbol, nms_);
+      SEXP ll_ = PROTECT(
+        create_named_list(2, "x", x_, "y", y_)
+      ); 
       
       if (polys[i].point_idx < 0) {
         warning("Poly [%i] has a point index of %i\n", i, polys[i].point_idx);  
@@ -594,7 +587,7 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
       
       
-      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
+      UNPROTECT(3); // everything is protected as they're now members of list 'res_'
     }
     
   } else {
@@ -614,20 +607,14 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
     for (int i = 0; i < npolys; i++) {
       if (polys[i].deleted) continue;
       
-      SEXP ll_  = PROTECT(allocVector(VECSXP, 2)); 
-      SEXP nms_ = PROTECT(allocVector(STRSXP, 2)); 
-      
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       
-      SET_STRING_ELT(nms_, 0, mkChar("x"));
-      SET_STRING_ELT(nms_, 1, mkChar("y"));
+      SEXP ll_ = PROTECT(
+        create_named_list(2, "x", x_, "y", y_)
+      ); 
       
-      SET_VECTOR_ELT(ll_, 0, x_);
-      SET_VECTOR_ELT(ll_, 1, y_);
-      
-      setAttrib(ll_, R_NamesSymbol, nms_);
-      
+ 
       SET_VECTOR_ELT(polys_, llidx, ll_);
       
       // Copy from the poly_t struct
@@ -635,7 +622,7 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
       
       
-      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
+      UNPROTECT(3); // everything is protected as they're now members of list 'res_'
       llidx++;
     }
   }
