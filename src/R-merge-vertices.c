@@ -186,8 +186,8 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
     warning("merge_vertices_(): No vertices to process\n");
     return R_NilValue;
   }
-  if (length(v1_) != length(v2_)) {
-    error("merge_vertices_(): v1 & v2 must be equal length");
+  if (length(v1_) != length(v2_) || length(v1_) != length(line_)) {
+    error("merge_vertices_():line, v1 & v2 must be equal length");
   }
   
   double *x = REAL(x_);
@@ -199,26 +199,31 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   SEXP fv1_   = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
   SEXP fv2_   = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
   SEXP fline_ = PROTECT(allocVector(INTSXP, nedges)); nprotect++;
-  int *fv1   = INTEGER(fv1_);
-  int *fv2   = INTEGER(fv2_);
-  int *fline = INTEGER(fline_);
+  
+  // int *fv1   = INTEGER(fv1_);
+  // int *fv2   = INTEGER(fv2_);
+  // int *fline = INTEGER(fline_);
   
   // These are initially copies of the input vectors 
-  memcpy(INTEGER(fv1_)  , INTEGER(v1_)  , nedges);
-  memcpy(INTEGER(fv2_)  , INTEGER(v2_)  , nedges);
-  memcpy(INTEGER(fline_), INTEGER(line_), nedges);
+  memcpy(INTEGER(fv1_)  , INTEGER(v1_)  , nedges * sizeof(int));
+  memcpy(INTEGER(fv2_)  , INTEGER(v2_)  , nedges * sizeof(int));
+  memcpy(INTEGER(fline_), INTEGER(line_), nedges * sizeof(int));
   
   // Convert them to C 0-indexing for processing
   convert_indexing_r_to_c(fv1_);
   convert_indexing_r_to_c(fv2_);
   convert_indexing_r_to_c(fline_);
 
+  // for (int i = 0; i < length(fv2_); i++) {
+  //   Rprintf("(%i) v2[%i] = %i    =   fv2[%i] = %i\n", nedges, i, INTEGER(v2_)[i], i, INTEGER(fv2_)[i]);
+  // }
+  
   // This will contain the final number of vertices after merging  
   int fnedges = 0;
   
   merge_vertices_core_(asReal(tol_), 
                        nverts, x, y, 
-                       nedges, fline, fv1, fv2, 
+                       nedges, INTEGER(fline_), INTEGER(fv1_), INTEGER(fv2_), 
                        &fnedges, asInteger(verbosity_));
   
   trim_vec(fv1_  , fnedges, nedges);

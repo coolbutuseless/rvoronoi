@@ -8,3 +8,5 @@
 ^man/figures$
 ^data-raw$
 ^\.github$
+^doc$
+^Meta$

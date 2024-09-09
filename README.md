@@ -116,8 +116,8 @@ identical(
 
 | expression    |    min |  median |   itr/sec | mem_alloc |
 |:--------------|-------:|--------:|----------:|----------:|
-| del_rtriangle | 49.2µs | 51.58µs |  18263.42 |    5.76KB |
-| del_new       |    5µs |  5.33µs | 177667.18 |    2.57KB |
+| del_rtriangle |  121µs | 127.7µs |  7441.047 |    5.76KB |
+| del_new       | 10.6µs |  12.8µs | 78030.642 |    2.57KB |
 
 ## Debug plotting
 

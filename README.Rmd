@@ -283,27 +283,27 @@ if (FALSE) {
 
 
 ```{r}
-# library(RTriangle)
-# theta <- seq(0, 2*pi, length.out = 6)[-1]
-# x <- c(0, cos(theta), 2 * cos(theta))
-# y <- c(0, sin(theta), 2 * sin(theta))
-# 
-# tri <- triangulate(pslg(P = cbind(x, y)))
-# 
-# v1 <- tri$VE[,1]
-# v2 <- tri$VE[,2]
-# 
-# line <- rep(1L, length(v1))
-# 
-# seg <- merge_vertices(tri$VP[,1], tri$VP[,2], line, v1, v2)
-# 
-# polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
-# 
-# cols <- rainbow(length(polys))
-# plot(tri$VP, asp = 1, ann = F, axes = FALSE)
-# for (i in seq_along(polys)) {
-#   polygon(polys[[i]], col = cols[i])
-# }
+library(RTriangle)
+theta <- seq(0, 2*pi, length.out = 6)[-1]
+x <- c(0, cos(theta), 2 * cos(theta))
+y <- c(0, sin(theta), 2 * sin(theta))
+
+tri <- triangulate(pslg(P = cbind(x, y)))
+
+v1 <- tri$VE[,1]
+v2 <- tri$VE[,2]
+
+line <- rep(1L, length(v1))
+
+seg <- merge_vertices(tri$VP[,1], tri$VP[,2], line, v1, v2)
+
+polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
+
+cols <- rainbow(length(polys))
+plot(tri$VP, asp = 1, ann = F, axes = FALSE)
+for (i in seq_along(polys)) {
+  polygon(polys[[i]], col = cols[i])
+}
 
 ```
 
