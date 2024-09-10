@@ -17,6 +17,7 @@
 
 #include "utils.h"
 #include "utils-bbox.h"
+#include "R-infinite-edges.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,7 +88,7 @@ void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbver
   }
   
   
-  Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
+  // Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Around the perimeter, need to add 
@@ -98,23 +99,25 @@ void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbver
   (*nbverts) += 4;
   
   
-  Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
+  // Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
   
 }
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Find infinte edges and intersect them with the boundary
+//
+//  User must pre-allocat xb,yb,rv1,rv2
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void bound_infinite_edges(
     bbox_t *bounds,
-    int nverts, double *x, double *y, 
-    int nsegs , int *li, int *v1, int *v2,
-    int nlines, double *a, double *b, double *c,
-    int nbverts, double *xb, double *yb,
-    int nbsegs, int *rv1, int *rv2) {
+    int nverts, double *x, double *y,            // Voronoi vertices
+    int nsegs , int *li, int *v1, int *v2,       // Voronoi edges
+    int nlines, double *a, double *b, double *c, // Voronoi lines
+    int nbverts, double *xb, double *yb,         // boundary intersection points (and boundary corners)
+    int nbsegs, int *rv1, int *rv2) {            // bounded rays, and perimeter segments
   
-  
+  int verbosity = 0;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Hold info about the two intercepts between rays and rectangle
@@ -224,7 +227,10 @@ void bound_infinite_edges(
     // Depending on how the ray is anchored (i.e. left, right or both)
     // add vertex/vertices for boundary intersection and add segment
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Rprintf("Ray: %i   Vert: %i\n", ray_idx, vert_idx);
+    if (verbosity > 0) {
+      Rprintf("Ray: %i   Vert: %i\n", ray_idx, vert_idx);
+    }
+    
     if (type == 0) {
       // double ended unbounded ray. 
       // Add vertices for two interesections with boundary
@@ -291,7 +297,9 @@ void bound_infinite_edges(
       npoints++;
     }
   }
-  Rprintf("Points on top perimeter: %i\n", npoints);
+  if (verbosity > 0) {
+    Rprintf("Points on top perimeter: %i\n", npoints);
+  }
   qsort(points, npoints, sizeof(point_t), horizontal_comparison);
   
   // Add segments
@@ -316,7 +324,9 @@ void bound_infinite_edges(
       npoints++;
     }
   }
-  Rprintf("Points on bottom perimeter: %i\n", npoints);
+  if (verbosity > 0) {
+    Rprintf("Points on bottom perimeter: %i\n", npoints);
+  }
   qsort(points, npoints, sizeof(point_t), horizontal_comparison);
   
   // Add segments
@@ -341,7 +351,9 @@ void bound_infinite_edges(
       npoints++;
     }
   }
-  Rprintf("Points on left perimeter: %i\n", npoints);
+  if (verbosity > 0) {
+    Rprintf("Points on left perimeter: %i\n", npoints);
+  }
   qsort(points, npoints, sizeof(point_t), vertical_comparison);
   
   // Add segments
@@ -366,7 +378,9 @@ void bound_infinite_edges(
       npoints++;
     }
   }
-  Rprintf("Points on right perimeter: %i\n", npoints);
+  if (verbosity > 0) {
+    Rprintf("Points on right perimeter: %i\n", npoints);
+  }
   qsort(points, npoints, sizeof(point_t), vertical_comparison);
   
   // Add segments

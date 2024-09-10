@@ -19,6 +19,7 @@
 #include "R-common.h"
 #include "R-merge-vertices.h"
 #include "R-extract-polygons.h"
+#include "R-infinite-edges.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,8 +30,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) == 0 || length(x_) != length(y_)) {
-    error("x/y lengths aren't valid");
+  if (length(x_) <= 1) {
+    error("Must be at least 2 seed points");
+  }
+  
+  if (length(x_) != length(y_)) {
+    error("x & y are not the same length");
   }
   
   int nprotect = 0;
@@ -58,12 +63,53 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Space for vertices
   // If there are 'n' points then 
-  // maximum number of vertices in the voronoi tesselation is 2n - 5
-  // maximum number of edges is 3n - 6
+  //   maximum number of vertices in the voronoi tesselation is 2n - 5
+  //   maximum number of edges is 3n - 6
+  //
+  // But the above result does not account for infinite rays.
+  //   If there are 'n' points, then the maximum number of infinite rays = 'n'
+  //   If these infinite rays are being clipped by intersection with a rectangular
+  //     boundary, then
+  //     - there are 4 extra vertices for the corners of the boundary
+  //     - there is 1 extra vertex where the ray intersects the boundary.
+  //     - for the special case of a double-ended infinite ray, then there
+  //       are two new vertices created.
+  //     - for a sequence of collinear points, there will be multiple
+  //       double ended rays.  For 'n' collinear points there is a maximum
+  //       of 'n-1' double ended rays, which would mean '2n-2' boundary 
+  //       intersection vertices
+  //
+  //  The maximum number of boundary vertices = 2n - 2
+  //
+  // Boundary intersections mean that there are now segments along the 
+  // perimeter with which to make new bounding polygons for these exterior points
+  //   - There are 4 segments needed to represent the sides of the boundary
+  //   - Each boundary intersection adds another segment.
+  //
+  // The maximum number of boundary segments 
+  //   = 4 + (num boundary intersections) 
+  //   = 4 + (2n - 2)
+  //   = 2n + 2
+  //
+  // I'm going to allocate maximum space both vertices and edges 
+  // Note: it is impossible to have a voronoi where the maximum interior 
+  //        vertices *and* maximum exterior vertices simultaneously.
+  //        A better analysis here would give me a better upper bound, 
+  //        but I don't need a tight bound at the moment as size of
+  //        voronois is not expected to be must about 1000 seed points.
+  //
+  // Add '10' just to avoid off-by-one errors in my thinking.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n = length(x_);
-  int max_verts = 2 * n;
-  int max_edges = 3 * n;
+  int n = length(x_); // number of seed points
+  
+  int max_interior_verts = 2 * n - 5;
+  int max_interior_edges = 3 * n - 6;
+  
+  // int max_exterior_verts = 2 * n + 2;
+  // int max_exterior_edges = 2 * n + 2;
+  
+  int max_verts = max_interior_verts + 10; 
+  int max_edges = max_interior_edges + 10; 
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Voronoi Vertices (x, y)
@@ -106,6 +152,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   voronoi(&ctx, ctx.triangulate);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Add voronoi vertices to bounding box. Expand by 10%
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
+  bbox_expand(&bounds, 0.10);
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge vertices in voronoi segments to prep for polygon building
   // void merge_vertices_core_(double tol, 
   //                           int nverts, double *x, double *y, 
@@ -138,6 +190,63 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
                        ctx.nsegs, linem, v1m, v2m, 
                        &fnedges, 0);
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Calculate the extra vertices and segments produced if we 
+  // bound the infinite rays
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // int nbverts = 0; // the number of bounded vertices (intersection with infinite rays and bounding box)
+  // int nbsegs  = 0; // the number of bounded rays + perimeter segments
+  // calc_space_for_bound_infinite_edges(ctx.nsegs, ctx.seg_v1, ctx.seg_v2, &nbverts, &nbsegs);
+  
+  // void bound_infinite_edges(
+  //     bbox_t *bounds,
+  //     int nverts, double *x, double *y, 
+  //     int nsegs , int *li, int *v1, int *v2,
+  //     int nlines, double *a, double *b, double *c,
+  //     int nbverts, double *xb, double *yb,
+  //     int nbsegs, int *rv1, int *rv2)
+  
+  // double *xb = malloc(nbverts * sizeof(double));
+  // double *yb = malloc(nbverts * sizeof(double));
+  // int *rv1 = malloc(nbsegs * sizeof(int));
+  // int *rv2 = malloc(nbsegs * sizeof(int));
+  // 
+  // bound_infinite_edges(
+  //   &bounds,
+  //   ctx.nverts, ctx.vert_x, ctx.vert_y,
+  //   fnedges, linem, v1m, v2m,
+  //   ctx.nlines, ctx.line_a, ctx.line_b, ctx.line_c,
+  //   nbverts, xb, yb,
+  //   nbsegs, rv1, rv2
+  // );
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Append the new exterior segments to the merged vertex list
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // fnedges += nbsegs;
+  // memcpy(v1m   + fnedges, rv1, nbsegs * sizeof(int));
+  // memcpy(v2m   + fnedges, rv2, nbsegs * sizeof(int));
+  // memset(linem + fnedges,   0, nbsegs * sizeof(int));
+  
+  // free(rv1);
+  // free(rv2);
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Create a new temporary vertex lists by concatenting the 
+  //   voronoi vertices and the exteerior vertices
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // double *xf = malloc((ctx.nverts + nbverts) * sizeof(double));
+  // double *yf = malloc((ctx.nverts + nbverts) * sizeof(double));
+  // 
+  // memcpy(xf + 0, ctx.vert_x, ctx.nverts * sizeof(double));
+  // memcpy(yf + 0, ctx.vert_y, ctx.nverts * sizeof(double));
+  // memcpy(xf + ctx.nverts, xb, nbverts * sizeof(double));
+  // memcpy(yf + ctx.nverts, yb, nbverts * sizeof(double));
+  
+  // free(xb);
+  // free(yb);
+  
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract the polygons using the (temporary) merged vertices
   // 
@@ -152,20 +261,27 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   if (asLogical(match_polygons_)) {
     polys_ = PROTECT(
       extract_polygons_internal(
-        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
-        fnedges, v1m, v2m,                  // Voronoi edges
+        // ctx.nverts + nbverts, xf, yf,    // Voronoi vertices + perimeter intersections
+        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
+        fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
         length(x_), REAL(x_), REAL(y_)      // Seed points
       )
     ); nprotect++;
   } else {
     polys_ = PROTECT(
       extract_polygons_internal(
-        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices
+        // ctx.nverts + nbverts, xf, yf,    // Voronoi vertices + perimeter intersections
+        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
         fnedges, v1m, v2m,                  // Voronoi edges
         0, NULL, NULL                       // Seed points
       )
     ); nprotect++;
   }
+  
+  
+  // free(xf);
+  // free(yf);
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Trim the merged indices to size 
@@ -205,10 +321,6 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
   // Covers all seed points and voronoi vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
-  bbox_expand(&bounds, 0.10);
-  
-  
   SEXP xmin_ = PROTECT(ScalarReal(bounds.xmin)); nprotect++;
   SEXP xmax_ = PROTECT(ScalarReal(bounds.xmax)); nprotect++;
   SEXP ymin_ = PROTECT(ScalarReal(bounds.ymin)); nprotect++;
