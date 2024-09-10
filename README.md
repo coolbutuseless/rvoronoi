@@ -114,10 +114,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |     min | median |   itr/sec | mem_alloc |
-|:--------------|--------:|-------:|----------:|----------:|
-| del_rtriangle | 120.8µs |  128µs |  7472.832 |    5.76KB |
-| del_new       |  9.69µs |   12µs | 73351.237 |    2.57KB |
+| expression    |     min |  median |   itr/sec | mem_alloc |
+|:--------------|--------:|--------:|----------:|----------:|
+| del_rtriangle | 49.36µs | 51.78µs |  18697.77 |    5.76KB |
+| del_new       |  4.96µs |  5.41µs | 165518.48 |    2.57KB |
 
 ## Debug plotting
 
@@ -330,14 +330,18 @@ points(x, y, pch = '+')
   - Adapted algorithm from binary search to instead use pre-indexed
     search bounds.
 - Point in polygon (to match seed points to voronoi polygons)
-  - **TODO** Use STR to bulk load an R-tree for optimized
-    point-in-bounding-box search
   - Search for bounding box collision to filter polygon candidates for
     exhaustive testing
-  - Optimised point-in-polygon search with early termination as voronoi
-    polygons are **always** convex. Test edges using the “leftOf()”
-    operator, and exit as soon as any vertices are right of a polygon
-    edge.
+  - Optimised point-in-polygon search with early termination possible
+    (as voronoi polygons are **always** convex) Test edges using the
+    “leftOf()” operator, and exit as soon as any vertices are right of a
+    polygon edge.
+  - No benefit in building an acceleration structure for
+    point-in-bounding-box when there of the order of ~100-1000 bounding
+    boxes. A linear search (with flagging of polygons already claimed)
+    is fast enough. If use case if voronoi of \>\> 1000 points, then
+    time taken to build acceleration structure (e.g. hierachical
+    bounding boxes) would become worth it.
 
 ## Related
 

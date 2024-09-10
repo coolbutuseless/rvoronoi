@@ -92,20 +92,20 @@ int match_polygons_to_seed_points(int point_idx, double x, double y, int npolys,
     
     // Rprintf("PIP: %i in %i [%i]\n", point_idx, poly.polygon_idx, poly.deleted);
     
-    if (polys[i].deleted) continue;
+    // No need to search this polygon if it has been deleted, or if it
+    // has been claimed by another point.  
+    // Remember: For a voronoi tesselation a seed point can only match one
+    // polygon (and vice versa)
+    if (polys[i].deleted || polys[i].taken) continue;
     
     bbox_t bbox = polys[i].bbox;
     
     if (x > bbox.xmin && x < bbox.xmax && y > bbox.ymin && y < bbox.ymax) {
-      // point intersects bounding box for this polygon
-      // bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp)
+      // The point intersects bounding box for this polygon!
+      // Now check if it lies inside the actual polygon
       bool pip = point_in_polygon_core_(x, y, polys[i].nvert, polys[i].x, polys[i].y);
       if (pip) {
         // point is in this polygon!
-        if (polys[i].taken) {
-          error("match_polygons_to_seed_points(): Point (%f, %f) matched polygon [%i] already taken by point [%i]", 
-                x, y, polys[i].polygon_idx, polys[i].point_idx);
-        }
         polys[i].taken = true;
         polys[i].point_idx = point_idx;
         // Rprintf("Point %3i => Polygon %3i\n", point_idx, polys[i].polygon_idx);
