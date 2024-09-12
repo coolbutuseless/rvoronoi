@@ -571,9 +571,10 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
       
       SEXP ll_ = PROTECT(
-        create_named_list(2, "x", x_, "y", y_)
+        create_named_list(3, "x", x_, "y", y_, "v", v_)
       ); 
       
       if (polys[i].point_idx < 0) {
@@ -583,11 +584,12 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       }
       
       // Copy from the poly_t struct
-      memcpy(REAL(x_), polys[i].x, polys[i].nvert * sizeof(double));
-      memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
+      memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
+      memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
+      memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
       
       
-      UNPROTECT(3); // everything is protected as they're now members of list 'res_'
+      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
     }
     
   } else {
@@ -609,20 +611,22 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+      SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
       
       SEXP ll_ = PROTECT(
-        create_named_list(2, "x", x_, "y", y_)
+        create_named_list(3, "x", x_, "y", y_, "v", v_)
       ); 
       
  
       SET_VECTOR_ELT(polys_, llidx, ll_);
       
       // Copy from the poly_t struct
-      memcpy(REAL(x_), polys[i].x, polys[i].nvert * sizeof(double));
-      memcpy(REAL(y_), polys[i].y, polys[i].nvert * sizeof(double));
+      memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
+      memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
+      memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
       
       
-      UNPROTECT(3); // everything is protected as they're now members of list 'res_'
+      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
       llidx++;
     }
   }
