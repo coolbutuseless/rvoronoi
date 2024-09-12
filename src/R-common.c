@@ -65,7 +65,8 @@ void init_sites(context_t *ctx, double *x, double *y, int n) {
     
     if (ctx->sites[i].coord.x == ctx->sites[i - 1].coord.x &&
         ctx->sites[i].coord.y == ctx->sites[i - 1].coord.y) {
-      error("Input points contain duplicates. Not allowed");
+      free_all_myalloc(ctx);
+      error("Input points contain duplicates. Not allowed [mem: %i]", ctx->total_alloc);
     }
     
   };

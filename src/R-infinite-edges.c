@@ -99,7 +99,7 @@ void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbver
   (*nbverts) += 4;
   
   
-  // Rprintf("Found %2i rays to bound. Needing %2i vertices\n", *nbsegs, *nbverts);
+  // Rprintf("Total external segements = %2i. External Vertices = %2i\n", *nbsegs, *nbverts);
   
 }
 

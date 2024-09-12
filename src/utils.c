@@ -37,7 +37,8 @@ void set_df_attributes(SEXP df_, int visible_length, int allocated_length) {
   }
   
   if (visible_length > allocated_length) {
-    error("set_df_attributes(): visible_length cannot be greated than allocated length");
+    error("set_df_attributes(): visible_length (%i) cannot be greater than allocated length (%i)",
+          visible_length, allocated_length);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

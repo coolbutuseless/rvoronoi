@@ -101,10 +101,9 @@ void merge_vertices_core_(double tol,
     int vlo = remap1[i];
     int vhi = remap2[i];
     
-    // Rprintf("%i: %i -> %i\n", i, vhi, vlo);
+    // Rprintf("REMAP: %i: %i -> %i\n", i, vhi, vlo);
     
     for (int j = 0; j < nedges; j++) {
-      if ( (v1[j] < 0) || (v2[j] < 0)) continue;
       if (v1[j] == vhi) v1[j] = vlo; 
       if (v2[j] == vhi) v2[j] = vlo; 
       discard[j] = v1[j] == v2[j];
@@ -112,6 +111,28 @@ void merge_vertices_core_(double tol,
   }
   
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Mark duplicate double ended rays for removal
+  //  Each double ended ray ends up appearing *twice* in the segment list
+  //  so we can delete
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int line_used[nedges];
+  // Rprintf("Checking for double-ended ray\n");
+  for (int i = 0; i < nedges; i++) line_used[i] = 0;
+  for (int i = 0; i < nedges; i++) {
+    if (v1[i] >= 0 || v2[i] >= 0) continue;
+    if (line_used[line[i]] == 1) {
+      // Rprintf("Discard double-ended ray at segment: %i", i);
+      discard[i] = 1;
+    }
+    line_used[line[i]] = 1;
+  }
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Tally the discarded edges
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   for (int i = 0; i < nedges; i++) {
     ndiscard += discard[i];
   }

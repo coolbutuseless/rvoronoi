@@ -49,10 +49,8 @@ remotes::install_github('coolbutuseless/rvoronoi')
 
 The following code calculates the voronoi tesselation on 20 random points.
 
-Only finite length segments are plotted.  Segments which head to infinity 
-are not plotted here.
 
-```{r voronoi}
+```{r voronoi, fig.width = 4, fig.height = 4}
 library(rvoronoi)
 
 set.seed(2)
@@ -62,19 +60,15 @@ y <- runif(20)
 vor <- voronoi(x, y) 
 
 # Plot the seed points
-plot(x, y, asp = 1, col = 'red')
+plot(x, y, asp = 1, ann = FALSE, axes = FALSE, col = 'red', 
+     xlim = c(-0.1, 1.1), ylim = c(-0.1, 1.1))
 
-# Plot all finite segments.  
-# This will not plot any of the segments which do not converge
+cols <- rainbow(length(vor$polygons))
+for (i in seq_along(vor$polygons)) {
+  polygon(vor$polygons[[i]], col = cols[i])
+}
 
-fseg <- subset(vor$segment, v1 > 0 & v2 > 0)
-
-segments(
-  vor$vertex$x[ fseg$v1 ],
-  vor$vertex$y[ fseg$v1 ],
-  vor$vertex$x[ fseg$v2 ],
-  vor$vertex$y[ fseg$v2 ],
-)
+points(x, y, pch = 19)
 ```
 
 
@@ -318,7 +312,7 @@ y <- runif(N)
 
 vor <- voronoi(x, y)
 
-plot_vor(vor, buffer = 1) |>
+plot_vor(vor, buffer = 0.1) |>
   draw_segments() |> 
   draw_inf_lines() |>
   draw_inf_segments(col = 'hotpink') |>

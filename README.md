@@ -37,9 +37,6 @@ remotes::install_github('coolbutuseless/rvoronoi')
 The following code calculates the voronoi tesselation on 20 random
 points.
 
-Only finite length segments are plotted. Segments which head to infinity
-are not plotted here.
-
 ``` r
 library(rvoronoi)
 
@@ -50,19 +47,15 @@ y <- runif(20)
 vor <- voronoi(x, y) 
 
 # Plot the seed points
-plot(x, y, asp = 1, col = 'red')
+plot(x, y, asp = 1, ann = FALSE, axes = FALSE, col = 'red', 
+     xlim = c(-0.1, 1.1), ylim = c(-0.1, 1.1))
 
-# Plot all finite segments.  
-# This will not plot any of the segments which do not converge
+cols <- rainbow(length(vor$polygons))
+for (i in seq_along(vor$polygons)) {
+  polygon(vor$polygons[[i]], col = cols[i])
+}
 
-fseg <- subset(vor$segment, v1 > 0 & v2 > 0)
-
-segments(
-  vor$vertex$x[ fseg$v1 ],
-  vor$vertex$y[ fseg$v1 ],
-  vor$vertex$x[ fseg$v2 ],
-  vor$vertex$y[ fseg$v2 ],
-)
+points(x, y, pch = 19)
 ```
 
 <img src="man/figures/README-voronoi-1.png" width="100%" />
@@ -114,10 +107,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |     min |  median |   itr/sec | mem_alloc |
-|:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 49.36µs | 51.78µs |  18697.77 |    5.76KB |
-| del_new       |  4.96µs |  5.41µs | 165518.48 |    2.57KB |
+| expression    |      min |  median |   itr/sec | mem_alloc |
+|:--------------|---------:|--------:|----------:|----------:|
+| del_rtriangle | 121.77µs | 127.6µs |  7390.705 |    5.76KB |
+| del_new       |   9.79µs |  11.7µs | 83466.769 |    2.57KB |
 
 ## Debug plotting
 
@@ -156,6 +149,14 @@ x <- cos(theta)
 y <- sin(theta)
 
 vor <- voronoi(x, y)
+#> Warning in voronoi(x, y): Poly [3] has a point index of -1
+#> Warning in voronoi(x, y): Poly [6] has a point index of -1
+#> Warning in voronoi(x, y): Poly [12] has a point index of -1
+#> Warning in voronoi(x, y): Poly [23] has a point index of -1
+#> Warning in voronoi(x, y): Poly [27] has a point index of -1
+```
+
+``` r
 
 plot_vor(vor) |>
   draw_segments() |> 
@@ -306,7 +307,7 @@ y <- runif(N)
 
 vor <- voronoi(x, y)
 
-plot_vor(vor, buffer = 1) |>
+plot_vor(vor, buffer = 0.1) |>
   draw_segments() |> 
   draw_inf_lines() |>
   draw_inf_segments(col = 'hotpink') |>

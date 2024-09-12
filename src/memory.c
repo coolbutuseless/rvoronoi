@@ -67,3 +67,16 @@ char *myalloc(context_t *ctx, unsigned n) {
   
   return (t);
 }
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void free_all_myalloc(context_t *ctx) {
+  for (int i = 0; i < ctx->alloc_count; i++) {
+    free(ctx->allocs[i]);
+  }
+  free(ctx->allocs);
+}
+
+

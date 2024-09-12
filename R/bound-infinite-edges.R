@@ -210,6 +210,21 @@ if (FALSE) {
 
 
 
+if (FALSE) {
+  
+  set.seed(2)
+  N <- 100
+  vor <- voronoi(runif(N), runif(N)) |> bench::mark()
+  
+  plot(vor$vertex, asp = 1, ann = F, axes = F, xlim = c(-0.5, 1.5), ylim = c(-0.5, 1.5))
+  
+  cols <- rainbow(length(vor$polygons))
+  for (i in seq_along(vor$polygons)) {
+    polygon(vor$polygons[[i]], col = cols[i])  
+  }
+  
+}
+
 
 
 
