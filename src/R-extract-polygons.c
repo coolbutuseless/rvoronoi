@@ -559,9 +559,16 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Seed / Polygon matching
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Rprintf("extract_polygons_internal: n seeds = %i\n", seed_n);
+    // int *polygon_idx = malloc(seed_n * sizeof(int));
+    // for (int i = 0; i < seed_n; i++) {
+    //   polygon_idx = -1;  
+    // }
+    
     for (int i = 0; i < seed_n; i++) {
-      match_polygons_to_seed_points(i, seed_x[i], seed_y[i], npolys, polys);
+      int res = match_polygons_to_seed_points(i, seed_x[i], seed_y[i], npolys, polys);
+      if (res < 0) {
+        warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
+      }
     }
     
     polys_ = PROTECT(allocVector(VECSXP, seed_n)); nprotect++;

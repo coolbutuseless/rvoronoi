@@ -64,8 +64,8 @@ if (FALSE) {
   
   N <- 6
   set.seed(704818)
-  x <- runif(N) * 2
-  y <- runif(N) * 2
+  x <- runif(N)
+  y <- runif(N)
   
   min(dist(cbind(x, y))) ^ 2
   
