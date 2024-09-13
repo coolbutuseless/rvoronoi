@@ -226,8 +226,8 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
     ctx.nverts, ctx.vert_x, ctx.vert_y,
     fnedges, linem, v1m, v2m,
     ctx.nlines, ctx.line_a, ctx.line_b, ctx.line_c,
-    nbverts, xb, yb,
-    nbsegs, rv1, rv2
+    &nbverts, xb, yb,
+    &nbsegs, rv1, rv2
   );
 #endif
   

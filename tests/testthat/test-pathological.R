@@ -62,8 +62,8 @@ if (FALSE) {
   
   
   
-  N <- 6
-  set.seed(704818)
+  N <- 5
+  set.seed(1231197)
   x <- runif(N)
   y <- runif(N)
   

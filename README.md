@@ -107,10 +107,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |      min | median |   itr/sec | mem_alloc |
-|:--------------|---------:|-------:|----------:|----------:|
-| del_rtriangle | 122.41µs |  128µs |  7640.239 |    5.76KB |
-| del_new       |   9.82µs |   12µs | 82652.309 |    2.57KB |
+| expression    |     min |  median |   itr/sec | mem_alloc |
+|:--------------|--------:|--------:|----------:|----------:|
+| del_rtriangle | 48.99µs | 57.48µs |  17180.52 |    5.76KB |
+| del_new       |  5.08µs |  5.54µs | 168878.42 |    2.57KB |
 
 ## Debug plotting
 
@@ -137,7 +137,7 @@ plot_vor(vor) |>
   draw_bounded_polygons(border = 'red')
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-plotdebug-1.png" width="100%" />
 
 ## Pathological 1
 
@@ -151,14 +151,14 @@ y <- sin(theta)
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
+  draw_segments() |>
   draw_inf_lines() |>
   draw_inf_segments(col = 'hotpink') |>
   draw_bounded_polygons(border = 'red')
 points(x, y)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+<img src="man/figures/README-path1-1.png" width="100%" />
 
 ## Pathological 2
 
@@ -180,7 +180,7 @@ plot_vor(vor) |>
 points(x, y, pch = '+')
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+<img src="man/figures/README-path2-1.png" width="100%" />
 
 ## Pathological 2a
 
@@ -202,7 +202,7 @@ plot_vor(vor) |>
 points(x, y, pch = '+')
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+<img src="man/figures/README-path2a-1.png" width="100%" />
 
 ## Pathological 3
 
@@ -222,7 +222,7 @@ plot_vor(vor) |>
 points(x, y, pch = '+')
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
+<img src="man/figures/README-path3-1.png" width="100%" />
 
 ## Pathological 4
 
@@ -245,7 +245,7 @@ plot_vor(vor) |>
 points(x, y, pch = '+')
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<img src="man/figures/README-path4-1.png" width="100%" />
 
 ``` r
 
@@ -287,7 +287,7 @@ for (i in seq_along(polys)) {
 }
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
+<img src="man/figures/README-rtriangle-1.png" width="100%" />
 
 ## Random
 
@@ -308,7 +308,7 @@ plot_vor(vor, buffer = 0.1) |>
 points(x, y, pch = '+')
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+<img src="man/figures/README-random-1.png" width="100%" />
 
 # Algorithms
 

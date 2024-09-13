@@ -69,7 +69,9 @@ int vertical_comparison(const void *v1, const void *v2) {
 
 
 
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbverts, int *nbsegs) {
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,8 +102,27 @@ void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbver
   
   
   // Rprintf("Total external segements = %2i. External Vertices = %2i\n", *nbsegs, *nbverts);
-  
 }
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Find the closest distance between (x, y) and all the 'n' points in (xs, ys)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+double closest_distance(double x, double y, int n, double *xs, double *ys) {
+  
+  double res = INFINITY;
+  
+  for (int i = 0; i < n; i++) {
+    
+    double d = (xs[i] - x) * (xs[i] - x) + (ys[i] - y) * (ys[i] - y);
+    
+    if (d < res) res = d;
+  }
+  
+  return res;
+}
+
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,8 +135,8 @@ void bound_infinite_edges(
     int nverts, double *x, double *y,            // Voronoi vertices
     int nsegs , int *li, int *v1, int *v2,       // Voronoi edges
     int nlines, double *a, double *b, double *c, // Voronoi lines
-    int nbverts, double *xb, double *yb,         // boundary intersection points (and boundary corners)
-    int nbsegs, int *rv1, int *rv2) {            // bounded rays, and perimeter segments
+    int *nbverts, double *xb, double *yb,         // boundary intersection points (and boundary corners)
+    int *nbsegs, int *rv1, int *rv2) {            // bounded rays, and perimeter segments
   
   int verbosity = 0;
   
@@ -274,22 +295,48 @@ void bound_infinite_edges(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Add vertices for boundary 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymin; vert_idx++;
-  xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymin; vert_idx++;
-  xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymax; vert_idx++;
-  xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymax; vert_idx++;
+  // xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymin; vert_idx++;
+  // xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymin; vert_idx++;
+  // xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymax; vert_idx++;
+  // xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymax; vert_idx++;
   
-  if (vert_idx != nbverts) {
-    error("Expecting vert_idx == nbverts :: %i == %i", vert_idx, nbverts);
+  double d = 0;
+  d = closest_distance(bounds->xmin, bounds->ymin, vert_idx, xb, yb);
+  if (d > 0) {
+    xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymin; vert_idx++;
   }
+  
+  d = closest_distance(bounds->xmax, bounds->ymin, vert_idx, xb, yb);
+  if (d > 0) {
+    xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymin; vert_idx++;
+  }
+  
+  d = closest_distance(bounds->xmax, bounds->ymax, vert_idx, xb, yb);
+  if (d > 0) {
+    xb[vert_idx] = bounds->xmax; yb[vert_idx] = bounds->ymax; vert_idx++;
+  }
+  
+  d = closest_distance(bounds->xmin, bounds->ymax, vert_idx, xb, yb);
+  if (d > 0) {
+    xb[vert_idx] = bounds->xmin; yb[vert_idx] = bounds->ymax; vert_idx++;
+  }
+  
+  
+  if (vert_idx > *nbverts) {
+    error("Expecting vert_idx <= nbverts :: %i == %i", vert_idx, *nbverts);
+  }
+  
+  // How many verts did we actaully add
+  *nbverts = vert_idx;
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Find all points along top edge
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int npoints = 0;
-  point_t points[nbverts];
+  point_t points[*nbverts];
   
-  for (int i = 0; i < nbverts; i++) {
+  for (int i = 0; i < *nbverts; i++) {
     if (yb[i] == bounds->ymax) {
       points[npoints].x = xb[i];
       points[npoints].y = yb[i];
@@ -316,7 +363,7 @@ void bound_infinite_edges(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   npoints = 0;
   
-  for (int i = 0; i < nbverts; i++) {
+  for (int i = 0; i < *nbverts; i++) {
     if (yb[i] == bounds->ymin) {
       points[npoints].x = xb[i];
       points[npoints].y = yb[i];
@@ -343,7 +390,7 @@ void bound_infinite_edges(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   npoints = 0;
   
-  for (int i = 0; i < nbverts; i++) {
+  for (int i = 0; i < *nbverts; i++) {
     if (xb[i] == bounds->xmin) {
       points[npoints].x = xb[i];
       points[npoints].y = yb[i];
@@ -370,7 +417,7 @@ void bound_infinite_edges(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   npoints = 0;
   
-  for (int i = 0; i < nbverts; i++) {
+  for (int i = 0; i < *nbverts; i++) {
     if (xb[i] == bounds->xmax) {
       points[npoints].x = xb[i];
       points[npoints].y = yb[i];
@@ -391,10 +438,12 @@ void bound_infinite_edges(
   }
   
   
-  if (ray_idx != nbsegs) {
-    error("Expecting ray_idx == nbsegs :: %i == %i", ray_idx, nbsegs);
+  if (ray_idx > *nbsegs) {
+    error("Expecting ray_idx <= nbsegs :: %i == %i", ray_idx, *nbsegs);
   }
   
+  *nbsegs  = ray_idx;
+  *nbverts = vert_idx;
 }
 
 
@@ -454,8 +503,8 @@ SEXP bound_infinite_edges_(
     length(x_), REAL(x_), REAL(y_),
     length(v1_), li, v1, v2,
     length(a_), REAL(a_), REAL(b_), REAL(c_),
-    nbverts, REAL(xb_), REAL(yb_),
-    nbsegs, INTEGER(rv1_), INTEGER(rv2_)
+    &nbverts, REAL(xb_), REAL(yb_),
+    &nbsegs, INTEGER(rv1_), INTEGER(rv2_)
   );
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

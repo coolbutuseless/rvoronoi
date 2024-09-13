@@ -118,7 +118,7 @@ identical(
 ```
 
 
-```{r echo=FALSE}
+```{r bench2, echo=FALSE}
 res <- bench::mark(
   del_rtriangle = triangulate(pslg(P = cbind(x, y)))$T,
   del_new       = delaunay(x, y),
@@ -135,7 +135,7 @@ res[1:5] |> knitr::kable()
 * Used for debugging
 * Not ready for general use
 
-```{r}
+```{r plotdebug}
 set.seed(3)
 N <- 10
 x0 <- runif(N)
@@ -160,7 +160,7 @@ plot_vor(vor) |>
 
 * 100 points in a circle
 
-```{r}
+```{r path1}
 theta <- seq(0, 2*pi, length.out = 101)[-1]
 x <- cos(theta)
 y <- sin(theta)
@@ -168,7 +168,7 @@ y <- sin(theta)
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
+  draw_segments() |>
   draw_inf_lines() |>
   draw_inf_segments(col = 'hotpink') |>
   draw_bounded_polygons(border = 'red')
@@ -183,7 +183,7 @@ points(x, y)
 * 100 points in a circle
 * 1 point at the centre
 
-```{r}
+```{r path2}
 theta <- seq(0, 2*pi, length.out = 101)[-1]
 x <- c(0, cos(theta))
 y <- c(0, sin(theta))
@@ -203,7 +203,7 @@ points(x, y, pch = '+')
 * 2 concentric circles
 * 1 point at the centre
 
-```{r}
+```{r path2a}
 theta <- seq(0, 2*pi, length.out = 100)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
@@ -223,7 +223,7 @@ points(x, y, pch = '+')
 
 * 100 points in a line
 
-```{r}
+```{r path3}
 x <- seq(0, 2*pi, length.out = 100)
 y <- 0.5 * x  
 
@@ -244,7 +244,7 @@ points(x, y, pch = '+')
 * 2 concentric cirles (50 points each)
 * 1 point at the centre
 
-```{r}
+```{r path4}
 theta <- seq(0, 2*pi, length.out = 4)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
@@ -276,7 +276,7 @@ if (FALSE) {
 ```
 
 
-```{r}
+```{r rtriangle}
 library(RTriangle)
 theta <- seq(0, 2*pi, length.out = 6)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
@@ -304,7 +304,7 @@ for (i in seq_along(polys)) {
 
 ## Random
 
-```{r}
+```{r random}
 set.seed(1)
 N <- 6
 x <- runif(N)
