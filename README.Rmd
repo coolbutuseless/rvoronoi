@@ -76,6 +76,36 @@ grid.raster(nr)
 ```
 
 
+## Voronoi Terminolog
+
+* Initial **sites**  (i.e. seed points)
+* Fortune's algorithm returns
+    * **vertices**
+    * **segments**  (finite, semi-finite and infinite)
+* This package reconstructs **polygons** (i.e. *voronoi cells*) by 
+  assembling the *segments* into polygons, and bounding any exterior
+  *cells* by intersecting with a rectangular boundary
+
+
+## Voronoi Tessellation feature comparison
+
+| Package                   | rvoronoi | deldir | RTriangle |
+|---------------------------|----------|--------|-----------|
+| segments                  |          |        |           |
+| interior polygons         |          |        |           |
+| bounded exterior polygons |          |        |           |
+| matched sites/polygons    |          |        |           |
+| vertices                  |          |        |           |
+
+
+
+## Delaunay Triangulation feature comparison
+
+| Package                          | rvoronoi | deldir | RTriangle |
+|----------------------------------|----------|--------|-----------|
+| site indices (defining polygons) |          |        |           |
+| polygon coordinates              |          |        |           |
+
 
 
 ## Voronoi Tesselation

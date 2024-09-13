@@ -201,11 +201,11 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min | median |   itr/sec | mem_alloc |
-|:-----------|--------:|-------:|----------:|----------:|
-| rvoronoi   | 393.5µs |  410µs | 2407.7374 |  139.56KB |
-| rtriangle  | 726.8µs |  775µs | 1246.1891 |  292.63KB |
-| deldir     |  16.8ms |   17ms |   58.5046 |    5.67MB |
+| expression |     min |  median |    itr/sec | mem_alloc |
+|:-----------|--------:|--------:|-----------:|----------:|
+| rvoronoi   | 393.5µs | 419.9µs | 2371.91832 |  139.56KB |
+| rtriangle  | 723.2µs | 787.2µs | 1242.62215 |  292.63KB |
+| deldir     |  16.8ms |  16.9ms |   58.70806 |    5.67MB |
 
 # Voronoi Tesselation Benchmark
 
@@ -274,9 +274,9 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.34ms | 3.45ms | 288.311071 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 165.12ms | 168.4ms | 5.809948 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 725.62µs | 763.09µs | 1228.025746 | 292.6KB |
+| voronoi(x, y) | 3.38ms | 3.45ms | 287.813316 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 157.6ms | 160.67ms | 6.113305 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 728.2µs | 758.5µs | 1229.584350 | 292.6KB |
 
 # Pathological Test Cases
 
