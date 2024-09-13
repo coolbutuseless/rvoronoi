@@ -32,6 +32,39 @@ You can install from
 remotes::install_github('coolbutuseless/rvoronoi')
 ```
 
+# In fair Voronoi, where we lay our scene
+
+``` r
+library(nara)
+library(grid)
+
+rj <- jpeg::readJPEG("man/figures/rj.jpg", native = TRUE)
+dim(rj)
+#> [1]  531 1278
+# grid.raster(rj)
+
+
+set.seed(1)
+N <- 5000
+x <- (runif(N, 1, ncol(rj))) |> sort() 
+y <- (runif(N, 1, nrow(rj))) 
+
+ind <- round(y) * ncol(rj) + round(x)
+
+cols <- rj[ind]
+cols <- nara::packed_cols_to_hex_cols(cols)
+
+vor <- voronoi(as.double(x), as.double(y))
+nr <- nara::nr_new(ncol(rj), nrow(rj))
+
+for (i in seq_along(vor$polygons)) {
+  nr_polygon(nr, vor$polygons[[i]]$x, vor$polygons[[i]]$y, fill = cols[i])
+}
+grid.raster(nr)
+```
+
+<img src="man/figures/README-romeo-1.png" width="100%" />
+
 ## Voronoi Tesselation
 
 The following code calculates the voronoi tesselation on 20 random
@@ -85,59 +118,167 @@ segments(x[del$v1], y[del$v1], x[del$v3], y[del$v3])
 
 ## Delaunay Benchmark
 
-Simple benchmark comparing this package with `{RTriangle}`
+Compare Delaunay Triangulation using
 
-Benchmarking code for other packages is welcomed!
+- `{rvoronoi}`
+- `{delone}`
+  - `remotes::install_github("hypertidy/delone")`
+- `{RTriangle}`
+- `{deldir}`
 
 ``` r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Delaunay
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+library(rvoronoi)
+# library(delone)
 library(RTriangle)
+library(deldir)
+#> deldir 2.0-4      Nickname: "Idol Comparison"
+#> 
+#>      The syntax of deldir() has changed since version 
+#>      0.0-10.  Read the help!!!.
+#> deldir 2.0-4      Nickname: "Idol Comparison"
+#> 
+#>      The syntax of deldir() has changed since version 
+#>      0.0-10.  Read the help!!!.
 
-set.seed(2024)
-N <- 20
+set.seed(1)
+N <- 1000
 x <- runif(N)
 y <- runif(N)
 
-del_rtriangle <- RTriangle::triangulate(RTriangle::pslg(P = cbind(x, y)))$T
-del_new       <- delaunay(x, y)$segment
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# {rvoronoi}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+del_rvoronoi <- rvoronoi::delaunay(x, y)$segment
 
-identical(
-  rvoronoi:::normalise_del(del_new),
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# {delone} - normalise to 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# del_delone <- delone::xy_tri(x, y)
+# del_delone <- matrix(del_delone, ncol = 3, byrow = TRUE) |> as.data.frame()
+# 
+# stopifnot(identical(
+#   rvoronoi:::normalise_del(del_rvoronoi),
+#   rvoronoi:::normalise_del(del_delone)
+# ))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# RTriangle
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+del_rtriangle <- RTriangle::triangulate(RTriangle::pslg(cbind(x, y)))$T
+del_rtriangle <- as.data.frame(del_rtriangle)
+
+stopifnot(identical(
+  rvoronoi:::normalise_del(del_rvoronoi),
   rvoronoi:::normalise_del(del_rtriangle)
-)
-#> [1] TRUE
+))
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# deldir
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+del_deldir <- deldir::deldir(x, y)
+del_deldir <- deldir::triMat(del_deldir)
+del_deldir <- as.data.frame(del_deldir)
+
+stopifnot(identical(
+  rvoronoi:::normalise_del(del_rvoronoi),
+  rvoronoi:::normalise_del(del_deldir)
+))
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Benchmark
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bench::mark(
+  # delone    = xy_tri  (x, y),
+  rvoronoi  = delaunay(x, y),
+  rtriangle = triangulate(pslg(cbind(x, y))),
+  deldir    = deldir(x, y),
+  check = FALSE
+)[,1:5]  |> knitr::kable()
 ```
 
-| expression    |     min |  median |   itr/sec | mem_alloc |
-|:--------------|--------:|--------:|----------:|----------:|
-| del_rtriangle | 48.99µs | 57.48µs |  17180.52 |    5.76KB |
-| del_new       |  5.08µs |  5.54µs | 168878.42 |    2.57KB |
+| expression |     min | median |   itr/sec | mem_alloc |
+|:-----------|--------:|-------:|----------:|----------:|
+| rvoronoi   | 393.5µs |  410µs | 2407.7374 |  139.56KB |
+| rtriangle  | 726.8µs |  775µs | 1246.1891 |  292.63KB |
+| deldir     |  16.8ms |   17ms |   58.5046 |    5.67MB |
 
-## Debug plotting
+# Voronoi Tesselation Benchmark
 
-- Used for debugging
-- Not ready for general use
+Compare:
+
+- `{rvoronoi}`
+- `{deldir}`
+- `{RTriangle}`
 
 ``` r
-set.seed(3)
-N <- 10
-x0 <- runif(N)
-y0 <- runif(N)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Voronoi
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+library(rvoronoi)
+library(deldir)
+library(RTriangle)
 
-vor <- voronoi(x0, y0)
+set.seed(1)
+N <- 1000
+x <- runif(N)
+y <- runif(N)
 
-if (FALSE) {
-  ps <- extract_polygons_r(vor)
-  ps
-}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# rvoronoi
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+vor_rvoronoi <- rvoronoi::voronoi(x, y)
 
-plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
+# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+# for (p in vor_rvoronoi$polygons) {
+#   polygon(p)
+# }
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# deldir
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1)
+
+# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+# for (p in vor_deldir$tiles) {
+#   polygon(p)
+# }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# RTriangle
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tri <- triangulate(pslg(P = cbind(x, y)))
+ve <- tri$VE |> as.data.frame()
+ve <- subset(ve, V1 > 0 & V2 > 0)
+
+# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+# p1 <- tri$VP[ve$V1, ] |> as.data.frame()
+# p2 <- tri$VP[ve$V2, ] |> as.data.frame()
+# segments(p1$V1, p1$V2, p2$V1, p2$V2)
+
+
+bench::mark(
+  voronoi(x, y),
+  cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
+  triangulate(pslg(P = cbind(x, y))),
+  check = FALSE
+)[,1:5] |> knitr::kable()
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 ```
 
-<img src="man/figures/README-plotdebug-1.png" width="100%" />
+| expression | min | median | itr/sec | mem_alloc |
+|:---|---:|---:|---:|---:|
+| voronoi(x, y) | 3.34ms | 3.45ms | 288.311071 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 165.12ms | 168.4ms | 5.809948 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 725.62µs | 763.09µs | 1228.025746 | 292.6KB |
+
+# Pathological Test Cases
 
 ## Pathological 1
 
@@ -184,11 +325,11 @@ points(x, y, pch = '+')
 
 ## Pathological 2a
 
-- 2 concentric circles
+- 2 concentric circles (100 points each)
 - 1 point at the centre
 
 ``` r
-theta <- seq(0, 2*pi, length.out = 100)[-1]
+theta <- seq(0, 2*pi, length.out = 101)[-1]
 x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
@@ -262,53 +403,6 @@ if (FALSE) {
   
 }
 ```
-
-``` r
-library(RTriangle)
-theta <- seq(0, 2*pi, length.out = 6)[-1]
-x <- c(0, cos(theta), 2 * cos(theta))
-y <- c(0, sin(theta), 2 * sin(theta))
-
-tri <- triangulate(pslg(P = cbind(x, y)))
-
-v1 <- tri$VE[,1]
-v2 <- tri$VE[,2]
-
-line <- rep(1L, length(v1))
-
-seg <- merge_vertices(tri$VP[,1], tri$VP[,2], line, v1, v2)
-
-polys <- extract_polygons(tri$VP[,1], tri$VP[,2], seg$v1, seg$v2)
-
-cols <- rainbow(length(polys))
-plot(tri$VP, asp = 1, ann = F, axes = FALSE)
-for (i in seq_along(polys)) {
-  polygon(polys[[i]], col = cols[i])
-}
-```
-
-<img src="man/figures/README-rtriangle-1.png" width="100%" />
-
-## Random
-
-``` r
-set.seed(1)
-N <- 6
-x <- runif(N)
-y <- runif(N)
-
-vor <- voronoi(x, y)
-
-plot_vor(vor, buffer = 0.1) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red') |>
-  draw_vertices()
-points(x, y, pch = '+')
-```
-
-<img src="man/figures/README-random-1.png" width="100%" />
 
 # Algorithms
 
