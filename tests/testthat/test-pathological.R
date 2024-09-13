@@ -28,62 +28,22 @@ test_that("multiplication works", {
 
 if (FALSE) {
   
-  set.seed(1)
-  
-  
-  # macOS
-  # N = 5,  set.seed(1231197)
-  set.seed(1231197)
-  set.seed(7355344)
-  set.seed(8077981)
-  set.seed(8927592)
-  
-  # codespace
-  N <- 6
-  # Seed: 136721
-  # Seed: 581684
-  # Seed: 704818
-  # Seed: 1735603
-  
-  start <- Sys.time()
-  for (i in seq(1, 1000000)) {
-    set.seed(i)
-    N <- 6
-    x <- runif(N) * 10
-    y <- runif(N) * 10
-    
-    tryCatch(
-      vor <- voronoi(x, y),
-      warning = \(w) { message("Seed: ", i) }
-    )
-  }
-  Sys.time() - start
-  
-  
-  
-  
-  N <- 5
-  set.seed(1231197)
+  seed <- 1024738599 # N = 1000
+  seed <- 469561852
+  seed <- as.integer(runif(1, 1, 2^30))
+  print(seed)
+  set.seed(seed)
+  N <- 1000
   x <- runif(N)
   y <- runif(N)
-  
-  min(dist(cbind(x, y))) ^ 2
-  
-  vor <- voronoi(x, y, match_polygons = TRUE)
-  vor <- voronoi(x, y, match_polygons = FALSE)
-  
-  
-  vor$segment
-  vor$msegments
-  vor$vertex
-  
+  vor <- voronoi(x, y)
   
   cols <- rainbow(length(vor$polygons))
-  plot(x/2, y/2, ann = F, asp = 1, axes = F, xlim = c(0, 1), ylim = c(0, 1))
+  plot(x, y, ann = F, asp = 1, axes = F, xlim = c(0, 1), ylim = c(0, 1), pch = '.')
   for (i in seq_along(vor$polygons)) {
-    polygon(vor$polygons[[i]]$x/2, vor$polygons[[i]]$y/2, col = cols[i])
+    polygon(vor$polygons[[i]]$x, vor$polygons[[i]]$y, col = cols[i])
   }
-  points(x/2, y/2, pch = 19)
+  points(x, y, pch = '.')
   
   polygon(vor$polygons[[5]], col = 'black')
   points(x[5], y[5], col = 'green', pch = 19)
