@@ -107,10 +107,10 @@ identical(
 #> [1] TRUE
 ```
 
-| expression    |      min |  median |   itr/sec | mem_alloc |
-|:--------------|---------:|--------:|----------:|----------:|
-| del_rtriangle | 121.77µs | 127.6µs |  7390.705 |    5.76KB |
-| del_new       |   9.79µs |  11.7µs | 83466.769 |    2.57KB |
+| expression    |      min | median |   itr/sec | mem_alloc |
+|:--------------|---------:|-------:|----------:|----------:|
+| del_rtriangle | 122.41µs |  128µs |  7640.239 |    5.76KB |
+| del_new       |   9.82µs |   12µs | 82652.309 |    2.57KB |
 
 ## Debug plotting
 
@@ -149,14 +149,6 @@ x <- cos(theta)
 y <- sin(theta)
 
 vor <- voronoi(x, y)
-#> Warning in voronoi(x, y): Poly [3] has a point index of -1
-#> Warning in voronoi(x, y): Poly [6] has a point index of -1
-#> Warning in voronoi(x, y): Poly [12] has a point index of -1
-#> Warning in voronoi(x, y): Poly [23] has a point index of -1
-#> Warning in voronoi(x, y): Poly [27] has a point index of -1
-```
-
-``` r
 
 plot_vor(vor) |>
   draw_segments() |> 

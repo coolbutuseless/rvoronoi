@@ -18,7 +18,32 @@
 #include "R-merge-vertices.h"
 
 
-
+void remap_insert(int *remap, int i1, int i2) {
+  
+  // Swap so i1 is always larger
+  if (i1 < i2) {
+    int tmp = i1;
+    i1 = i2;
+    i2 = tmp;
+  }
+  
+  // New remapping
+  if (remap[i1] < 0) {
+    remap[i1] = i2;
+    return;
+  } else if (remap[i1] == i2) {
+    return;
+  } else {
+    // i1 is already remapped to something!
+    if (remap[i1] > i2) {
+      remap_insert(remap, remap[i1], i2);
+      remap[i1] = i2;
+    } else {
+      remap_insert(remap, remap[i1], i2);
+    }
+  }
+  
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // 
@@ -31,13 +56,13 @@ void merge_vertices_core_(double tol,
                           int verbosity) {
   
   
-  int *remap1 = malloc((unsigned long)nverts * sizeof(int));
-  int *remap2 = malloc((unsigned long)nverts * sizeof(int));
-  if (remap1 == NULL || remap2 == NULL) {
-    error("merge_vertices_core_(): could not allocate 'remap1' and 'remap2'");
+  int *remap = malloc((unsigned long)nverts * sizeof(int));
+  if (remap == NULL) {
+    error("merge_vertices_core_(): could not allocate 'remap'");
   }
-  int rcnt = 0;
-  
+  for (int i = 0; i < nverts; i++) {
+    remap[i] = -1;
+  }
   
   for (int i = 0; i < nedges; i++) {
     int i1 = v1[i];
@@ -57,15 +82,13 @@ void merge_vertices_core_(double tol,
     
     double dist = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
     
+    if (verbosity > 0) {
+      Rprintf("Edge: %i (%i -> %i): Dist: %.6f\n", i, i1, i2, dist);
+    }
+    
     if (dist < tol) {
-      if (i1 > i2) {
-        remap1[rcnt] = i2;
-        remap2[rcnt] = i1;  // remap2 always holds the higher index
-      } else {
-        remap1[rcnt] = i1;
-        remap2[rcnt] = i2;
-      }
-      rcnt++;
+      if (verbosity > 0) Rprintf("^ Remap\n");
+      remap_insert(remap, i1, i2);
     } 
   }
   
@@ -76,7 +99,7 @@ void merge_vertices_core_(double tol,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (verbosity > 0) {
     for (int i = 0; i < nedges; i++) {
-      Rprintf("%2i: (%2i, %2i)\n", i, v1[i], v2[i]);
+      Rprintf("%2i: (%4i, %4i)\n", i, v1[i], v2[i]);
     }
   }
   
@@ -84,8 +107,10 @@ void merge_vertices_core_(double tol,
   // Print remaps
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (verbosity > 0) {
-    for (int i = rcnt - 1; i >= 0; i--) {
-      Rprintf("Remap: %i: %i == %i\n", i, remap1[i], remap2[i]);
+    for (int i = 0; i < nverts; i++) {
+      if (remap[i] >= 0) {
+        Rprintf("Remap: %i => %i\n", i, remap[i]);
+      }
     }
   }
   
@@ -97,11 +122,12 @@ void merge_vertices_core_(double tol,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Renumber verts
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  for (int i = rcnt - 1; i >= 0; i--) {
-    int vlo = remap1[i];
-    int vhi = remap2[i];
+  for (int i = nverts - 1; i >= 0; i--) {
+    if (remap[i] < 0) continue;
+    int vlo = remap[i];
+    int vhi = i;
     
-    // Rprintf("REMAP: %i: %i -> %i\n", i, vhi, vlo);
+    // Rprintf("REMAP: %i -> %i\n", vhi, vlo);
     
     for (int j = 0; j < nedges; j++) {
       if (v1[j] == vhi) v1[j] = vlo; 
@@ -140,7 +166,7 @@ void merge_vertices_core_(double tol,
   if (verbosity > 0) {
     Rprintf("Ndistcard: %i\n", ndiscard);
     for (int i = 0; i < nedges; i++) {
-      Rprintf("(%i)  %i\n", i, discard[i]);
+      Rprintf("(%4i)  %4i\n", i, discard[i]);
     }
   }
   
@@ -149,7 +175,7 @@ void merge_vertices_core_(double tol,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (verbosity > 0) {  
     for (int i = 0; i < nedges; i++) {
-      Rprintf("%2i: (%2i, %2i)\n", i, v1[i], v2[i]);
+      Rprintf("%2i: (%4i, %4i)\n", i, v1[i], v2[i]);
     }
   }
   
@@ -165,7 +191,7 @@ void merge_vertices_core_(double tol,
     v2[dst]   = v2[src];
     line[dst] = line[src];
     if (verbosity > 1) {
-      Rprintf("src %02i  ->  dst %02i\n", src, dst);
+      Rprintf("src %4i  ->  dst %4i\n", src, dst);
     }
   }
   
@@ -179,15 +205,14 @@ void merge_vertices_core_(double tol,
   
   if (verbosity > 0) {  
     for (int i = 0; i < nedges; i++) {
-      Rprintf("%2i: (%2i, %2i)\n", i, v1[i], v2[i]);
+      Rprintf("%2i: (%4i, %4i)\n", i, v1[i], v2[i]);
     }
   }
   
   *fnedges = nedges - ndiscard;
   
   free(discard);
-  free(remap1);
-  free(remap2);
+  free(remap);
 }
 
 

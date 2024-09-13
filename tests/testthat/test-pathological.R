@@ -40,14 +40,17 @@ if (FALSE) {
   
   # codespace
   N <- 6
-  set.seed(7288852)
+  # Seed: 136721
+  # Seed: 581684
+  # Seed: 704818
+  # Seed: 1735603
   
   start <- Sys.time()
-  for (i in seq(1, 10000000)) {
+  for (i in seq(1, 1000000)) {
     set.seed(i)
     N <- 6
-    x <- runif(N)
-    y <- runif(N)
+    x <- runif(N) * 10
+    y <- runif(N) * 10
     
     tryCatch(
       vor <- voronoi(x, y),
@@ -60,60 +63,51 @@ if (FALSE) {
   
   
   N <- 6
-  set.seed(7288852)
-  x <- runif(N)
-  y <- runif(N)
+  set.seed(704818)
+  x <- runif(N) * 2
+  y <- runif(N) * 2
+  
+  min(dist(cbind(x, y))) ^ 2
+  
   vor <- voronoi(x, y, match_polygons = TRUE)
   vor <- voronoi(x, y, match_polygons = FALSE)
   
   
-  
-  set.seed(327)
-  N <- 400
-  x <- runif(N)
-  y <- runif(N)
-  vor <- voronoi(x, y) 
   vor$segment
   vor$msegments
   vor$vertex
   
   
   cols <- rainbow(length(vor$polygons))
-  plot(x, y, ann = F, asp = 1, axes = F, xlim = c(0, 1), ylim = c(0, 1))
+  plot(x/2, y/2, ann = F, asp = 1, axes = F, xlim = c(0, 1), ylim = c(0, 1))
   for (i in seq_along(vor$polygons)) {
-    polygon(vor$polygons[[i]], col = cols[i])
+    polygon(vor$polygons[[i]]$x/2, vor$polygons[[i]]$y/2, col = cols[i])
   }
-  points(x, y, pch = '.')
-  # points(vor$vertex, col = 'hotpink', pch = 19)
+  points(x/2, y/2, pch = 19)
   
-  points(x, y, pch = '.')
-  # points(vor$vertex, col = 'hotpink', pch = 19)
+  polygon(vor$polygons[[5]], col = 'black')
+  points(x[5], y[5], col = 'green', pch = 19)
+  # points(x[6], y[6], col = 'black', pch = 19)
   
-  polygon(vor$polygons[[6]], col = 'black')
   
-  # $x
-  # [1]  0.470762318  0.469139242 -0.004196656 -0.004196656  0.291792072
-  # 
-  # $y
-  # [1] 0.4934863 0.4942734 0.2754361 0.8359567 0.8359567
   
-  points(x[2], y[2], col = 'hotpink')
+  xt <- x[2]
+  yt <- y[2]
+  poly <- vor$polygons[[5]]
   
-  point_in_convex_polygon(x, y, vor$polygons[[6]]$x, vor$polygons[[6]]$y)  
+  point_in_convex_polygon(xt, yt, poly$x, poly$y)  
   
-  x <- x[6]
-  y <- y[6]
-  poly <- vor$polygons[[6]]
   
   
   plot(poly, ann = FALSE, asp = 1, axes = F, pch = '.')
-  # polygon(poly)
-  # points(x, y, col = 'red', pch = 19)  
+  polygon(poly)
+  points(x[4], y[4], col = 'red')
+  points(x[5], y[5], col = 'black')
   
   text(poly$x + 0.0, poly$y + 0.0, labels = seq_along(poly$x))
   
   
-  points(x, y, pch = .)
+  points(x, y, pch = 19)
   # points(vor$vertex, col = 'hotpink', pch = 19)
   
 }

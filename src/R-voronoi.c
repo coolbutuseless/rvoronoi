@@ -185,7 +185,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge close vertices which are an artefact of the tessellation
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  merge_vertices_core_(1e-6, 
+  merge_vertices_core_(1e-5, 
                        ctx.nverts, ctx.vert_x, ctx.vert_y,
                        ctx.nsegs, linem, v1m, v2m, 
                        &fnedges, 0);
