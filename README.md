@@ -6,16 +6,16 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
-![](https://img.shields.io/badge/status-dangerously_unstable-red.svg)
+![](https://img.shields.io/badge/API-stabilising-lightblue.svg)
 [![R-CMD-check](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `rvoronoi` is a testing ground for some rendering ideas using fast
-delaunay triangulation and voronoi tessellation.
+delaunay triangulation and Voronoi tessellation.
 
-For small sets of seed points (e.g. 20 points) this package can be 10x
-faster than `RTriangle` package. For larger sets of seed points, the gap
-closes up - e.g. for N = 1000, still 2x faster than `RTriangle` package.
+For small sets of site (e.g. 20 points) this package can be 10x faster
+than `RTriangle` package. For larger sets of sites, the gap closes up -
+e.g. for N = 1000, still 2x faster than `RTriangle` package.
 
 The core of this package is Steven Fortune’s original C source code for
 his sweep algorithm. This code has been updated and adapted to run
@@ -34,29 +34,43 @@ remotes::install_github('coolbutuseless/rvoronoi')
 
 # In fair Voronoi, where we lay our scene
 
+A Voronoi tessellation of a scene from 1996 movie [Romeo +
+Juliet](https://www.imdb.com/title/tt0117509/?ref_=fn_al_tt_1)
+
 ``` r
 library(nara)
 library(grid)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Load image
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rj <- jpeg::readJPEG("man/figures/rj.jpg", native = TRUE)
-dim(rj)
-#> [1]  531 1278
-# grid.raster(rj)
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Sample lots of random points in the image
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 set.seed(5)
 N <- 4000
-x <- (runif(N, 1, ncol(rj))) |> sort() 
+x <- (runif(N, 1, ncol(rj))) 
 y <- (runif(N, 1, nrow(rj))) 
 
-ind <- round(y) * ncol(rj) + round(x)
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Extract the colour at each pointt
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ind  <- round(y) * ncol(rj) + round(x)
 cols <- rj[ind]
 cols <- nara::packed_cols_to_hex_cols(cols)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate the Voronoi
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor <- voronoi(as.double(x), as.double(y))
-nr <- nara::nr_new(ncol(rj), nrow(rj))
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot all Voronoi polygons in their appropriate colour
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nr <- nara::nr_new(ncol(rj), nrow(rj))
 for (i in seq_along(vor$polygons)) {
   nr_polygon(nr, vor$polygons[[i]]$x, vor$polygons[[i]]$y, fill = cols[i])
 }
@@ -64,6 +78,8 @@ grid.raster(nr)
 ```
 
 <img src="man/figures/README-romeo-1.png" width="100%" />
+
+### Convert Voronoi to grob (Work in progress)
 
 ``` r
 grob <- voronoiGrob(vor)
@@ -81,7 +97,7 @@ grid.draw(grob)
 - Fortune’s algorithm returns
   - **vertices**
   - **segments** (finite, semi-finite and infinite)
-- This package reconstructs **polygons** (i.e. *voronoi cells*) by
+- This package reconstructs **polygons** (i.e. *Voronoi cells*) by
   assembling the *segments* into polygons, and bounding any exterior
   *cells* by intersecting with a rectangular boundary
 
@@ -104,7 +120,7 @@ grid.draw(grob)
 
 ## Voronoi Tessellation
 
-The following code calculates the voronoi tessellation on 20 random
+The following code calculates the Voronoi tessellation on 20 random
 points.
 
 ``` r
@@ -135,7 +151,7 @@ y <- runif(10)
 
 del <- delaunay(x, y)$segment
 
-# Plot the seed points
+# Plot the sites
 plot(x, y, asp = 1, col = 'red', ann = F, axes = F, pch = 19)
 
 # Plot all finite segments.  
@@ -245,10 +261,10 @@ bench::mark(
 
 | expression |     min |  median |    itr/sec | mem_alloc |
 |:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 391.3µs | 412.1µs | 2376.47092 |  162.78KB |
-| rvoronoi   | 385.8µs | 390.6µs | 2546.78751 |   23.58KB |
-| rtriangle  | 723.4µs | 744.3µs | 1326.63082 |  292.63KB |
-| deldir     |  16.7ms |  16.8ms |   59.26916 |    5.67MB |
+| rvoronoi   | 394.8µs | 410.3µs | 2413.48161 |  162.78KB |
+| rvoronoi   | 385.9µs | 393.1µs | 2515.57164 |   23.58KB |
+| rtriangle  | 727.6µs | 763.8µs | 1281.35037 |  292.63KB |
+| deldir     |  16.9ms |  17.1ms |   58.24851 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -337,24 +353,24 @@ ve <- subset(ve, V1 > 0 & V2 > 0)
 
 ``` r
 bench::mark(
-  voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
-  voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
-  voronoi(x, y, calc_polygons = FALSE),
-  deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
-  RTriangle::triangulate(pslg(P = cbind(x, y))),
+  `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
+  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
+  deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
+  RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 ```
 
-| expression | min | median | itr/sec | mem_alloc |
-|:---|---:|---:|---:|---:|
-| voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE) | 3.49ms | 3.55ms | 278.230429 | 235KB |
-| voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE) | 2.46ms | 2.5ms | 388.099205 | 235KB |
-| voronoi(x, y, calc_polygons = FALSE) | 406.19µs | 432.63µs | 2216.892087 | 137.3KB |
-| deldir::cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 185.05ms | 189.25ms | 5.213012 | 52.1MB |
-| RTriangle::triangulate(pslg(P = cbind(x, y))) | 720.82µs | 767.68µs | 1186.797804 | 292.6KB |
+| expression                    |      min |   median |     itr/sec | mem_alloc |
+|:------------------------------|---------:|---------:|------------:|----------:|
+| rvoronoi (full)               |   3.55ms |   3.98ms |  251.403338 |     235KB |
+| rvoronoi (unmatched polygons) |   2.45ms |   2.59ms |  377.567321 |     235KB |
+| rvoronoi (match RTriangle)    | 405.04µs | 422.63µs | 2258.576231 |   137.3KB |
+| deldir                        | 163.28ms | 165.82ms |    5.916541 |    52.1MB |
+| RTriangle                     | 725.58µs | 779.78µs | 1162.507923 |   292.6KB |
 
 # Pathological Test Cases
 
@@ -462,24 +478,24 @@ plot_vor(vor) |>
 - Fortune’s Sweep Algorithm for Delaunay
   - Adapted original source code to call from R
 - Polygon reconstruction
-  - Use voronoi vertices and edge connectivity to reconstruct polygonal
-    voronoi tiles
+  - Use Voronoi vertices and segment connectivity to reconstruct
+    polygonal Voronoi cells
   - Using “An optimal algorithm for extracting the regions of a plane
     graph” by Jiang & Bunke, Pattern Recognition Letters 14 (1993)
     pp553-558.
   - Adapted algorithm from binary search to instead use pre-indexed
     search bounds.
-- Point in polygon (to match seed points to voronoi polygons)
+- Point in polygon (to match sites to Voronoi polygons)
   - Search for bounding box collision to filter polygon candidates for
     exhaustive testing
   - Optimised point-in-polygon search with early termination possible
-    (as voronoi polygons are **always** convex) Test edges using the
+    (as Voronoi polygons are **always** convex) Test edges using the
     “leftOf()” operator, and exit as soon as any vertices are right of a
     polygon edge.
   - No benefit in building an acceleration structure for
     point-in-bounding-box when there of the order of ~100-1000 bounding
     boxes. A linear search (with flagging of polygons already claimed)
-    is fast enough. If use case if voronoi of \>\> 1000 points, then
+    is fast enough. If use case if Voronoi of \>\> 1000 points, then
     time taken to build acceleration structure (e.g. hierachical
     bounding boxes) would become worth it.
 
