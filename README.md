@@ -45,7 +45,7 @@ dim(rj)
 
 
 set.seed(1)
-N <- 5000
+N <- 100
 x <- (runif(N, 1, ncol(rj))) |> sort() 
 y <- (runif(N, 1, nrow(rj))) 
 
@@ -64,6 +64,43 @@ grid.raster(nr)
 ```
 
 <img src="man/figures/README-romeo-1.png" width="100%" />
+
+``` r
+grob <- voronoiGrob(vor)
+# grob$vp <- viewport(default.units = 'snpc', width = 1/1270, height = 1/1270)
+grob$vp <- viewport(default.units = 'points', width = 1270, height = 670)
+grid.newpage()
+grid.draw(grob)
+```
+
+<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+
+## Voronoi Terminolog
+
+- Initial **sites** (i.e. seed points)
+- Fortune’s algorithm returns
+  - **vertices**
+  - **segments** (finite, semi-finite and infinite)
+- This package reconstructs **polygons** (i.e. *voronoi cells*) by
+  assembling the *segments* into polygons, and bounding any exterior
+  *cells* by intersecting with a rectangular boundary
+
+## Voronoi Tessellation feature comparison
+
+| Package                   | rvoronoi | deldir | RTriangle |
+|---------------------------|----------|--------|-----------|
+| segments                  | Yes      |        |           |
+| interior polygons         | Yes      |        |           |
+| bounded exterior polygons | Yes      |        |           |
+| matched sites/polygons    | Yes      |        |           |
+| vertices                  | Yes      |        |           |
+
+## Delaunay Triangulation feature comparison
+
+| Package                          | rvoronoi | deldir | RTriangle |
+|----------------------------------|----------|--------|-----------|
+| site indices (defining polygons) | Yes      |        |           |
+| polygon coordinates              | Yes      |        |           |
 
 ## Voronoi Tesselation
 
@@ -201,11 +238,11 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |    itr/sec | mem_alloc |
-|:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 393.5µs | 419.9µs | 2371.91832 |  139.56KB |
-| rtriangle  | 723.2µs | 787.2µs | 1242.62215 |  292.63KB |
-| deldir     |  16.8ms |  16.9ms |   58.70806 |    5.67MB |
+| expression |     min | median |    itr/sec | mem_alloc |
+|:-----------|--------:|-------:|-----------:|----------:|
+| rvoronoi   | 389.5µs |  407µs | 2434.48177 |  139.56KB |
+| rtriangle  | 728.7µs |  759µs | 1296.48296 |  292.63KB |
+| deldir     |  16.8ms |   17ms |   58.67374 |    5.67MB |
 
 # Voronoi Tesselation Benchmark
 
@@ -274,9 +311,9 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.38ms | 3.45ms | 287.813316 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 157.6ms | 160.67ms | 6.113305 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 728.2µs | 758.5µs | 1229.584350 | 292.6KB |
+| voronoi(x, y) | 3.38ms | 3.47ms | 283.631339 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 160.11ms | 162.09ms | 6.087512 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 720.33µs | 756.7µs | 1160.784557 | 292.6KB |
 
 # Pathological Test Cases
 

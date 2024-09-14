@@ -4,10 +4,13 @@
 test_that("Voronoi works", {
   vor <- voronoi(tpoints$x, tpoints$y)
 
-  expect_identical(names(vor), c("vertex", "line", "segment", "extents", "polygons", "msegments", "exterior"))
+  expect_identical(
+    names(vor), 
+    c("sites", "vertices", "segments", "polygons", "lines", "extents", "msegments")
+  )
 
-  expect_equal(nrow(vor$vertex ), 187)
-  expect_equal(nrow(vor$line   ), 286)
-  expect_equal(nrow(vor$segment), 286)
+  expect_equal(nrow(vor$vertices), 187)
+  expect_equal(nrow(vor$lines   ), 286)
+  expect_equal(nrow(vor$segments), 286)
 })
 

@@ -26,7 +26,7 @@
 // Voronoi Tesselation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
-
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,7 +141,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   ctx.seg_line = INTEGER(seg_line_);
   ctx.seg_v1   = INTEGER(seg_v1_);
   ctx.seg_v2   = INTEGER(seg_v2_);
-    
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Calculate voronoi tesselation using Fortune's Sweep algorithm 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,6 +157,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
   bbox_expand(&bounds, 0.10);
   
+  // Rprintf("BBOX: (%.3f, %.3f), (%.3f, %.3f)\n", bounds.xmin, bounds.ymin,
+  //         bounds.xmax, bounds.ymax);
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge vertices in voronoi segments to prep for polygon building
   // void merge_vertices_core_(double tol, 
@@ -166,7 +169,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //                           int verbosity)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int fnedges = 0; // Final number of edges after merging
-
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set up the "working area" for the merging of vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,7 +184,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   memcpy(v1m  , ctx.seg_v1  , ctx.nsegs * sizeof(int));
   memcpy(v2m  , ctx.seg_v2  , ctx.nsegs * sizeof(int));
   memcpy(linem, ctx.seg_line, ctx.nsegs * sizeof(int));
-
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Merge close vertices which are an artefact of the tessellation
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,7 +209,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   calc_space_for_bound_infinite_edges(fnedges, v1m, v2m, &nbverts, &nbsegs);
   
   // Rprintf("DoBounding: fnedges = %i, nbverts = %i,  nbsegs = %i\n", 
-          // fnedges, nbverts, nbsegs);
+  // fnedges, nbverts, nbsegs);
   
   // void bound_infinite_edges(
   //     bbox_t *bounds,
@@ -247,8 +250,6 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   memcpy(xf + ctx.nverts,         xb,    nbverts * sizeof(double));
   memcpy(yf + ctx.nverts,         yb,    nbverts * sizeof(double));
   
-  SEXP exterior_ = PROTECT(create_named_list(2, "x", xf_, "y", yf_)); nprotect++;
-  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Append the new exterior segments to the merged vertex list
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,14 +259,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
     (linem + fnedges)[i] = -99;
   }
   // memset(linem + fnedges, -99, nbsegs * sizeof(int));
-
+  
   free(xb);
   free(yb);
   free(rv1);
   free(rv2);
   fnedges += nbsegs;
-#else 
-  SEXP exterior_ = R_NilValue;
 #endif
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -324,7 +323,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
     create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
   ); nprotect++;
   set_df_attributes(msegs_, fnedges, length(v1m_));
-    
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -332,7 +331,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
     create_named_list(2, "x", vert_x_, "y", vert_y_)
   ); nprotect++;
   set_df_attributes(vert_, ctx.nverts, max_verts);
-    
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -372,10 +371,21 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //     extents = list()
   // )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP sites_ = PROTECT(
+    create_named_list(2, "x", x_, "y", y_)  // original site/seed points  
+  ); nprotect++;
+  
   SEXP res_ = PROTECT(
-    create_named_list(7, "vertex", vert_, "line", line_, "segment", seg_, 
-                      "extents", ext_, "polygons", polys_, "msegments", msegs_,
-                      "exterior", exterior_)
+    create_named_list(
+      7, 
+      "sites"    , sites_,
+      "vertices" , vert_, 
+      "segments" , seg_,
+      "polygons" , polys_, 
+      "lines"    , line_, 
+      "extents"  , ext_, 
+      "msegments", msegs_
+    )
   ); nprotect++;
   setAttrib(res_, R_ClassSymbol, mkString("vor"));
   
@@ -383,7 +393,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   // Free all the 'myalloc()' memory
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   free_all_myalloc(&ctx);
-
+  
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

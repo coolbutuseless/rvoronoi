@@ -77,8 +77,8 @@ polygon(vor$polygons[[1]])
 
 
 
-segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$line, vor$segment$v1, vor$segment$v2, verbosity = 0)
-polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+segs <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$segment$v1, vor$segment$v2, verbosity = 0)
+polys <- extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2)
 
 # png("working/02-voronoi.png")
 plot_vor(vor, buffer = 0.3, pch = '.') |>
@@ -90,8 +90,8 @@ points(xs, ys, pch = '+')
 # invisible(dev.off())
 
 
-segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
-polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+segs <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
+polys <- extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2)
 
 ints <- lapply(polys, function(poly) {
   polyclip::polyclip(mypoly, poly) 

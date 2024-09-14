@@ -122,7 +122,7 @@ extract_polygons_r <- function(x, y, v1, v2, verbosity = 0) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Convert the list of wedges for each region
   # 'vidxs' is a list of vectors
-  #         each vector is a set of vertex indices into vor$vertex
+  #         each vector is a set of vertex indices into vor$vertices
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   vidxs <- lapply(regions, function(region) {
     region_wedges <- wedge[region, ]

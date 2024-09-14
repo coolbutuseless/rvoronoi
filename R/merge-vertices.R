@@ -29,12 +29,12 @@ if (FALSE) {
   vor <- voronoi(x, y)
   
   vor$segment
-  segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
+  segs <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
 
-  polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
+  polys <- extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2)
   
   cols <- rainbow(length(polys))
-  plot(vor$vertex, asp = 1, ann = F, axes = FALSE)
+  plot(vor$vertices, asp = 1, ann = F, axes = FALSE)
   for (i in seq_along(polys)) {
     polygon(polys[[i]], col = cols[i])
   }
@@ -55,14 +55,14 @@ if (FALSE) {
   vor <- voronoi(x, y)
   
   vor$segment
-  segs <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
+  segs <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$segment$v1, vor$segment$v2)
   
-  polys <- extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2)
-  extract_polygons(vor$vertex$x, vor$vertex$y, segs$v1, segs$v2) |> bench::mark()
+  polys <- extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2)
+  extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2) |> bench::mark()
   # Linear search: N = 3000,  24.6 itr/sec
   
   cols <- rainbow(length(polys))
-  plot(vor$vertex, asp = 1, ann = F, axes = FALSE, xlim = c(-0.2, 1.2), ylim = c(-0.2, 1.2))
+  plot(vor$vertices, asp = 1, ann = F, axes = FALSE, xlim = c(-0.2, 1.2), ylim = c(-0.2, 1.2))
   for (i in seq_along(polys)) {
     polygon(polys[[i]], col = cols[i])
   }

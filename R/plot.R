@@ -12,10 +12,10 @@ draw_segments <- function(vor, ...) {
   fseg <- subset(vor$segment, v1 > 0 & v2 > 0)
   
   segments(
-    vor$vertex$x[fseg$v1],
-    vor$vertex$y[fseg$v1],
-    vor$vertex$x[fseg$v2],
-    vor$vertex$y[fseg$v2],
+    vor$vertices$x[fseg$v1],
+    vor$vertices$y[fseg$v1],
+    vor$vertices$x[fseg$v2],
+    vor$vertices$y[fseg$v2],
     ...
   )
   
@@ -48,9 +48,9 @@ draw_inf_segments <- function(vor, col = 'grey90', ...) {
     if (seg$v1 <= 0 && seg$v2 <= 0) {
       # warning("Double NA segment: ", i)
     } else if (seg$v1 > 0) {
-      segments(vor$vertex$x[seg$v1], vor$vertex$y[seg$v1], xhi, yhi[i], col = col, ...)
+      segments(vor$vertices$x[seg$v1], vor$vertices$y[seg$v1], xhi, yhi[i], col = col, ...)
     } else if (seg$v2 > 0) {
-      segments(xlo, ylo[i], vor$vertex$x[seg$v2], vor$vertex$y[seg$v2], col = col, ...)
+      segments(xlo, ylo[i], vor$vertices$x[seg$v2], vor$vertices$y[seg$v2], col = col, ...)
     } else {
       stop("Shouldn't get here")
     }
@@ -141,7 +141,7 @@ plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...) {
   xlim = c(vor$extents$xmin - buffer, vor$extents$xmax + buffer)
   ylim = c(vor$extents$ymin - buffer, vor$extents$ymax + buffer)
   
-  plot(vor$vertex$x, vor$vertex$y, asp = asp, ann = ann, axes = axes, 
+  plot(vor$vertices$x, vor$vertices$y, asp = asp, ann = ann, axes = axes, 
        xlim = xlim, ylim = ylim, ...)
   
   rect(vor$extents$xmin, vor$extents$ymin, vor$extents$xmax, vor$extents$ymax, 
@@ -167,9 +167,9 @@ plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...) {
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 draw_vertices <- function(vor, nudge_x = 0.1, nudge_y = nudge_x, ...) {
-  points(vor$vertex, ...)
-  # text(x = vor$vertex$x + nudge_x, 
-  # y = vor$vertex$y + nudge_y, labels = seq_along(vor$vertex$x))
+  points(vor$vertices, ...)
+  # text(x = vor$vertices$x + nudge_x, 
+  # y = vor$vertices$y + nudge_y, labels = seq_along(vor$vertices$x))
   
   
   invisible(vor)

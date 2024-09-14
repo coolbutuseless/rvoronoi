@@ -59,8 +59,8 @@ fseg <- vor$segment
 fseg <- subset(fseg, v1 > 0 & v2 > 0)
 
 segments(
-  vor$vertex$x[fseg$v1], vor$vertex$y[fseg$v1],
-  vor$vertex$x[fseg$v2], vor$vertex$y[fseg$v2]
+  vor$vertices$x[fseg$v1], vor$vertices$y[fseg$v1],
+  vor$vertices$x[fseg$v2], vor$vertices$y[fseg$v2]
 )
 
 # Bounds
@@ -96,12 +96,12 @@ for (seg_idx in seq_len(nrow(inf_seg))) {
   y0   <- NA_real_
   if (seg$v1 > 0) {
     type <- 2
-    x0   <- vor$vertex$x[seg$v1]
-    y0   <- vor$vertex$y[seg$v1]
+    x0   <- vor$vertices$x[seg$v1]
+    y0   <- vor$vertices$y[seg$v1]
   } else if (seg$v2 > 0) {
     type <- 1
-    x0   <- vor$vertex$x[seg$v2]
-    y0   <- vor$vertex$y[seg$v2]
+    x0   <- vor$vertices$x[seg$v2]
+    y0   <- vor$vertices$y[seg$v2]
   }
   points(x0, y0, pch = 19, col = 'blue')
   

@@ -61,8 +61,8 @@ if (FALSE) {
   fseg <- subset(fseg, v1 > 0 & v2 > 0)
   
   segments(
-    vor$vertex$x[fseg$v1], vor$vertex$y[fseg$v1],
-    vor$vertex$x[fseg$v2], vor$vertex$y[fseg$v2]
+    vor$vertices$x[fseg$v1], vor$vertices$y[fseg$v1],
+    vor$vertices$x[fseg$v2], vor$vertices$y[fseg$v2]
   )
   
   # Bounds
@@ -98,12 +98,12 @@ if (FALSE) {
     y0   <- NA_real_
     if (seg$v1 > 0) {
       type <- 2
-      x0   <- vor$vertex$x[seg$v1]
-      y0   <- vor$vertex$y[seg$v1]
+      x0   <- vor$vertices$x[seg$v1]
+      y0   <- vor$vertices$y[seg$v1]
     } else if (seg$v2 > 0) {
       type <- 1
-      x0   <- vor$vertex$x[seg$v2]
-      y0   <- vor$vertex$y[seg$v2]
+      x0   <- vor$vertices$x[seg$v2]
+      y0   <- vor$vertices$y[seg$v2]
     }
     points(x0, y0, pch = 19, col = 'blue')
     
@@ -191,14 +191,14 @@ if (FALSE) {
   
   res <- bound_infinite_edges(
     vor$extents$xmin, vor$extents$ymin, vor$extents$xmax, vor$extents$ymax,
-    vor$vertex$x, vor$vertex$y,
+    vor$vertices$x, vor$vertices$y,
     vor$line$a, vor$line$b, vor$line$c,
     vor$msegments$line, vor$msegments$v1, vor$msegments$v2
   )
   
   
-  vor$vertex
-  verts <- rbind(vor$vertex, res$vertex)  
+  vor$vertices
+  verts <- rbind(vor$vertices, res$vertex)  
   
   
   segments(verts$x[res$segment$v1], verts$y[res$segment$v1], verts$x[res$segment$v2], verts$y[res$segment$v2], col = 'blue', lwd = 3)
@@ -216,7 +216,7 @@ if (FALSE) {
   N <- 100
   vor <- voronoi(runif(N), runif(N)) |> bench::mark()
   
-  plot(vor$vertex, asp = 1, ann = F, axes = F, xlim = c(-0.5, 1.5), ylim = c(-0.5, 1.5))
+  plot(vor$vertices, asp = 1, ann = F, axes = F, xlim = c(-0.5, 1.5), ylim = c(-0.5, 1.5))
   
   cols <- rainbow(length(vor$polygons))
   for (i in seq_along(vor$polygons)) {

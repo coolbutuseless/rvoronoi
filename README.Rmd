@@ -57,7 +57,7 @@ dim(rj)
 
 
 set.seed(1)
-N <- 5000
+N <- 100
 x <- (runif(N, 1, ncol(rj))) |> sort() 
 y <- (runif(N, 1, nrow(rj))) 
 
@@ -76,6 +76,16 @@ grid.raster(nr)
 ```
 
 
+```{r}
+grob <- voronoiGrob(vor)
+# grob$vp <- viewport(default.units = 'snpc', width = 1/1270, height = 1/1270)
+grob$vp <- viewport(default.units = 'points', width = 1270, height = 670)
+grid.newpage()
+grid.draw(grob)
+```
+
+
+
 ## Voronoi Terminolog
 
 * Initial **sites**  (i.e. seed points)
@@ -91,11 +101,11 @@ grid.raster(nr)
 
 | Package                   | rvoronoi | deldir | RTriangle |
 |---------------------------|----------|--------|-----------|
-| segments                  |          |        |           |
-| interior polygons         |          |        |           |
-| bounded exterior polygons |          |        |           |
-| matched sites/polygons    |          |        |           |
-| vertices                  |          |        |           |
+| segments                  |  Yes     |        |           |
+| interior polygons         |  Yes     |        |           |
+| bounded exterior polygons |  Yes     |        |           |
+| matched sites/polygons    |  Yes     |        |           |
+| vertices                  |  Yes     |        |           |
 
 
 
@@ -103,8 +113,8 @@ grid.raster(nr)
 
 | Package                          | rvoronoi | deldir | RTriangle |
 |----------------------------------|----------|--------|-----------|
-| site indices (defining polygons) |          |        |           |
-| polygon coordinates              |          |        |           |
+| site indices (defining polygons) |  Yes     |        |           |
+| polygon coordinates              |  Yes     |        |           |
 
 
 

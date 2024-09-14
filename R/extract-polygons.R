@@ -25,13 +25,13 @@ if (FALSE) {
   vor <- voronoi(x, y)
   
   vor$segment
-  seg <- merge_vertices(vor$vertex$x, vor$vertex$y, vor$segment$line, vor$segment$v1, vor$segment$v2, verbosity = 0)
+  seg <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$segment$v1, vor$segment$v2, verbosity = 0)
   seg
   
-  polys <- extract_polygons(vor$vertex$x, vor$vertex$y, seg[[1]], seg[[2]])
+  polys <- extract_polygons(vor$vertices$x, vor$vertices$y, seg[[1]], seg[[2]])
   
-  # extract_polygons  (vor$vertex$x, vor$vertex$y, seg[[1]], seg[[2]])
-  # extract_polygons_r(vor$vertex$x, vor$vertex$y, seg[[1]], seg[[2]])
+  # extract_polygons  (vor$vertices$x, vor$vertices$y, seg[[1]], seg[[2]])
+  # extract_polygons_r(vor$vertices$x, vor$vertices$y, seg[[1]], seg[[2]])
   
   
   cols <- rainbow(length(polys))

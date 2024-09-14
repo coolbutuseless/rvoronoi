@@ -68,7 +68,7 @@ if (FALSE) {
   
   
   points(x, y, pch = 19)
-  # points(vor$vertex, col = 'hotpink', pch = 19)
+  # points(vor$vertices, col = 'hotpink', pch = 19)
   
 }
 
