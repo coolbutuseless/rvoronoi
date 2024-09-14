@@ -92,9 +92,12 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
     SEXP pidx_ = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
     SEXP xs_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
     SEXP ys_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
+    SEXP vs_   = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
+    
     double *xs = REAL(xs_);
     double *ys = REAL(ys_);
     int *pidx  = INTEGER(pidx_);
+    int *vidx  = INTEGER(vs_);
     
     double *x = REAL(x_);
     double *y = REAL(y_);
@@ -115,11 +118,15 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
       *pidx++ = i + 1;
       *pidx++ = i + 1;
       *pidx++ = i + 1;
+      
+      *vidx++ = v1[i] + 1;
+      *vidx++ = v2[i] + 1;
+      *vidx++ = v3[i] + 1;
     }
     
     
-    SEXP polys_ = PROTECT(
-      create_named_list(3, "idx", pidx_, "x", xs_, "y", ys_)
+    polys_ = PROTECT(
+      create_named_list(4, "idx", pidx_, "x", xs_, "y", ys_, "vidx", vs_)
     ); nprotect++;
     set_df_attributes(polys_, 3 * ctx.ntris, 3 * ctx.ntris);
   }
