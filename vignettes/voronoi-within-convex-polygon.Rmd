@@ -81,12 +81,13 @@ segs <- merge_vertices(vor$vertices$x, vor$vertices$y, vor$segment$line, vor$seg
 polys <- extract_polygons(vor$vertices$x, vor$vertices$y, segs$v1, segs$v2)
 
 # png("working/02-voronoi.png")
-plot_vor(vor, buffer = 0.3, pch = '.') |>
-  # draw_segments() |>
-  # draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(xs, ys, pch = '+') 
+plot_vor(vor) |>
+  draw_finite_segments() |>
+  draw_semi_infinite_segments(col = 'hotpink') |>
+  draw_infinite_segments(col = 'red') |>
+  draw_polygons() |>
+  draw_sites(text = TRUE) |>
+  draw_vertices()
 # invisible(dev.off())
 
 
@@ -101,12 +102,13 @@ ints <- unlist(ints, recursive = FALSE)
 cols <- rainbow(length(ints))
 
 # png("working/03-intersect.png")
-plot_vor(vor, buffer = 0.3, pch = '.') |>
-  # draw_segments() |>
-  # draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(xs, ys, pch = '+') 
+plot_vor(vor) |>
+  draw_finite_segments() |>
+  draw_semi_infinite_segments(col = 'hotpink') |>
+  draw_infinite_segments(col = 'red') |>
+  draw_polygons() |>
+  draw_sites(text = TRUE) |>
+  draw_vertices()
 
 for (i in seq_along(ints)) {
   polygon(ints[[i]], col = cols[i])

@@ -10,7 +10,8 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README-",
   out.width = "100%",
-  fig.height = 4
+  fig.width =  6,
+  fig.height = 5
 )
 
 library(rvoronoi)
@@ -47,7 +48,7 @@ remotes::install_github('coolbutuseless/rvoronoi')
 
 # In fair Voronoi, where we lay our scene
 
-```{r romeo}
+```{r romeo, fig.height = 4}
 library(nara)
 library(grid)
 
@@ -86,7 +87,7 @@ grid.draw(grob)
 
 
 
-## Voronoi Terminolog
+## Voronoi Terminology
 
 * Initial **sites**  (i.e. seed points)
 * Fortune's algorithm returns
@@ -126,22 +127,16 @@ The following code calculates the voronoi tesselation on 20 random points.
 ```{r voronoi, fig.width = 4, fig.height = 4}
 library(rvoronoi)
 
-set.seed(2)
+set.seed(4)
 x <- runif(20)
 y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-# Plot the seed points
-plot(x, y, asp = 1, ann = FALSE, axes = FALSE, col = 'red', 
-     xlim = c(-0.1, 1.1), ylim = c(-0.1, 1.1))
-
-cols <- rainbow(length(vor$polygons))
-for (i in seq_along(vor$polygons)) {
-  polygon(vor$polygons[[i]], col = cols[i])
-}
-
-points(x, y, pch = 19)
+plot_vor(vor) |>
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.2)
 ```
 
 
@@ -157,7 +152,7 @@ y <- runif(10)
 del <- delaunay(x, y)$segment
 
 # Plot the seed points
-plot(x, y, asp = 1, col = 'red')
+plot(x, y, asp = 1, col = 'red', ann = F, axes = F)
 
 # Plot all finite segments.  
 # This will not plot any of the segments which do not converge
@@ -333,11 +328,9 @@ y <- sin(theta)
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |>
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y)
+  draw_polygons() |>
+  draw_sites(text = FALSE) |>
+  draw_vertices()
 ```
 
 
@@ -356,11 +349,9 @@ y <- c(0, sin(theta))
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.3)
 ```
 
 ## Pathological 2a
@@ -375,12 +366,11 @@ y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
 
+
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.3)
 ```
 
 
@@ -395,18 +385,16 @@ y <- 0.5 * x
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices()
 ```
 
 
 
 ## Pathological 4
 
-* 2 concentric cirles (50 points each)
+* 2 concentric equalateral triangles 
 * 1 point at the centre
 
 ```{r path4}
@@ -416,26 +404,11 @@ y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
 
-plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red') |>
-  draw_vertices()
-points(x, y, pch = '+')
 
-if (FALSE) {
-  plot(x, y, ann = F, axes = F, asp = 1)
-  
-  cols <- rainbow(length(vor$polygons))
-  
-  for (i in seq_along(vor$polygons)) {
-  polygon(vor$polygons[[i]], col = cols[i])  
-  text(x[i], y[i], labels = i)
-  # points(x[i], y[i], col = 'black', pch = '+')
-  }
-  
-}
+plot_vor(vor) |>
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices()
 ```
 
 

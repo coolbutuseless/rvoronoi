@@ -75,7 +75,7 @@ grid.draw(grob)
 
 <img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
 
-## Voronoi Terminolog
+## Voronoi Terminology
 
 - Initial **sites** (i.e. seed points)
 - Fortune’s algorithm returns
@@ -110,22 +110,16 @@ points.
 ``` r
 library(rvoronoi)
 
-set.seed(2)
+set.seed(4)
 x <- runif(20)
 y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-# Plot the seed points
-plot(x, y, asp = 1, ann = FALSE, axes = FALSE, col = 'red', 
-     xlim = c(-0.1, 1.1), ylim = c(-0.1, 1.1))
-
-cols <- rainbow(length(vor$polygons))
-for (i in seq_along(vor$polygons)) {
-  polygon(vor$polygons[[i]], col = cols[i])
-}
-
-points(x, y, pch = 19)
+plot_vor(vor) |>
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.2)
 ```
 
 <img src="man/figures/README-voronoi-1.png" width="100%" />
@@ -142,7 +136,7 @@ y <- runif(10)
 del <- delaunay(x, y)$segment
 
 # Plot the seed points
-plot(x, y, asp = 1, col = 'red')
+plot(x, y, asp = 1, col = 'red', ann = F, axes = F)
 
 # Plot all finite segments.  
 # This will not plot any of the segments which do not converge
@@ -240,9 +234,9 @@ bench::mark(
 
 | expression |     min | median |    itr/sec | mem_alloc |
 |:-----------|--------:|-------:|-----------:|----------:|
-| rvoronoi   | 389.5µs |  407µs | 2434.48177 |  139.56KB |
-| rtriangle  | 728.7µs |  759µs | 1296.48296 |  292.63KB |
-| deldir     |  16.8ms |   17ms |   58.67374 |    5.67MB |
+| rvoronoi   | 393.3µs |  407µs | 2439.52804 |  139.56KB |
+| rtriangle  | 735.8µs |  771µs | 1252.96301 |  292.63KB |
+| deldir     |  16.7ms |   17ms |   58.56195 |    5.67MB |
 
 # Voronoi Tesselation Benchmark
 
@@ -311,9 +305,9 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.38ms | 3.47ms | 283.631339 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 160.11ms | 162.09ms | 6.087512 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 720.33µs | 756.7µs | 1160.784557 | 292.6KB |
+| voronoi(x, y) | 3.38ms | 3.46ms | 286.082781 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 163.27ms | 165.5ms | 6.013261 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 727.01µs | 764.59µs | 1110.991471 | 292.6KB |
 
 # Pathological Test Cases
 
@@ -329,11 +323,9 @@ y <- sin(theta)
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |>
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y)
+  draw_polygons() |>
+  draw_sites(text = FALSE) |>
+  draw_vertices()
 ```
 
 <img src="man/figures/README-path1-1.png" width="100%" />
@@ -351,11 +343,9 @@ y <- c(0, sin(theta))
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.3)
 ```
 
 <img src="man/figures/README-path2-1.png" width="100%" />
@@ -372,12 +362,11 @@ y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
 
+
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices(cex = 0.3)
 ```
 
 <img src="man/figures/README-path2a-1.png" width="100%" />
@@ -393,18 +382,16 @@ y <- 0.5 * x
 vor <- voronoi(x, y)
 
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red')
-points(x, y, pch = '+')
+  draw_polygons() |>
+  draw_sites() |>
+  draw_vertices()
 ```
 
 <img src="man/figures/README-path3-1.png" width="100%" />
 
 ## Pathological 4
 
-- 2 concentric cirles (50 points each)
+- 2 concentric equalateral triangles
 - 1 point at the centre
 
 ``` r
@@ -414,32 +401,14 @@ y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
 
+
 plot_vor(vor) |>
-  draw_segments() |> 
-  draw_inf_lines() |>
-  draw_inf_segments(col = 'hotpink') |>
-  draw_bounded_polygons(border = 'red') |>
+  draw_polygons() |>
+  draw_sites() |>
   draw_vertices()
-points(x, y, pch = '+')
 ```
 
 <img src="man/figures/README-path4-1.png" width="100%" />
-
-``` r
-
-if (FALSE) {
-  plot(x, y, ann = F, axes = F, asp = 1)
-  
-  cols <- rainbow(length(vor$polygons))
-  
-  for (i in seq_along(vor$polygons)) {
-  polygon(vor$polygons[[i]], col = cols[i])  
-  text(x[i], y[i], labels = i)
-  # points(x[i], y[i], col = 'black', pch = '+')
-  }
-  
-}
-```
 
 # Algorithms
 

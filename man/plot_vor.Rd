@@ -4,7 +4,7 @@
 \alias{plot_vor}
 \title{Plot the vertices of the voronoi tesselation}
 \usage{
-plot_vor(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...)
+plot_vor(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = ".", ...)
 }
 \arguments{
 \item{vor}{object returned by \code{voronoi()}}
@@ -16,6 +16,8 @@ plot_vor(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, ...)
 \item{ann}{annotation? Default: FALSE}
 
 \item{axes}{draw axes? Default: FALSE}
+
+\item{pch}{plot character}
 
 \item{...}{other arguments passed to \code{plot()}}
 }
