@@ -1,5 +1,5 @@
-void calc_space_for_bound_infinite_edges(int nsegs, int *v1, int *v2, int *nbverts, int *nbsegs);
-void bound_infinite_edges(
+void calc_space_for_bound_infinite_segments(int nsegs, int *v1, int *v2, int *nbverts, int *nbsegs);
+void bound_infinite_segments(
     bbox_t *bounds,
     int nverts, double *x, double *y, 
     int nsegs , int *li, int *v1, int *v2,

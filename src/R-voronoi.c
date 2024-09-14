@@ -19,7 +19,7 @@
 #include "R-common.h"
 #include "R-merge-vertices.h"
 #include "R-extract-polygons.h"
-#include "R-infinite-edges.h"
+#include "R-infinite-segments.h"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -209,12 +209,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
     // Use the merged segments to find infinite rays (single and double ended)
     // and then calculate the actual number of vertices and segments needed
     // to store the bounded external polygons
-    calc_space_for_bound_infinite_edges(fnedges, v1m, v2m, &nbverts, &nbsegs);
+    calc_space_for_bound_infinite_segments(fnedges, v1m, v2m, &nbverts, &nbsegs);
     
     // Rprintf("DoBounding: fnedges = %i, nbverts = %i,  nbsegs = %i\n", 
     // fnedges, nbverts, nbsegs);
     
-    // void bound_infinite_edges(
+    // void bound_infinite_segments(
     //     bbox_t *bounds,
     //     int nverts, double *x, double *y,
     //     int nsegs , int *li, int *v1, int *v2,
@@ -227,7 +227,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
     int *rv1   = calloc(nbsegs  , sizeof(int));
     int *rv2   = calloc(nbsegs  , sizeof(int));
     
-    bound_infinite_edges(
+    bound_infinite_segments(
       &bounds,
       ctx.nverts, ctx.vert_x, ctx.vert_y,
       fnedges, linem, v1m, v2m,

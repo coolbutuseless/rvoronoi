@@ -622,7 +622,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     // The polygon 'site_idx' is set to this site index.
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     for (int i = 0; i < n_sites; i++) {
-      int res = match_sites_to_seed_points(i, xsite[i], ysite[i], npolys, polys);
+      int res = find_matching_polygon_for_site(i, xsite[i], ysite[i], npolys, polys);
       if (res < 0) {
         warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
       }

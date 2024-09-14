@@ -1,7 +1,7 @@
 
 
 
-# extern SEXP bound_infinite_edges_(
+# extern SEXP bound_infinite_segments_(
 # SEXP xmin_, SEXP ymin_, SEXP xmax_, SEXP ymax_,
 # SEXP x_, SEXP y_,
 # SEXP v1_, SEXP v2_);
@@ -18,13 +18,13 @@
 #' @return list of new vertices and new edges
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bound_infinite_edges <- function(xmin, ymin, xmax, ymax,
+bound_infinite_segments <- function(xmin, ymin, xmax, ymax,
                                  x, y, 
                                  a, b, c,
                                  line, v1, v2) {
   
   
-  .Call(bound_infinite_edges_, 
+  .Call(bound_infinite_segments_, 
         xmin, ymin, xmax, ymax,
         x, y,
         a, b, c,
@@ -189,7 +189,7 @@ if (FALSE) {
   
   
   
-  res <- bound_infinite_edges(
+  res <- bound_infinite_segments(
     vor$extents$xmin, vor$extents$ymin, vor$extents$xmax, vor$extents$ymax,
     vor$vertices$x, vor$vertices$y,
     vor$line$a, vor$line$b, vor$line$c,

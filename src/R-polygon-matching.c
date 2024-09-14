@@ -13,17 +13,23 @@
 #include "R-polygon-matching.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// is the given point to the left of the line?
+// is the given point (x, y) to the left of the line  (x1,y1) - (x2,y2) ?
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 static bool point_left_of_line(double x, double y, 
                                double x1, double y1, double x2, double y2) {
   return (x2 - x1) * (y  - y1) - (y2 - y1) * (x - x1) > 0;
 }
 
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Is the point within the polygon?
 //
-// The handedness of the polygon doesn't matter
+// (For this test, the handedness of the polygon doesn't matter)
+//
+// Method:
+// Check each edge around the polygon returns the same value for 
+// 'point_left_of_line' in regards to the test point.
+// IF all the same, then the point is inside the polygon!
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp) {
   
@@ -36,7 +42,7 @@ bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp) {
     status = new_status;
   }
   
-  // Wrap around to start
+  // Wrap around to first point
   new_status = point_left_of_line(x, y, xp[N-1], yp[N-1], xp[0], yp[0]);
   if (new_status != status) return false;
   
@@ -82,12 +88,20 @@ SEXP points_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Match a point to a polygon
+// @param site_idx site index
+// @param x,y coords of site point
+// @param npolys number of polygons
+// @param polys vector of poly_t structs
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int match_sites_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys) {
-  
-  // Rprintf("PIP ---------------------------------\n");
+int find_matching_polygon_for_site(int site_idx, double x, double y, int npolys, poly_t *polys) {
   
   // loop over all polygons
+  //     if point inside bounding box
+  //         if point inside polygon
+  //              mark polygon with the 'point_idx'
+  //              return polygon_idx
+  // otherwise 
+  //    return -1
   for (int i = 0; i < npolys; i++) {
     
     // Rprintf("PIP: %i in %i [%i]\n", site_idx, poly.polygon_idx, poly.deleted);
@@ -115,7 +129,6 @@ int match_sites_to_seed_points(int site_idx, double x, double y, int npolys, pol
     
   } // next polygon
   
-  // Rprintf("match_sites_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", site_idx, x, y);
   return -1;
 }
 
