@@ -4,10 +4,12 @@
 \alias{delaunay}
 \title{Calculate Voronoi}
 \usage{
-delaunay(x, y)
+delaunay(x, y, calc_polygons = TRUE)
 }
 \arguments{
 \item{x, y}{coordinates of seed points}
+
+\item{calc_polygons}{calculate and return polygon coordinates? default: TRUE}
 }
 \value{
 data.frame. Each row specifies the indices of the three seed points

@@ -29,6 +29,7 @@ voronoi <- function(x, y, match_polygons = TRUE) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Calculate Voronoi
 #' @inheritParams voronoi
+#' @param calc_polygons calculate and return polygon coordinates? default: TRUE
 #' @return data.frame. Each row specifies the indices of the three seed points
 #'         which define a single delaunay triangle
 #' @examples
@@ -38,8 +39,8 @@ voronoi <- function(x, y, match_polygons = TRUE) {
 #' delaunay(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-delaunay <- function(x, y) {
-  .Call(delaunay_, x, y)
+delaunay <- function(x, y, calc_polygons = TRUE) {
+  .Call(delaunay_, x, y, calc_polygons)
 }
 
 

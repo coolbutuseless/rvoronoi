@@ -21,7 +21,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Delauney Triangulation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP delaunay_(SEXP x_, SEXP y_) {
+SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
@@ -86,39 +86,43 @@ SEXP delaunay_(SEXP x_, SEXP y_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertex coordinates for each triangle
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP pidx_ = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
-  SEXP xs_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
-  SEXP ys_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
-  double *xs = REAL(xs_);
-  double *ys = REAL(ys_);
-  int *pidx  = INTEGER(pidx_);
+  SEXP polys_ = R_NilValue;
   
-  double *x = REAL(x_);
-  double *y = REAL(y_);
-  int *v1 = INTEGER(v1_);
-  int *v2 = INTEGER(v2_);
-  int *v3 = INTEGER(v3_);
-  
-  for (int i = 0; i < ctx.ntris; i++) {
+  if (asLogical(calc_polygons_)) {
+    SEXP pidx_ = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
+    SEXP xs_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
+    SEXP ys_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
+    double *xs = REAL(xs_);
+    double *ys = REAL(ys_);
+    int *pidx  = INTEGER(pidx_);
     
-    *xs++ = x[ v1[i] ];
-    *xs++ = x[ v2[i] ];
-    *xs++ = x[ v3[i] ];
+    double *x = REAL(x_);
+    double *y = REAL(y_);
+    int *v1 = INTEGER(v1_);
+    int *v2 = INTEGER(v2_);
+    int *v3 = INTEGER(v3_);
     
-    *ys++ = y[ v1[i] ];
-    *ys++ = y[ v2[i] ];
-    *ys++ = y[ v3[i] ];
+    for (int i = 0; i < ctx.ntris; i++) {
+      
+      *xs++ = x[ v1[i] ];
+      *xs++ = x[ v2[i] ];
+      *xs++ = x[ v3[i] ];
+      
+      *ys++ = y[ v1[i] ];
+      *ys++ = y[ v2[i] ];
+      *ys++ = y[ v3[i] ];
+      
+      *pidx++ = i + 1;
+      *pidx++ = i + 1;
+      *pidx++ = i + 1;
+    }
     
-    *pidx++ = i + 1;
-    *pidx++ = i + 1;
-    *pidx++ = i + 1;
+    
+    SEXP polys_ = PROTECT(
+      create_named_list(3, "idx", pidx_, "x", xs_, "y", ys_)
+    ); nprotect++;
+    set_df_attributes(polys_, 3 * ctx.ntris, 3 * ctx.ntris);
   }
-  
-  
-  SEXP polys_ = PROTECT(
-    create_named_list(3, "idx", pidx_, "x", xs_, "y", ys_)
-  ); nprotect++;
-  set_df_attributes(polys_, 3 * ctx.ntris, 3 * ctx.ntris);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // List of delaunay results: list(vertex = data.frame(), coords = data.frame())

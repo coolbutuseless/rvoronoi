@@ -235,7 +235,8 @@ stopifnot(identical(
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bench::mark(
   # delone    = xy_tri  (x, y),
-  rvoronoi  = delaunay(x, y),
+  rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
+  rvoronoi  = delaunay(x, y, calc_polygons = FALSE),
   rtriangle = triangulate(pslg(cbind(x, y))),
   deldir    = deldir(x, y),
   check = FALSE
@@ -244,9 +245,10 @@ bench::mark(
 
 | expression |     min |  median |    itr/sec | mem_alloc |
 |:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 392.5µs | 412.2µs | 2410.61717 |  139.56KB |
-| rtriangle  | 725.6µs | 764.6µs | 1283.33544 |  292.63KB |
-| deldir     |  16.7ms |  17.1ms |   58.54301 |    5.67MB |
+| rvoronoi   | 394.7µs | 407.9µs | 2427.41745 |  139.56KB |
+| rvoronoi   | 382.2µs | 388.6µs | 2551.04990 |   23.58KB |
+| rtriangle  | 737.3µs |   784µs | 1240.62492 |  292.63KB |
+| deldir     |  16.7ms |  17.3ms |   58.03145 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -325,9 +327,9 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.5ms | 3.6ms | 274.205035 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 161.2ms | 162.3ms | 6.126727 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 726.7µs | 765.1µs | 1217.402095 | 292.6KB |
+| voronoi(x, y) | 3.5ms | 3.56ms | 276.183724 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 165.7ms | 173.64ms | 5.804134 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 728.6µs | 771.68µs | 1166.820621 | 292.6KB |
 
 # Pathological Test Cases
 

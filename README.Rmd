@@ -243,7 +243,8 @@ stopifnot(identical(
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bench::mark(
   # delone    = xy_tri  (x, y),
-  rvoronoi  = delaunay(x, y),
+  rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
+  rvoronoi  = delaunay(x, y, calc_polygons = FALSE),
   rtriangle = triangulate(pslg(cbind(x, y))),
   deldir    = deldir(x, y),
   check = FALSE
