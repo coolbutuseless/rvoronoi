@@ -83,7 +83,7 @@ SEXP points_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Match a point to a polygon
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int match_polygons_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys) {
+int match_sites_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys) {
   
   // Rprintf("PIP ---------------------------------\n");
   
@@ -115,7 +115,7 @@ int match_polygons_to_seed_points(int site_idx, double x, double y, int npolys, 
     
   } // next polygon
   
-  // Rprintf("match_polygons_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", site_idx, x, y);
+  // Rprintf("match_sites_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", site_idx, x, y);
   return -1;
 }
 

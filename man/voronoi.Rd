@@ -4,12 +4,15 @@
 \alias{voronoi}
 \title{Voronoi tessellation on an infinite plane}
 \usage{
-voronoi(x, y, match_polygons = TRUE)
+voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE)
 }
 \arguments{
 \item{x, y}{coordinates of seed points}
 
-\item{match_polygons}{logical. SHould the polygons be re-ordered to match 
+\item{calc_polygons}{calculate polygons from the voronoi vertices and segments
+Default: TRUE}
+
+\item{match_sites}{logical. SHould the polygons be re-ordered to match 
 the seed points? Default: TRUE}
 }
 \value{

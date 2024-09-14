@@ -243,12 +243,12 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |    itr/sec | mem_alloc |
-|:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 394.7µs | 407.9µs | 2427.41745 |  139.56KB |
-| rvoronoi   | 382.2µs | 388.6µs | 2551.04990 |   23.58KB |
-| rtriangle  | 737.3µs |   784µs | 1240.62492 |  292.63KB |
-| deldir     |  16.7ms |  17.3ms |   58.03145 |    5.67MB |
+| expression |     min |  median |   itr/sec | mem_alloc |
+|:-----------|--------:|--------:|----------:|----------:|
+| rvoronoi   | 390.2µs | 408.4µs | 2426.6614 |  162.78KB |
+| rvoronoi   | 382.7µs | 393.8µs | 2517.3336 |   23.58KB |
+| rtriangle  | 732.2µs | 767.2µs | 1264.2931 |  292.63KB |
+| deldir     |  16.8ms |  17.1ms |   57.9974 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -283,21 +283,42 @@ y <- runif(N)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_rvoronoi <- rvoronoi::voronoi(x, y)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# for (p in vor_rvoronoi$polygons) {
-#   polygon(p)
-# }
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  for (p in vor_rvoronoi$polygons) {
+    polygon(p)
+  }
+}
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1)
+vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# for (p in vor_deldir$tiles) {
-#   polygon(p)
-# }
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  for (p in vor_deldir$tiles) {
+    polygon(p)
+  }
+}
+
+if (FALSE) {
+  plot(vor_deldir$tiles)
+}
+  
+if (FALSE) {
+  set.seed(42)
+  x <- runif(20)
+  y <- runif(20)
+  dxy <- deldir(x,y,rw=c(0,1,0,1))
+  cxy1 <- cvt(dxy,verb=TRUE, stopcrit = 'maxit', maxit = 1)
+  plot(cxy1$tiles)
+  with(cxy1$centroids,points(x,y,pch=20,col="red"))
+  cxy2 <- cvt(dxy,stopcrit="m",verb=TRUE)
+  plot(cxy2$tiles)
+  with(cxy2$centroids,points(x,y,pch=20,col="red"))
+}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # RTriangle
@@ -316,9 +337,11 @@ ve <- subset(ve, V1 > 0 & V2 > 0)
 
 ``` r
 bench::mark(
-  voronoi(x, y),
-  cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
-  triangulate(pslg(P = cbind(x, y))),
+  voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
+  voronoi(x, y, calc_polygons = FALSE),
+  deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
+  RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
@@ -327,9 +350,11 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.5ms | 3.56ms | 276.183724 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 165.7ms | 173.64ms | 5.804134 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 728.6µs | 771.68µs | 1166.820621 | 292.6KB |
+| voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE) | 3.48ms | 3.57ms | 275.699908 | 235KB |
+| voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE) | 2.44ms | 2.5ms | 391.974728 | 235KB |
+| voronoi(x, y, calc_polygons = FALSE) | 403.77µs | 417.58µs | 2289.465627 | 137.3KB |
+| deldir::cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 172.79ms | 173.88ms | 5.750506 | 52.1MB |
+| RTriangle::triangulate(pslg(P = cbind(x, y))) | 728.2µs | 780.76µs | 1145.850196 | 292.6KB |
 
 # Pathological Test Cases
 

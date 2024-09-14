@@ -2,7 +2,9 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Voronoi tessellation on an infinite plane
 #' @param x,y coordinates of seed points
-#' @param match_polygons logical. SHould the polygons be re-ordered to match 
+#' @param calc_polygons calculate polygons from the voronoi vertices and segments
+#'        Default: TRUE
+#' @param match_sites logical. SHould the polygons be re-ordered to match 
 #'        the seed points? Default: TRUE
 #' @return named list of data.frames.
 #' \describe{
@@ -21,8 +23,8 @@
 #' voronoi(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-voronoi <- function(x, y, match_polygons = TRUE) {
-  .Call(voronoi_, x, y, match_polygons)
+voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE) {
+  .Call(voronoi_, x, y, calc_polygons, match_sites)
 }
 
 

@@ -70,7 +70,7 @@ polygon(mypoly)
 
 
 
-vor <- voronoi(xs, ys, match_polygons = TRUE)
+vor <- voronoi(xs, ys, match_sites = TRUE)
 
 plot(xs, ys, ann = F, axes = F, asp = 1)
 polygon(vor$polygons[[1]])

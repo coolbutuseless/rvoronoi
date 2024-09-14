@@ -281,21 +281,42 @@ y <- runif(N)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_rvoronoi <- rvoronoi::voronoi(x, y)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# for (p in vor_rvoronoi$polygons) {
-#   polygon(p)
-# }
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  for (p in vor_rvoronoi$polygons) {
+    polygon(p)
+  }
+}
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1)
+vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# for (p in vor_deldir$tiles) {
-#   polygon(p)
-# }
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  for (p in vor_deldir$tiles) {
+    polygon(p)
+  }
+}
+
+if (FALSE) {
+  plot(vor_deldir$tiles)
+}
+  
+if (FALSE) {
+  set.seed(42)
+  x <- runif(20)
+  y <- runif(20)
+  dxy <- deldir(x,y,rw=c(0,1,0,1))
+  cxy1 <- cvt(dxy,verb=TRUE, stopcrit = 'maxit', maxit = 1)
+  plot(cxy1$tiles)
+  with(cxy1$centroids,points(x,y,pch=20,col="red"))
+  cxy2 <- cvt(dxy,stopcrit="m",verb=TRUE)
+  plot(cxy2$tiles)
+  with(cxy2$centroids,points(x,y,pch=20,col="red"))
+}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # RTriangle
@@ -314,9 +335,11 @@ ve <- subset(ve, V1 > 0 & V2 > 0)
 
 ```{r}
 bench::mark(
-  voronoi(x, y),
-  cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
-  triangulate(pslg(P = cbind(x, y))),
+  voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
+  voronoi(x, y, calc_polygons = FALSE),
+  deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
+  RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 ```

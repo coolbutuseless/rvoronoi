@@ -25,7 +25,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Voronoi Tessellation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
+SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
@@ -157,172 +157,182 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   bbox_add(&bounds, ctx.nverts, ctx.vert_x, ctx.vert_y);
   bbox_expand(&bounds, 0.10);
   
-  // Rprintf("BBOX: (%.3f, %.3f), (%.3f, %.3f)\n", bounds.xmin, bounds.ymin,
-  //         bounds.xmax, bounds.ymax);
   
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Merge vertices in voronoi segments to prep for polygon building
-  // void merge_vertices_core_(double tol, 
-  //                           int nverts, double *x, double *y, 
-  //                           int nedges, int *v1, int *v2, 
-  //                           int *fnedges,
-  //                           int verbosity)
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int fnedges = 0; // Final number of edges after merging
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Set up the "working area" for the merging of vertices
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP v1m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
-  SEXP v2m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
-  SEXP linem_ = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
-  
-  int *v1m   = INTEGER(v1m_);
-  int *v2m   = INTEGER(v2m_);
-  int *linem = INTEGER(linem_);
-  
-  memcpy(v1m  , ctx.seg_v1  , ctx.nsegs * sizeof(int));
-  memcpy(v2m  , ctx.seg_v2  , ctx.nsegs * sizeof(int));
-  memcpy(linem, ctx.seg_line, ctx.nsegs * sizeof(int));
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Merge close vertices which are an artefact of the tessellation
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  merge_vertices_core_(1e-10, 
-                       ctx.nverts, ctx.vert_x, ctx.vert_y,
-                       ctx.nsegs, linem, v1m, v2m, 
-                       &fnedges, 0);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Calculate the extra vertices and segments produced if we 
-  // bound the infinite rays
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#define DOBOUNDING
-  
-#ifdef DOBOUNDING
-  int nbverts = 0;
-  int nbsegs  = 0;
-  
-  // Use the merged segments to find infinite rays (single and double ended)
-  // and then calculate the actual number of vertices and segments needed
-  // to store the bounded external polygons
-  calc_space_for_bound_infinite_edges(fnedges, v1m, v2m, &nbverts, &nbsegs);
-  
-  // Rprintf("DoBounding: fnedges = %i, nbverts = %i,  nbsegs = %i\n", 
-  // fnedges, nbverts, nbsegs);
-  
-  // void bound_infinite_edges(
-  //     bbox_t *bounds,
-  //     int nverts, double *x, double *y,
-  //     int nsegs , int *li, int *v1, int *v2,
-  //     int nlines, double *a, double *b, double *c,
-  //     int nbverts, double *xb, double *yb,
-  //     int nbsegs, int *rv1, int *rv2);
-  
-  double *xb = calloc(nbverts , sizeof(double));
-  double *yb = calloc(nbverts , sizeof(double));
-  int *rv1   = calloc(nbsegs  , sizeof(int));
-  int *rv2   = calloc(nbsegs  , sizeof(int));
-  
-  bound_infinite_edges(
-    &bounds,
-    ctx.nverts, ctx.vert_x, ctx.vert_y,
-    fnedges, linem, v1m, v2m,
-    ctx.nlines, ctx.line_a, ctx.line_b, ctx.line_c,
-    &nbverts, xb, yb,
-    &nbsegs, rv1, rv2
-  );
-#endif
-  
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Create a new MEGA vertex list by concatenting the 
-  //   voronoi vertices and the exterior vertices
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ifdef DOBOUNDING
-  SEXP xf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
-  SEXP yf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
-  double *xf = REAL(xf_);
-  double *yf = REAL(yf_);
-  
-  memcpy(xf + 0         , ctx.vert_x, ctx.nverts * sizeof(double));
-  memcpy(yf + 0         , ctx.vert_y, ctx.nverts * sizeof(double));
-  memcpy(xf + ctx.nverts,         xb,    nbverts * sizeof(double));
-  memcpy(yf + ctx.nverts,         yb,    nbverts * sizeof(double));
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Append the new exterior segments to the merged vertex list
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  memcpy(v1m   + fnedges, rv1, nbsegs * sizeof(int));
-  memcpy(v2m   + fnedges, rv2, nbsegs * sizeof(int));
-  for (int i = 0; i < nbsegs; i++) {
-    (linem + fnedges)[i] = -99;
-  }
-  // memset(linem + fnedges, -99, nbsegs * sizeof(int));
-  
-  free(xb);
-  free(yb);
-  free(rv1);
-  free(rv2);
-  fnedges += nbsegs;
-#endif
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Extract the polygons using the (temporary) merged vertices
-  // 
-  // SEXP extract_polygons_core(
-  //    int vert_n, double *vert_x, double *vert_y,  // The voronoi vertices
-  //    int nsegs, int *seg_v1, int *seg_v2,         // Voronoi edges
-  //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
-  //  )
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP polys_ = R_NilValue;
+  SEXP msegs_ = R_NilValue;
   
+  if (asLogical(calc_polygons_)) {
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Merge vertices in voronoi segments to prep for polygon building
+    // void merge_vertices_core_(double tol, 
+    //                           int nverts, double *x, double *y, 
+    //                           int nedges, int *v1, int *v2, 
+    //                           int *fnedges,
+    //                           int verbosity)
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    int fnedges = 0; // Final number of edges after merging
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Set up the "working area" for the merging of vertices
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SEXP v1m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    SEXP v2m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    SEXP linem_ = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    
+    int *v1m   = INTEGER(v1m_);
+    int *v2m   = INTEGER(v2m_);
+    int *linem = INTEGER(linem_);
+    
+    memcpy(v1m  , ctx.seg_v1  , ctx.nsegs * sizeof(int));
+    memcpy(v2m  , ctx.seg_v2  , ctx.nsegs * sizeof(int));
+    memcpy(linem, ctx.seg_line, ctx.nsegs * sizeof(int));
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Merge close vertices which are an artefact of the tessellation
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    merge_vertices_core_(1e-10, 
+                         ctx.nverts, ctx.vert_x, ctx.vert_y,
+                         ctx.nsegs, linem, v1m, v2m, 
+                         &fnedges, 0);
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Calculate the extra vertices and segments produced if we 
+    // bound the infinite rays
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#define DOBOUNDING
+    
 #ifdef DOBOUNDING
-  if (asLogical(match_polygons_)) {
-    polys_ = PROTECT(
-      extract_polygons_internal(
-        ctx.nverts + nbverts, xf, yf,       // Voronoi vertices + perimeter intersections
-        fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
-        length(x_), REAL(x_), REAL(y_)      // Seed points
-      )
-    ); nprotect++;
-  } else {
-    polys_ = PROTECT(
-      extract_polygons_internal(
-        ctx.nverts + nbverts, xf, yf,    // Voronoi vertices + perimeter intersections
-        fnedges, v1m, v2m,                  // Voronoi edges
-        0, NULL, NULL                       // Seed points
-      )
-    ); nprotect++;
-  }
-#else 
-  if (asLogical(match_polygons_)) {
-    polys_ = PROTECT(
-      extract_polygons_internal(
-        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
-        fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
-        length(x_), REAL(x_), REAL(y_)      // Seed points
-      )
-    ); nprotect++;
-  } else {
-    polys_ = PROTECT(
-      extract_polygons_internal(
-        ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
-        fnedges, v1m, v2m,                  // Voronoi edges
-        0, NULL, NULL                       // Seed points
-      )
-    ); nprotect++;
-  } 
+    int nbverts = 0;
+    int nbsegs  = 0;
+    
+    // Use the merged segments to find infinite rays (single and double ended)
+    // and then calculate the actual number of vertices and segments needed
+    // to store the bounded external polygons
+    calc_space_for_bound_infinite_edges(fnedges, v1m, v2m, &nbverts, &nbsegs);
+    
+    // Rprintf("DoBounding: fnedges = %i, nbverts = %i,  nbsegs = %i\n", 
+    // fnedges, nbverts, nbsegs);
+    
+    // void bound_infinite_edges(
+    //     bbox_t *bounds,
+    //     int nverts, double *x, double *y,
+    //     int nsegs , int *li, int *v1, int *v2,
+    //     int nlines, double *a, double *b, double *c,
+    //     int nbverts, double *xb, double *yb,
+    //     int nbsegs, int *rv1, int *rv2);
+    
+    double *xb = calloc(nbverts , sizeof(double));
+    double *yb = calloc(nbverts , sizeof(double));
+    int *rv1   = calloc(nbsegs  , sizeof(int));
+    int *rv2   = calloc(nbsegs  , sizeof(int));
+    
+    bound_infinite_edges(
+      &bounds,
+      ctx.nverts, ctx.vert_x, ctx.vert_y,
+      fnedges, linem, v1m, v2m,
+      ctx.nlines, ctx.line_a, ctx.line_b, ctx.line_c,
+      &nbverts, xb, yb,
+      &nbsegs, rv1, rv2
+    );
 #endif
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Trim the merged indices to size 
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP msegs_ = PROTECT(
-    create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
-  ); nprotect++;
-  set_df_attributes(msegs_, fnedges, length(v1m_));
+    
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Create a new MEGA vertex list by concatenting the 
+    //   voronoi vertices and the exterior vertices
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#ifdef DOBOUNDING
+    SEXP xf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
+    SEXP yf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
+    double *xf = REAL(xf_);
+    double *yf = REAL(yf_);
+    
+    memcpy(xf + 0         , ctx.vert_x, ctx.nverts * sizeof(double));
+    memcpy(yf + 0         , ctx.vert_y, ctx.nverts * sizeof(double));
+    memcpy(xf + ctx.nverts,         xb,    nbverts * sizeof(double));
+    memcpy(yf + ctx.nverts,         yb,    nbverts * sizeof(double));
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Append the new exterior segments to the merged vertex list
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    memcpy(v1m   + fnedges, rv1, nbsegs * sizeof(int));
+    memcpy(v2m   + fnedges, rv2, nbsegs * sizeof(int));
+    for (int i = 0; i < nbsegs; i++) {
+      (linem + fnedges)[i] = -99;
+    }
+    // memset(linem + fnedges, -99, nbsegs * sizeof(int));
+    
+    free(xb);
+    free(yb);
+    free(rv1);
+    free(rv2);
+    fnedges += nbsegs;
+#endif
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Extract the polygons using the (temporary) merged vertices
+    // 
+    // SEXP extract_polygons_core(
+    //    int vert_n, double *vert_x, double *vert_y,  // The voronoi vertices
+    //    int nsegs, int *seg_v1, int *seg_v2,         // Voronoi edges
+    //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
+    //  )
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+#ifdef DOBOUNDING
+    if (asLogical(match_sites_)) {
+      polys_ = PROTECT(
+        extract_polygons_internal(
+          ctx.nverts + nbverts, xf, yf,       // Voronoi vertices + perimeter intersections
+          fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
+          length(x_), REAL(x_), REAL(y_)      // Seed points
+        )
+      ); nprotect++;
+    } else {
+      polys_ = PROTECT(
+        extract_polygons_internal(
+          ctx.nverts + nbverts, xf, yf,    // Voronoi vertices + perimeter intersections
+          fnedges, v1m, v2m,                  // Voronoi edges
+          0, NULL, NULL                       // Seed points
+        )
+      ); nprotect++;
+    }
+#else 
+    if (asLogical(match_sites_)) {
+      polys_ = PROTECT(
+        extract_polygons_internal(
+          ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
+          fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
+          length(x_), REAL(x_), REAL(y_)      // Seed points
+        )
+      ); nprotect++;
+    } else {
+      polys_ = PROTECT(
+        extract_polygons_internal(
+          ctx.nverts, ctx.vert_x, ctx.vert_y, // Voronoi vertices only
+          fnedges, v1m, v2m,                  // Voronoi edges
+          0, NULL, NULL                       // Seed points
+        )
+      ); nprotect++;
+    } 
+#endif
+    
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Trim the merged indices to size 
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    msegs_ = PROTECT(
+      create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
+    ); nprotect++;
+    set_df_attributes(msegs_, fnedges, length(v1m_));
+    
+    
+    convert_indexing_c_to_r(linem_);
+    convert_indexing_c_to_r(v1m_);
+    convert_indexing_c_to_r(v2m_);
+    
+  }  // End: if (calc_polygons)
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
@@ -402,10 +412,6 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   convert_indexing_c_to_r(seg_line_);
   convert_indexing_c_to_r(seg_v1_);
   convert_indexing_c_to_r(seg_v2_);
-  
-  convert_indexing_c_to_r(linem_);
-  convert_indexing_c_to_r(v1m_);
-  convert_indexing_c_to_r(v2m_);
   
   
   

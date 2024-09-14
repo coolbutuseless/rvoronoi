@@ -20,5 +20,5 @@ typedef struct {
   bool deleted;     // has this polygon been deleted
 } poly_t;
 
-int match_polygons_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys);
+int match_sites_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys);
 
