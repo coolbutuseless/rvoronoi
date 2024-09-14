@@ -83,18 +83,18 @@ SEXP points_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Match a point to a polygon
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int match_polygons_to_seed_points(int point_idx, double x, double y, int npolys, poly_t *polys) {
+int match_polygons_to_seed_points(int site_idx, double x, double y, int npolys, poly_t *polys) {
   
   // Rprintf("PIP ---------------------------------\n");
   
   // loop over all polygons
   for (int i = 0; i < npolys; i++) {
     
-    // Rprintf("PIP: %i in %i [%i]\n", point_idx, poly.polygon_idx, poly.deleted);
+    // Rprintf("PIP: %i in %i [%i]\n", site_idx, poly.polygon_idx, poly.deleted);
     
     // No need to search this polygon if it has been deleted, or if it
     // has been claimed by another point.  
-    // Remember: For a voronoi tesselation a seed point can only match one
+    // Remember: For a voronoi tessellation a seed point can only match one
     // polygon (and vice versa)
     if (polys[i].deleted || polys[i].taken) continue;
     
@@ -107,15 +107,15 @@ int match_polygons_to_seed_points(int point_idx, double x, double y, int npolys,
       if (pip) {
         // point is in this polygon!
         polys[i].taken = true;
-        polys[i].point_idx = point_idx;
-        // Rprintf("Point %3i => Polygon %3i\n", point_idx, polys[i].polygon_idx);
+        polys[i].site_idx = site_idx;
+        // Rprintf("Point %3i => Polygon %3i\n", site_idx, polys[i].polygon_idx);
         return polys[i].polygon_idx;
       }
     }
     
   } // next polygon
   
-  // Rprintf("match_polygons_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", point_idx, x, y);
+  // Rprintf("match_polygons_to_seed_points(): Point %i (%f, %f) did not match any polygons!\n", site_idx, x, y);
   return -1;
 }
 

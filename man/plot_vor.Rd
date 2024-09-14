@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{plot_vor}
 \alias{plot_vor}
-\title{Plot the vertices of the voronoi tesselation}
+\title{Plot the vertices of the voronoi tessellation}
 \usage{
 plot_vor(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = ".", ...)
 }
@@ -25,5 +25,5 @@ plot_vor(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = ".", ...)
 None.
 }
 \description{
-Plot the vertices of the voronoi tesselation
+Plot the vertices of the voronoi tessellation
 }

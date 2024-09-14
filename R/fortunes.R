@@ -1,13 +1,13 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Voronoi tesselation on an infinite plane
+#' Voronoi tessellation on an infinite plane
 #' @param x,y coordinates of seed points
 #' @param match_polygons logical. SHould the polygons be re-ordered to match 
 #'        the seed points? Default: TRUE
 #' @return named list of data.frames.
 #' \describe{
-#'   \item{vertex}{data.frame of vertex coordinates in the tesselation}
-#'   \item{line}{data.frame of line equations in the tesselation of the form 'ax + by = c'}
+#'   \item{vertex}{data.frame of vertex coordinates in the tessellation}
+#'   \item{line}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
 #'   \item{segment}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
 #'         is the row index into the 'line' data.frame.  'v1' and 'v2' are 
 #'         the indices into 'vertex' which define the endpoints along the 

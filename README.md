@@ -11,7 +11,7 @@
 <!-- badges: end -->
 
 `rvoronoi` is a testing ground for some rendering ideas using fast
-delaunay triangulation and voronoi tesselation.
+delaunay triangulation and voronoi tessellation.
 
 For small sets of seed points (e.g. 20 points) this package can be 10x
 faster than `RTriangle` package. For larger sets of seed points, the gap
@@ -44,8 +44,8 @@ dim(rj)
 # grid.raster(rj)
 
 
-set.seed(1)
-N <- 100
+set.seed(5)
+N <- 4000
 x <- (runif(N, 1, ncol(rj))) |> sort() 
 y <- (runif(N, 1, nrow(rj))) 
 
@@ -102,9 +102,9 @@ grid.draw(grob)
 | site indices (defining polygons) | Yes      |        |           |
 | polygon coordinates              | Yes      |        |           |
 
-## Voronoi Tesselation
+## Voronoi Tessellation
 
-The following code calculates the voronoi tesselation on 20 random
+The following code calculates the voronoi tessellation on 20 random
 points.
 
 ``` r
@@ -136,7 +136,7 @@ y <- runif(10)
 del <- delaunay(x, y)$segment
 
 # Plot the seed points
-plot(x, y, asp = 1, col = 'red', ann = F, axes = F)
+plot(x, y, asp = 1, col = 'red', ann = F, axes = F, pch = 19)
 
 # Plot all finite segments.  
 # This will not plot any of the segments which do not converge
@@ -156,6 +156,13 @@ Compare Delaunay Triangulation using
   - `remotes::install_github("hypertidy/delone")`
 - `{RTriangle}`
 - `{deldir}`
+
+<details>
+
+<summary>
+
+Delaunay Triangulation Benchmark
+</summary>
 
 ``` r
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,8 +225,11 @@ stopifnot(identical(
   rvoronoi:::normalise_del(del_rvoronoi),
   rvoronoi:::normalise_del(del_deldir)
 ))
+```
 
+</details>
 
+``` r
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Benchmark
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,19 +242,26 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min | median |    itr/sec | mem_alloc |
-|:-----------|--------:|-------:|-----------:|----------:|
-| rvoronoi   | 390.8µs |  408µs | 2420.95487 |  139.56KB |
-| rtriangle  | 730.7µs |  768µs | 1257.77451 |  292.63KB |
-| deldir     |  16.7ms |   17ms |   58.42824 |    5.67MB |
+| expression |     min |  median |    itr/sec | mem_alloc |
+|:-----------|--------:|--------:|-----------:|----------:|
+| rvoronoi   | 392.5µs | 412.2µs | 2410.61717 |  139.56KB |
+| rtriangle  | 725.6µs | 764.6µs | 1283.33544 |  292.63KB |
+| deldir     |  16.7ms |  17.1ms |   58.54301 |    5.67MB |
 
-# Voronoi Tesselation Benchmark
+# Voronoi Tessellation Benchmark
 
 Compare:
 
 - `{rvoronoi}`
 - `{deldir}`
 - `{RTriangle}`
+
+<details>
+
+<summary>
+
+Voronoi Tessellation Benchmark
+</summary>
 
 ``` r
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -291,8 +308,11 @@ ve <- subset(ve, V1 > 0 & V2 > 0)
 # p1 <- tri$VP[ve$V1, ] |> as.data.frame()
 # p2 <- tri$VP[ve$V2, ] |> as.data.frame()
 # segments(p1$V1, p1$V2, p2$V1, p2$V2)
+```
 
+</details>
 
+``` r
 bench::mark(
   voronoi(x, y),
   cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
@@ -305,9 +325,9 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y) | 3.38ms | 3.46ms | 285.242446 | 235KB |
-| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 163.48ms | 166.32ms | 5.990506 | 52.1MB |
-| triangulate(pslg(P = cbind(x, y))) | 725µs | 759.24µs | 1122.538395 | 292.6KB |
+| voronoi(x, y) | 3.5ms | 3.6ms | 274.205035 | 235KB |
+| cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 161.2ms | 162.3ms | 6.126727 | 52.1MB |
+| triangulate(pslg(P = cbind(x, y))) | 726.7µs | 765.1µs | 1217.402095 | 292.6KB |
 
 # Pathological Test Cases
 

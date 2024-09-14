@@ -23,7 +23,7 @@
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Voronoi Tesselation
+// Voronoi Tessellation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   
@@ -63,7 +63,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Space for vertices
   // If there are 'n' points then 
-  //   maximum number of vertices in the voronoi tesselation is 2n - 5
+  //   maximum number of vertices in the voronoi tessellation is 2n - 5
   //   maximum number of edges is 3n - 6
   //
   // But the above result does not account for infinite rays.
@@ -105,7 +105,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   int max_interior_verts = 2 * n - 5;
   int max_interior_edges = 3 * n - 6;
   
-  int max_exterior_verts = 2 * n + 4;
+  // int max_exterior_verts = 2 * n + 4;
   int max_exterior_edges = 2 * n + 4;
   
   int max_verts = max_interior_verts + 10; 
@@ -143,7 +143,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   ctx.seg_v2   = INTEGER(seg_v2_);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Calculate voronoi tesselation using Fortune's Sweep algorithm 
+  // Calculate voronoi tessellation using Fortune's Sweep algorithm 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   freeinit(&ctx.sfl, sizeof *ctx.sites);
   init_sites(&ctx, REAL(x_), REAL(y_), length(x_));
@@ -272,7 +272,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP match_polygons_) {
   // 
   // SEXP extract_polygons_core(
   //    int vert_n, double *vert_x, double *vert_y,  // The voronoi vertices
-  //    int seg_n, int *seg_v1, int *seg_v2,         // Voronoi edges
+  //    int nsegs, int *seg_v1, int *seg_v2,         // Voronoi edges
   //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
   //  )
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

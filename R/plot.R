@@ -171,7 +171,7 @@ draw_sites <- function(vor, pch = '+', cex = 0.5, text = FALSE, ...) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Plot the vertices of the voronoi tesselation
+#' Plot the vertices of the voronoi tessellation
 #' @param vor object returned by \code{voronoi()}
 #' @param ... other arguments passed to \code{plot()}
 #' @param asp aspect ration. Default 1
@@ -180,7 +180,7 @@ draw_sites <- function(vor, pch = '+', cex = 0.5, text = FALSE, ...) {
 #' @param axes draw axes? Default: FALSE
 #' @param buffer buffer around extents. defualt: 0
 #' @return None.
-#' @importFrom graphics rect
+#' @importFrom graphics rect par
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = '.', ...) {
@@ -188,7 +188,7 @@ plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = 
   xlim = c(vor$extents$xmin - buffer, vor$extents$xmax + buffer)
   ylim = c(vor$extents$ymin - buffer, vor$extents$ymax + buffer)
   
-  par(mar = c(0, 0, 0, 0))
+  graphics::par(mar = c(0, 0, 0, 0))
   plot(vor$vertices$x, vor$vertices$y, asp = asp, ann = ann, axes = axes, 
        xlim = xlim, ylim = ylim, ...)
   

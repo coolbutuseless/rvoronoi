@@ -21,23 +21,27 @@
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// An 'edge' is a directed edge with the tesselation
-// For every bounded segment (ctx.seg_v1, ctx.seg_v2) add the two 
-// directed edges  (v1, v2) and (v2, v1)
+// An 'edge' is a directed edge
+// 
+// For every segment (line, v1, v2)
+//    add the two directed edges  (v1, v2) and (v2, v1)
 // 
 // For every edge, include the angle in radians it makes with the horizontal.
-// values should be in range [0, 2pi)
+// Angles should be in range [0, 2pi)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct {
   int v1;
   int v2;
-  double theta;
+  double theta; // Angle in radians. In range [0, 2pi)
 } edge_t;
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// A 'wedge' is a sequence of 3 vertices defining an angle at 'v2'
-// v1,v2,v3 are indexes into (ctx.vert_x, ctx.vert_y)
+// A 'wedge' is a sequence of 3 vertices defining the angle at 'v2'
+// v1,v2,v3 are indexes into (ctx.xvor, ctx.yvor)
+//
+// 'used' keeps track of whether the wedge has already been used as part
+// of a polygon
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct {
   int v1;
@@ -108,10 +112,11 @@ void free_polys(int npolys, poly_t *polys) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Given the vertices and edge information (after running voronoi())
-// build the list of regions/polygons
+// Fortune's Voronoi returns vertices and segments (line, v1, v2)
 //
-// The method used in this package to convert a list of uncorrelated edges to 
+// This function builds those elements into a set of polygons.
+//
+// The method used in this package to convert a list of uncorrelated segments to 
 // a list of polygons is from Jiang & Bunke's "An optimal 
 // algorithm for extracting the regions of a plane graph" (Pattern Recognition
 // Letters 14 (1993), p553-558).
@@ -127,79 +132,100 @@ void free_polys(int npolys, poly_t *polys) {
 //     3. Find the next unused wedge - mark as 'used', add to region. If no unsed wedge, then algorithm complete
 //     4. Search for matching continuing wedge. E.g. if initial wedge is c(1, 4, 7), look for wedge c(4, 7, x). Add to region
 //     5. If new wedge matches original wedge, then: region is extracted. Go to 3 else: go to 4
+//
+// 'poly_t' is defined in 'R-polygon-matching.h'
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int seg_n, int *seg_v1, int *seg_v2, int *npolysp) {
+poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor, 
+                              int n_vor_segs, int *v1vor, int *v2vor, 
+                              int *npolys) {
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // How many bounded edges are there - with neither vertex index being NA
+  // How many finite segments are there? 
+  //   i.e. vertex index >= 0
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n_undir_edges = 0;
-  for (int i = 0; i < seg_n; i++) {
-    n_undir_edges += seg_v1[i] >= 0 && seg_v2[i] >= 0;
+  int n_finite_segments = 0;
+  for (int i = 0; i < n_vor_segs; i++) {
+    n_finite_segments += v1vor[i] >= 0 && v2vor[i] >= 0;
   }
   
-  if (n_undir_edges == 0) {
-    // No finite edges to process. i.e. no polygons are possible!
-    *npolysp = 0;
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Check there are some finite segments to process. 
+  // If there are no segments then no polygons are possible!
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (n_finite_segments == 0) {
+    *npolys = 0;
     return NULL;
   }
     
-    
-  int n_dir_edges = 2 * n_undir_edges;
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // For each finite segment in the voronoi, two directed edges need
+  // to be created.
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int n_dir_edges = 2 * n_finite_segments;
 
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Allocate space for TWICE the number of bounded edges (undirected)
-  // 'edge' is going to hold **directed** edges
+  // Allocate space for directed edges
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   edge_t *edge = calloc((unsigned long)n_dir_edges, sizeof(edge_t));
-  if (edge == NULL) error("Could not allocate edge memory");
+  if (edge == NULL) error("extract_polygons_core(): Could not allocate edge memory");
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Copy edges in primary direction and calculate angle
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int idx = 0;
-  for (int i = 0; i < seg_n; i++) {
-    if (seg_v1[i] < 0 || seg_v2[i] < 0)
+  for (int i = 0; i < n_vor_segs; i++) {
+    
+    // The vertex indicies at each end of this segment
+    int v1 = v1vor[i]; 
+    int v2 = v2vor[i];
+    
+    // Don't process semi-infinite or infinite segments
+    if (v1 < 0 || v2 < 0)
       continue;
     
-    if (seg_v1[i] == seg_v2[i]) {
-      error("dupe vertex at C index %i. Use `merge_vertices()`", i);
+    // Sanity check. There should not be any zero-length segments 
+    if (v1 == v2) {
+      error("extract_polygons_core(): dupe vertex at C index %i. Use `merge_vertices()`?", i);
     }
     
-    int v1 = seg_v1[i]; 
-    int v2 = seg_v2[i];
-    
-    double x1 = vert_x[v1];
-    double x2 = vert_x[v2];
-    double y1 = vert_y[v1];
-    double y2 = vert_y[v2];
-    
-    // Rprintf("(%2i, %2i) (%.3f, %.3f) (%.3f, %.3f)\n", v1, v2, x1, y1, x2, y2);
-    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Calculate the angle of this segment (in radians) and
+    // ensure that it lies within the range [0, 2pi)
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    double x1 = xvor[v1];
+    double x2 = xvor[v2];
+    double y1 = yvor[v1];
+    double y2 = yvor[v2];
     double theta = atan2(y2 - y1, x2 - x1);
     theta = theta < 0 ? theta + 2 * M_PI : theta;
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Create this directed edge
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     edge[idx].v1    = v1;
     edge[idx].v2    = v2;
     edge[idx].theta = theta;
     idx++;
   }
   
-  if (idx != n_undir_edges) {
-    error("extract_polygons() poly: sanity idx != nedges.  %i != %i", idx, n_undir_edges);
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Sanity check 
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (idx != n_finite_segments) {
+    error("extract_polygons() poly: sanity idx != nedges.  %i != %i", idx, n_finite_segments);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Copy edges in the alternate direction. Flip the angle
+  // Copy edges in the alternate direction and flip the angle
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  for (int i = 0; i < n_undir_edges; i++) {
-    edge[n_undir_edges + i].v1    = edge[i].v2;
-    edge[n_undir_edges + i].v2    = edge[i].v1;
+  for (int i = 0; i < n_finite_segments; i++) {
+    edge[n_finite_segments + i].v1    = edge[i].v2;
+    edge[n_finite_segments + i].v2    = edge[i].v1;
     double theta = edge[i].theta + M_PI;
     theta = theta >= 2 * M_PI ? theta - 2 * M_PI : theta;
-    edge[n_undir_edges + i].theta = theta;
+    edge[n_finite_segments + i].theta = theta;
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,6 +238,7 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   wedge_t *wedge = calloc((unsigned long)n_dir_edges, sizeof(wedge_t));
   if (wedge == NULL) error("Could not allocated wedge memory");
+  
   idx = 0;
   int v1_group = edge[0].v1;
   int v2_first = edge[0].v2;
@@ -251,10 +278,25 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Figure out search bounds for each wedge starting with a particular
-  // vertex
+  // For each wedge (i1, i2, i3), we must find the matching wedge 
+  // (i2, i3, *) which has not already been claimed.
+  //
+  // Since the wedges are sorted by (i1, i2), the original paper does a 
+  // binary search to find the matching wedge.
+  // 
+  // However! For a generic random (non-pathological) voronoi each vertex 
+  // will only take part in a handful of wedges.
+  //
+  // For this implementation of the algorithm, I will pre-calculate 
+  // the start/stop index of each 'i1' value in the sorted wedge list.  
+  // 
+  // This means that a search for (i1, i2, *) can lookup the wedge index
+  // for where (i1, *, *) starts and ends, and onlly check for matches within
+  // those bounds.
+  //
+  // My totally untested assumption is that this index lookup method 
+  // is cache friendlier than a binary search.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
   typedef struct {
     int first; // At which index is this vertex first seen in 'wedge'?
     int last;  // At which index is this vertex last  seen in 'wedge'?
@@ -285,18 +327,8 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
     }
   }
 
-  // last time the last vertex index is seen is the last edge (obviously :)
+  // The last time the final vertex index is seen is the last edge 
   bounds[cvert].last = n_dir_edges - 1;
-
-  // Verbosity/debugging
-  // for (int i = 0; i < n_dir_edges; i++) {
-  //   Rprintf("W %3i %i: (%3i, %3i, %3i)\n", i, wedge[i].used, wedge[i].v1, wedge[i].v2, wedge[i].v3);
-  // }
-  //
-  // for (int i = 0; i < nbounds; i++) {
-  //   Rprintf("B %i  [%i, %i]\n", i, bounds[i].first, bounds[i].last);
-  // }
-  
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -309,20 +341,24 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
   //        Then: Complete region has been extracted. Go to 3 
   //        ELse: go to 4 so find next matching wedge
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  // Current polygons in C form: pointer to arrays of integer vertex indices
   poly_t *polys;
   int poly_capacity = 32;
-  int npolys = 0;
   polys = calloc((unsigned long)poly_capacity, sizeof(poly_t));
   if (polys == NULL) error("Couldn't allocate polys");
   
   // Temp storage for the current set of vertex indices
-  int vidx[1024];
-  int nvert = 0;
+#define MAX_VERTS_PER_POLY 4096
+  int vidx[MAX_VERTS_PER_POLY];
+  int nvert = 0; // Number of vertices in this particular polygon
   
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Keep searching for polygons until we run out of wedges
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   while(1) {
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Reset the vertex count for this new polygon
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     nvert = 0;
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,27 +374,47 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       }
     }
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // If no unsused wedges were found, it means we've extracted all 
+    // the polygons from this data.  Job complete!
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if (!found_unused) {
-      // No more unused wedges. Job complete!
       break;
     }
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Record the v1 and v2 for the wedge found (v1, v2, *)
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     vidx[nvert++] = wedge[first].v1;
     vidx[nvert++] = wedge[first].v2;
     
-    int i = first;  // current wedge
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // i = current wedge index
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    int i = first;  
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // When we loop around to the first wedge, we stop capturing vertices
+    // for this polygon, but we need to keep marking wedges as used.
+    // For any particular polygon extraction, capturing = false for the 
+    // last two wedges in the sequence
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     bool capturing = true;
     
-    
-    // Find all subsequent wedge matches for the initial wedge
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Find subsequent wedge match for the current wedge
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     while (true) {
       
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      // Store the 'v3' vertex from the current wedge
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       if (capturing) {
         vidx[nvert++] = wedge[i].v3;
-      }
-      
-      if (nvert > 1000) {
-        error("'nvert' > 1000");
+        if (nvert == MAX_VERTS_PER_POLY) {
+          error("Number of vertices for a single polygon exceeds limit of 16384. Please file an issue");
+        }
       }
       
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -371,7 +427,11 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       bool match_found = false;
       
       
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // Old linear search for next wedge
+      // I.e. exhaustive search through *all* wedges to find an unused 
+      // wedge which starts with (v2, v3, *) to match current (v1, v2, v3)
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // for (j = 0; j < n_dir_edges; j++) {
       //   if (!wedge[j].used &&
       //       wedge[j].v1 == wedge[i].v2 &&
@@ -382,12 +442,15 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       //   }
       // }
       
-      // New sub-limear search for next matching wedge.
-      // just searches between the known start/end index in 'wedge' where
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      // New lineear search for next matching wedge but with pre-calculated 
+      // offset to to where (v2, *, *) starts in the wedge list 
+      // I.e. only search linearly through (v2, *, *) wedges.
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       int this_v1 = wedge[i].v2;
       for (j = bounds[this_v1].first; j <= bounds[this_v1].last; j++) {
         if (!wedge[j].used &&
-            wedge[j].v1 == wedge[i].v2 &&
+            wedge[j].v1 == wedge[i].v2 &&   // this check should always return true. leaving for sanity reasons
             wedge[j].v2 == wedge[i].v3) {
           wedge[j].used = true;
           match_found = true;
@@ -402,11 +465,20 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // If the end of this matching wedge is identical to the 
       // start of the first wedge, then we have completed a polygon!
+      // 
+      //  - don't capture any more vertices (capturing = FALSE)
+      //  - but keep processing so we mark this wedge and the following wedge
+      //    as used.
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       if (wedge[j].v3 == wedge[first].v1) {
         capturing = false;
       }
       
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      // We have not found wedge (*, v1i, v2i) which matches the 
+      // starting wedge (v1i, v2i, v3i).  
+      // Our polygon is complete!
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       if (wedge[j].v2 == wedge[first].v1 &&
           wedge[j].v3 == wedge[first].v2) {
         break;
@@ -414,59 +486,52 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // Continue search to find the next matching wedge
+      // Set the current wedge index to be this latest matching wedge index and
+      // continue
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       i = j;
     }
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // record this set of temporary verts as a polygon
+    // Exaand storage if we've reached capacity for storing polygons
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (npolys == poly_capacity) {
-      // Exaand storage if we've reached capacity
+    if (*npolys == poly_capacity) {
       poly_capacity *= 2;
       polys  = realloc(polys , (unsigned long)poly_capacity * sizeof(poly_t));
     } 
     
-    polys[npolys].v = malloc((unsigned long)nvert * sizeof(int));
-    if (polys[npolys].v == NULL) error("polys[npolys] failed allocation");
-    memcpy(polys[npolys].v, &vidx, (unsigned long)nvert * sizeof(int));
-    polys[npolys].nvert = nvert;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Allocate room for the vertices in this polygon
+    // Copy over the "working memory" where the polygon vertices have been
+    // accumulated (i.e. 'vidx') and set the vertex count for this poly_t struct
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    polys[*npolys].v = malloc((unsigned long)nvert * sizeof(int));
+    if (polys[*npolys].v == NULL) error("polys[npolys] failed allocation");
+    memcpy(polys[*npolys].v, &vidx, (unsigned long)nvert * sizeof(int));
+    polys[*npolys].nvert = nvert;
     
-    npolys++;
+    // Increase the polygon count then go found the next one
+    (*npolys)++;
   
   } // while(1): Find next unused wedge
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Dump info about all polygons
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // for (int i = 0; i < npolys; i++) {
-  //   int nvert = nverts[i];
-  //   int *vidx = polys[i];
-  //   
-  //   Rprintf("[%2i]  ", i);
-  //   for (int j = 0; j < nvert; j++) {
-  //     Rprintf("%2i ", vidx[j]);
-  //   }
-  //   Rprintf("\n");
-  //   
-  // }
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Calculate polygon coordinates, bbox etc
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  for (int i = 0; i < npolys; i++) {
+  for (int i = 0; i < *npolys; i++) {
     int nvert = polys[i].nvert;
     int *vidx = polys[i].v;
     
-    polys[i].polygon_idx = i;
-    polys[i].taken = 0;
-    polys[i].deleted = 0;
-    polys[i].point_idx = -1;
-    polys[i].cx = 0;
-    polys[i].cy = 0;
+    polys[i].polygon_idx =  i; // Polygon number in order it was found
+    polys[i].taken       =  0; // Has polygon been matched to site
+    polys[i].deleted     =  0; // The algo will produce 1 large, region-bounding polygon which should be deleted
+    polys[i].site_idx   = -1; // Which of the original sites does this polygon match
+    polys[i].cx          =  0; // Centroid x
+    polys[i].cy          =  0; // Centroid y
     
-    polys[i].bbox = bbox_new();
+    polys[i].bbox = bbox_new(); // Bounding box - used to accelerate matching to initial sites
     
     polys[i].x = malloc(nvert * sizeof(double));
     polys[i].y = malloc(nvert * sizeof(double));
@@ -474,33 +539,25 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
       error("Could not allocate mem for polys[i].x and .y");
     }
     
+    // Calculate actual coordinates of each polygon vertex
     for (int j = 0; j < nvert; j++) {
-      polys[i].x[j] = vert_x[ vidx[j] ];
-      polys[i].y[j] = vert_y[ vidx[j] ];
+      polys[i].x[j] = xvor[ vidx[j] ];
+      polys[i].y[j] = yvor[ vidx[j] ];
       
       polys[i].cx += polys[i].x[j];
       polys[i].cy += polys[i].y[j];
-      
-      // polys[i].bbox.xmin = polys[i].x[j] < polys[i].bbox.xmin ? polys[i].x[j] : polys[i].bbox.xmin;
-      // polys[i].bbox.xmax = polys[i].x[j] > polys[i].bbox.xmax ? polys[i].x[j] : polys[i].bbox.xmax;
-      // polys[i].bbox.ymin = polys[i].y[j] < polys[i].bbox.ymin ? polys[i].y[j] : polys[i].bbox.ymin;
-      // polys[i].bbox.ymax = polys[i].y[j] > polys[i].bbox.ymax ? polys[i].y[j] : polys[i].bbox.ymax;
     }
     
+    // Expand bounding box to encompas all polygon vertices
     bbox_add(&polys[i].bbox, nvert, polys[i].x, polys[i].y);
     
-    
-    
-    // compute centroid
+    // compute polygon centroid
     polys[i].cx /= nvert;
     polys[i].cy /= nvert;
     
     // compute bbox area
     polys[i].bbox_area = (polys[i].bbox.xmax - polys[i].bbox.xmin) * (polys[i].bbox.ymax - polys[i].bbox.ymin);
   }
-  
-  
-  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
@@ -509,7 +566,6 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
   free(wedge);
   free(edge);
   
-  *npolysp = npolys;
   return polys;
 }
 
@@ -519,9 +575,9 @@ poly_t *extract_polygons_core(int vert_n, double *vert_x, double *vert_y, int se
 // Create 'poly_t *polys' object and then translate into final 
 // R SEXP nested list representation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y, 
-                               int seg_n, int *seg_v1, int *seg_v2,
-                               int seed_n, double *seed_x, double *seed_y) {
+SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor, 
+                               int n_vor_segs, int *v1vor, int *v2vor,
+                               int n_sites, double *xsite, double *ysite) {
   
   int nprotect = 0;
   int npolys = 0;
@@ -529,14 +585,19 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract polygons
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  poly_t *polys = extract_polygons_core(vert_n, vert_x, vert_y, seg_n, seg_v1, seg_v2, &npolys);
+  poly_t *polys = extract_polygons_core(n_vor_verts, xvor, yvor, 
+                                        n_vor_segs, v1vor, v2vor, 
+                                        &npolys);
   
   if (npolys == 0) {
     return R_NilValue;
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Find largest polygon by bbox
+  // Find largest polygon by bbox and mark for deletion.
+  // The polygon extraction algorithm  extracts the exterior polyon of 
+  // the outside boundary.  It is the largest polygon in the extracted polygons
+  // and does not represent a voronoi cell.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int max_bbox_area_idx = -1;
   double max_bbox_area  = -1;
@@ -552,43 +613,38 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
   SEXP polys_ = R_NilValue;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // If seed points given then reorganise polygons in the same order as 
+  // If seed points given then re-organise polygons in the same order as 
   // the seed points.  Otherwise a generic compact representation is used
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (seed_n > 0) {
+  if (n_sites > 0) {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Seed / Polygon matching
+    // For each site, find the polygon it is contained within.
+    // The polygon 'site_idx' is set to this site index.
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // int *polygon_idx = malloc(seed_n * sizeof(int));
-    // for (int i = 0; i < seed_n; i++) {
-    //   polygon_idx = -1;  
-    // }
-    
-    for (int i = 0; i < seed_n; i++) {
-      int res = match_polygons_to_seed_points(i, seed_x[i], seed_y[i], npolys, polys);
+    for (int i = 0; i < n_sites; i++) {
+      int res = match_polygons_to_seed_points(i, xsite[i], ysite[i], npolys, polys);
       if (res < 0) {
         warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
       }
     }
     
-    polys_ = PROTECT(allocVector(VECSXP, seed_n)); nprotect++;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // R list of polygons
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    polys_ = PROTECT(allocVector(VECSXP, n_sites)); nprotect++;
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Each polygon = 
+    //    -  x, y coordinates
+    //    -  v: vertex indices
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     for (int i = 0; i < npolys; i++) {
       if (polys[i].deleted) continue;
       
+      // Allocate vectors
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
-      
-      SEXP ll_ = PROTECT(
-        create_named_list(3, "x", x_, "y", y_, "v", v_)
-      ); 
-      
-      if (polys[i].point_idx < 0) {
-        warning("Poly [%i] has a point index of %i\n", i, polys[i].point_idx);  
-      } else {
-        SET_VECTOR_ELT(polys_, polys[i].point_idx, ll_);
-      }
       
       // Copy from the poly_t struct
       memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
@@ -597,13 +653,27 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       
       convert_indexing_c_to_r(v_);
       
+      SEXP ll_ = PROTECT(
+        create_named_list(3, "x", x_, "y", y_, "v", v_)
+      ); 
+      
+      set_df_attributes(ll_, polys[i].nvert, polys[i].nvert);
+      
+      // Place the polygon in the correct position in the list
+      if (polys[i].site_idx < 0) {
+        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);  
+      } else {
+        SET_VECTOR_ELT(polys_, polys[i].site_idx, ll_);
+      }
+      
       UNPROTECT(4); // everything is protected as they're now members of list 'res_'
     }
     
   } else {
-    // No seed points. Just a compact list of polygons
-    
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // No sites given so just return a generic list of polygons in the order 
+    // they were found
+    //
     // Convert C polygons to an R list of lists of coordinates:
     //  list(list(x = ..., y = ...), list(x = ..., y = ...))
     // 
@@ -617,16 +687,10 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
     for (int i = 0; i < npolys; i++) {
       if (polys[i].deleted) continue;
       
+      // Allocate R space
       SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
       SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
-      
-      SEXP ll_ = PROTECT(
-        create_named_list(3, "x", x_, "y", y_, "v", v_)
-      ); 
-      
- 
-      SET_VECTOR_ELT(polys_, llidx, ll_);
       
       // Copy from the poly_t struct
       memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
@@ -634,6 +698,15 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
       memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
       
       convert_indexing_c_to_r(v_);
+      
+      SEXP ll_ = PROTECT(
+        create_named_list(3, "x", x_, "y", y_, "v", v_)
+      ); 
+      
+      set_df_attributes(ll_, polys[i].nvert, polys[i].nvert);
+      
+ 
+      SET_VECTOR_ELT(polys_, llidx, ll_);
       
       UNPROTECT(4); // everything is protected as they're now members of list 'res_'
       llidx++;
@@ -654,7 +727,7 @@ SEXP extract_polygons_internal(int vert_n, double *vert_x, double *vert_y,
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// R shimx`
+// R shim
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP xseed_, SEXP yseed_, SEXP verbosity_) {
 

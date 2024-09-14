@@ -2,7 +2,7 @@
 % Please edit documentation in R/fortunes.R
 \name{voronoi}
 \alias{voronoi}
-\title{Voronoi tesselation on an infinite plane}
+\title{Voronoi tessellation on an infinite plane}
 \usage{
 voronoi(x, y, match_polygons = TRUE)
 }
@@ -15,8 +15,8 @@ the seed points? Default: TRUE}
 \value{
 named list of data.frames.
 \describe{
-  \item{vertex}{data.frame of vertex coordinates in the tesselation}
-  \item{line}{data.frame of line equations in the tesselation of the form 'ax + by = c'}
+  \item{vertex}{data.frame of vertex coordinates in the tessellation}
+  \item{line}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
   \item{segment}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
         is the row index into the 'line' data.frame.  'v1' and 'v2' are 
         the indices into 'vertex' which define the endpoints along the 
@@ -25,7 +25,7 @@ named list of data.frames.
 }
 }
 \description{
-Voronoi tesselation on an infinite plane
+Voronoi tessellation on an infinite plane
 }
 \examples{
 set.seed(1)

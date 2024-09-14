@@ -19,7 +19,7 @@ library(rvoronoi)
 ```
 
 The original `voronoi()` method from Fortune's original C code returns only edge definitions 
-i.e. two connected vertices which are part of the tesselation boundary.
+i.e. two connected vertices which are part of the tessellation boundary.
 
 But these edge definitions are uncorrelated - there's no way to tell which edges
 make up each polygonal boundary as that information is not returned 
