@@ -113,40 +113,6 @@ draw_polygons <- function(vor, cols = rainbow(length(vor$polygons)), ...) {
 
 
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Plot the vertices of the voronoi tesselation
-#' @param vor object returned by \code{voronoi()}
-#' @param ... other arguments passed to \code{plot()}
-#' @param asp aspect ration. Default 1
-#' @param ann annotation? Default: FALSE
-#' @param pch plot character
-#' @param axes draw axes? Default: FALSE
-#' @param buffer buffer around extents. defualt: 0
-#' @return None.
-#' @importFrom graphics rect
-#' @export
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = '.', ...) {
-  
-  xlim = c(vor$extents$xmin - buffer, vor$extents$xmax + buffer)
-  ylim = c(vor$extents$ymin - buffer, vor$extents$ymax + buffer)
-  
-  plot(vor$vertices$x, vor$vertices$y, asp = asp, ann = ann, axes = axes, 
-       xlim = xlim, ylim = ylim, ...)
-  
-  rect(vor$extents$xmin, vor$extents$ymin, vor$extents$xmax, vor$extents$ymax, 
-       lty = 3, border = 'grey80')
-  
-  rect(vor$extents$xmin - buffer, vor$extents$ymin - buffer, 
-       vor$extents$xmax + buffer, vor$extents$ymax + buffer, 
-       lty = 3, border = 'grey80')
-  
-  
-  invisible(vor)
-}
-
-
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Draw vertex nodes
@@ -204,6 +170,41 @@ draw_sites <- function(vor, pch = '+', cex = 0.5, text = FALSE, ...) {
 
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Plot the vertices of the voronoi tesselation
+#' @param vor object returned by \code{voronoi()}
+#' @param ... other arguments passed to \code{plot()}
+#' @param asp aspect ration. Default 1
+#' @param ann annotation? Default: FALSE
+#' @param pch plot character
+#' @param axes draw axes? Default: FALSE
+#' @param buffer buffer around extents. defualt: 0
+#' @return None.
+#' @importFrom graphics rect
+#' @export
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+plot_vor <- function(vor, buffer = 0, asp = 1, ann = FALSE, axes = FALSE, pch = '.', ...) {
+  
+  xlim = c(vor$extents$xmin - buffer, vor$extents$xmax + buffer)
+  ylim = c(vor$extents$ymin - buffer, vor$extents$ymax + buffer)
+  
+  par(mar = c(0, 0, 0, 0))
+  plot(vor$vertices$x, vor$vertices$y, asp = asp, ann = ann, axes = axes, 
+       xlim = xlim, ylim = ylim, ...)
+  
+  rect(vor$extents$xmin, vor$extents$ymin, vor$extents$xmax, vor$extents$ymax, 
+       lty = 3, border = 'grey80')
+  
+  rect(vor$extents$xmin - buffer, vor$extents$ymin - buffer, 
+       vor$extents$xmax + buffer, vor$extents$ymax + buffer, 
+       lty = 3, border = 'grey80')
+  
+  
+  invisible(vor)
+}
+
+
+
 if (FALSE) {
   
   set.seed(1)
@@ -212,7 +213,6 @@ if (FALSE) {
   y <- runif(N)
   vor <- voronoi(x, y)
   
-  
   plot_vor(vor) |>
     draw_finite_segments() |>
     draw_semi_infinite_segments(col = 'hotpink') |>
@@ -220,7 +220,6 @@ if (FALSE) {
     draw_polygons() |>
     draw_sites(text = TRUE) |>
     draw_vertices()
-  
   
   
   

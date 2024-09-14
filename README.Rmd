@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%",
   fig.width =  6,
-  fig.height = 5
+  fig.height = 4
 )
 
 library(rvoronoi)
@@ -35,6 +35,7 @@ e.g. for N = 1000, still 2x faster than `RTriangle` package.
 The core of this package is Steven Fortune's original C source code for his
 sweep algorithm.   This code has been updated and adapted to run within R.
 [Original source code (packaged as a shell archive)](https://netlib.sandia.gov/voronoi/sweep2)
+
 
 
 ## Installation
@@ -124,7 +125,7 @@ grid.draw(grob)
 The following code calculates the voronoi tesselation on 20 random points.
 
 
-```{r voronoi, fig.width = 4, fig.height = 4}
+```{r voronoi}
 library(rvoronoi)
 
 set.seed(4)
