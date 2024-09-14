@@ -10,17 +10,22 @@
 [![R-CMD-check](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`rvoronoi` is a testing ground for some rendering ideas using fast
-delaunay triangulation and Voronoi tessellation.
+`rvoronoi` provides fast Delaunay triangulation and Voronoi tessellation
+using [Fortune’s Sweep Line
+Algorithm](https://en.wikipedia.org/wiki/Fortune%27s_algorithm).
 
-For small sets of site (e.g. 20 points) this package can be 10x faster
-than `RTriangle` package. For larger sets of sites, the gap closes up -
-e.g. for N = 1000, still 2x faster than `RTriangle` package.
+A key benefit of this package (besides *speed!*) is that the Voronoi
+tesselation can return a full set of enclosed polygons matched to the
+input sites. This makes it convenient for plotting.
 
 The core of this package is Steven Fortune’s original C source code for
 his sweep algorithm. This code has been updated and adapted to run
 within R. [Original source code (packaged as a shell
 archive)](https://netlib.sandia.gov/voronoi/sweep2)
+
+For small sets of site (e.g. 20 points) this package can be 10x faster
+than `RTriangle` package. For larger sets of sites, the gap closes up -
+e.g. for N = 1000, still 2x faster than `RTriangle` package.
 
 ## Installation
 
@@ -45,7 +50,6 @@ library(grid)
 # Load image
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rj <- jpeg::readJPEG("man/figures/rj.jpg", native = TRUE)
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Sample lots of random points in the image
@@ -105,17 +109,17 @@ grid.draw(grob)
 
 | Package                   | rvoronoi | deldir | RTriangle |
 |---------------------------|----------|--------|-----------|
-| segments                  | Yes      |        |           |
-| interior polygons         | Yes      |        |           |
-| bounded exterior polygons | Yes      |        |           |
-| matched sites/polygons    | Yes      |        |           |
-| vertices                  | Yes      |        |           |
+| vertices                  | Yes      | Yes    | Yes       |
+| segments                  | Yes      | Yes    | Yes       |
+| interior polygons         | Yes      | Yes    |           |
+| bounded exterior polygons | Yes      | Yes    |           |
+| matched sites/polygons    | Yes      | ???    |           |
 
 ## Delaunay Triangulation feature comparison
 
 | Package                          | rvoronoi | deldir | RTriangle |
 |----------------------------------|----------|--------|-----------|
-| site indices (defining polygons) | Yes      |        |           |
+| site indices (defining polygons) | Yes      | Yes    | Yes       |
 | polygon coordinates              | Yes      |        |           |
 
 ## Voronoi Tessellation
@@ -246,9 +250,6 @@ stopifnot(identical(
 </details>
 
 ``` r
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Benchmark
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bench::mark(
   # delone    = xy_tri  (x, y),
   rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
@@ -261,10 +262,10 @@ bench::mark(
 
 | expression |     min |  median |    itr/sec | mem_alloc |
 |:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 394.8µs | 410.3µs | 2413.48161 |  162.78KB |
-| rvoronoi   | 385.9µs | 393.1µs | 2515.57164 |   23.58KB |
-| rtriangle  | 727.6µs | 763.8µs | 1281.35037 |  292.63KB |
-| deldir     |  16.9ms |  17.1ms |   58.24851 |    5.67MB |
+| rvoronoi   | 393.9µs | 409.5µs | 2420.96987 |  162.78KB |
+| rvoronoi   |   386µs | 394.5µs | 2510.46808 |   23.58KB |
+| rtriangle  | 724.6µs | 761.2µs | 1271.85978 |  292.63KB |
+| deldir     |  16.9ms |  17.2ms |   58.01351 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -343,34 +344,49 @@ tri <- triangulate(pslg(P = cbind(x, y)))
 ve <- tri$VE |> as.data.frame()
 ve <- subset(ve, V1 > 0 & V2 > 0)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# p1 <- tri$VP[ve$V1, ] |> as.data.frame()
-# p2 <- tri$VP[ve$V2, ] |> as.data.frame()
-# segments(p1$V1, p1$V2, p2$V1, p2$V2)
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  p1 <- tri$VP[ve$V1, ] |> as.data.frame()
+  p2 <- tri$VP[ve$V2, ] |> as.data.frame()
+  segments(p1$V1, p1$V2, p2$V1, p2$V2)
+}
 ```
 
 </details>
+
+### Voronoi - vertices and segments only
+
+``` r
+bench::mark(
+  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
+  RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
+  check = FALSE
+)[,1:5] |> knitr::kable()
+```
+
+| expression                 |   min | median |  itr/sec | mem_alloc |
+|:---------------------------|------:|-------:|---------:|----------:|
+| rvoronoi (match RTriangle) | 407µs |  419µs | 2361.973 |     137KB |
+| RTriangle                  | 721µs |  752µs | 1316.743 |     293KB |
+
+### Voronoi - polygons
 
 ``` r
 bench::mark(
   `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
   `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
-  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
   deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
-  RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 ```
 
-| expression                    |      min |   median |     itr/sec | mem_alloc |
-|:------------------------------|---------:|---------:|------------:|----------:|
-| rvoronoi (full)               |   3.55ms |   3.98ms |  251.403338 |     235KB |
-| rvoronoi (unmatched polygons) |   2.45ms |   2.59ms |  377.567321 |     235KB |
-| rvoronoi (match RTriangle)    | 405.04µs | 422.63µs | 2258.576231 |   137.3KB |
-| deldir                        | 163.28ms | 165.82ms |    5.916541 |    52.1MB |
-| RTriangle                     | 725.58µs | 779.78µs | 1162.507923 |   292.6KB |
+| expression                    |      min |   median |    itr/sec | mem_alloc |
+|:------------------------------|---------:|---------:|-----------:|----------:|
+| rvoronoi (full)               |   3.49ms |   3.56ms | 276.602575 |     235KB |
+| rvoronoi (unmatched polygons) |   2.46ms |   2.51ms | 387.872008 |     235KB |
+| deldir                        | 169.49ms | 176.25ms |   5.721694 |    52.1MB |
 
 # Pathological Test Cases
 

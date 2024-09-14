@@ -25,17 +25,20 @@ library(rvoronoi)
 [![R-CMD-check](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/rvoronoi/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`rvoronoi` is a testing ground for some rendering ideas using fast delaunay triangulation
-and Voronoi tessellation.
+`rvoronoi` provides fast Delaunay triangulation and Voronoi tessellation using
+[Fortune's Sweep Line Algorithm](https://en.wikipedia.org/wiki/Fortune%27s_algorithm).
 
-For small sets of site (e.g. 20 points) this package can be 10x faster than 
-`RTriangle` package.  For larger sets of sites, the gap closes up - 
-e.g. for N = 1000, still 2x faster than `RTriangle` package.
+A key benefit of this package (besides *speed!*) is that the Voronoi tesselation 
+can return a full set of enclosed polygons matched to the input sites. This 
+makes it convenient for plotting.
 
 The core of this package is Steven Fortune's original C source code for his
 sweep algorithm.   This code has been updated and adapted to run within R.
 [Original source code (packaged as a shell archive)](https://netlib.sandia.gov/voronoi/sweep2)
 
+For small sets of site (e.g. 20 points) this package can be 10x faster than 
+`RTriangle` package.  For larger sets of sites, the gap closes up - 
+e.g. for N = 1000, still 2x faster than `RTriangle` package.
 
 
 ## Installation
@@ -59,7 +62,6 @@ library(grid)
 # Load image
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rj <- jpeg::readJPEG("man/figures/rj.jpg", native = TRUE)
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Sample lots of random points in the image
@@ -118,11 +120,11 @@ grid.draw(grob)
 
 | Package                   | rvoronoi | deldir | RTriangle |
 |---------------------------|----------|--------|-----------|
-| segments                  |  Yes     |        |           |
-| interior polygons         |  Yes     |        |           |
-| bounded exterior polygons |  Yes     |        |           |
-| matched sites/polygons    |  Yes     |        |           |
-| vertices                  |  Yes     |        |           |
+| vertices                  |  Yes     | Yes    | Yes       |
+| segments                  |  Yes     | Yes    | Yes       |
+| interior polygons         |  Yes     | Yes    |           |
+| bounded exterior polygons |  Yes     | Yes    |           |
+| matched sites/polygons    |  Yes     | ???    |           |
 
 
 
@@ -130,7 +132,7 @@ grid.draw(grob)
 
 | Package                          | rvoronoi | deldir | RTriangle |
 |----------------------------------|----------|--------|-----------|
-| site indices (defining polygons) |  Yes     |        |           |
+| site indices (defining polygons) |  Yes     | Yes    |  Yes      |
 | polygon coordinates              |  Yes     |        |           |
 
 
@@ -253,9 +255,6 @@ stopifnot(identical(
 </details>
 
 ```{r}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Benchmark
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bench::mark(
   # delone    = xy_tri  (x, y),
   rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
@@ -265,6 +264,7 @@ bench::mark(
   check = FALSE
 )[,1:5]  |> knitr::kable()
 ```
+
 
 
 # Voronoi Tessellation Benchmark
@@ -340,26 +340,39 @@ tri <- triangulate(pslg(P = cbind(x, y)))
 ve <- tri$VE |> as.data.frame()
 ve <- subset(ve, V1 > 0 & V2 > 0)
 
-# plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
-# p1 <- tri$VP[ve$V1, ] |> as.data.frame()
-# p2 <- tri$VP[ve$V2, ] |> as.data.frame()
-# segments(p1$V1, p1$V2, p2$V1, p2$V2)
+if (FALSE) {
+  plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
+  p1 <- tri$VP[ve$V1, ] |> as.data.frame()
+  p2 <- tri$VP[ve$V2, ] |> as.data.frame()
+  segments(p1$V1, p1$V2, p2$V1, p2$V2)
+}
 ```
 
 </details>
 
+
+
+### Voronoi - vertices and segments only 
+
 ```{r}
 bench::mark(
-  `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
-  `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
   `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
-  deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
   RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 ```
 
 
+### Voronoi - polygons
+
+```{r}
+bench::mark(
+  `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
+  deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
+  check = FALSE
+)[,1:5] |> knitr::kable()
+```
 
 
 
