@@ -7,7 +7,7 @@
 #' @param xseed,yseed coorindates of the vornoi seed points.  If given then 
 #'        the polygons will align with the seed points
 #' @return \code{list(list(x = ..., y = ...), list(x = ..., y = ...), ...)}
-#' @export
+#' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extract_polygons <- function(x, y, v1, v2, xseed = NULL, yseed = NULL, verbosity = 0L) {
   .Call(extract_polygons_, x, y, v1, v2, xseed, yseed, verbosity)

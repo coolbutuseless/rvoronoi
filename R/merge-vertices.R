@@ -9,7 +9,7 @@
 #' @param tol tolerance for merging close vertices. 
 #' @param verbosity verbosity level. Default: 0
 #' @return \code{list(line, v1, v2)}
-#' @export
+#' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 merge_vertices <- function(x, y, line, v1, v2, tol = 1e-5, verbosity = 0L) {
   .Call(merge_vertices_, x, y, line, v1, v2, tol, verbosity)

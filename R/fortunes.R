@@ -1,20 +1,25 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Voronoi tessellation on an infinite plane
-#' @param x,y coordinates of seed points
-#' @param calc_polygons calculate polygons from the voronoi vertices and segments
+#' Voronoi Tessellation
+#' 
+#' @param x,y coordinates of seed sites. Duplicate points are not allowed.
+#' @param calc_polygons Logical. Should voronoi polygons be calculated?
 #'        Default: TRUE
-#' @param match_sites logical. SHould the polygons be re-ordered to match 
+#' @param match_sites Logical. Should the polygons be re-ordered to match 
 #'        the seed points? Default: TRUE
 #' @return named list of data.frames.
 #' \describe{
-#'   \item{vertex}{data.frame of vertex coordinates in the tessellation}
-#'   \item{line}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
-#'   \item{segment}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
-#'         is the row index into the 'line' data.frame.  'v1' and 'v2' are 
+#'   \item{sites}{data.frame of original sites}
+#'   \item{vertices}{data.frame of voronoi vertices. This is the raw output from Fortune's algorithm}
+#'   \item{segments}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
+#'         is the row index into the 'lines' data.frame.  'v1' and 'v2' are 
 #'         the indices into 'vertex' which define the endpoints along the 
-#'         specified 'line'.  If 'v1' or 'v2' are NA this indicates that the 
+#'         specified 'line'.  If 'v1' or 'v2' are negative this indicates that the 
 #'         segment continues to infinity}
+#'   \item{polygons}{list of polygon information for each voronoi cell}
+#'   \item{lines}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
+#'   \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box encompassing
+#'   input sites and voronoi vertices}
 #' }
 #' @examples
 #' set.seed(1)
@@ -29,11 +34,16 @@ voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Calculate Voronoi
+#' Delaunay Triangulation
+#' 
 #' @inheritParams voronoi
 #' @param calc_polygons calculate and return polygon coordinates? default: TRUE
-#' @return data.frame. Each row specifies the indices of the three seed points
-#'         which define a single delaunay triangle
+#' @return named list of data
+#' \describe{
+#'  \item{segments}{data.frame. Each row specifies the indices of the three seed points
+#'         which define a single delaunay triangle}
+#'  \item{polygons}{data.frame of polygon coordinates}
+#' }
 #' @examples
 #' set.seed(1)
 #' x <- runif(10)

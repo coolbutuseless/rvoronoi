@@ -2,33 +2,37 @@
 % Please edit documentation in R/fortunes.R
 \name{voronoi}
 \alias{voronoi}
-\title{Voronoi tessellation on an infinite plane}
+\title{Voronoi Tessellation}
 \usage{
 voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE)
 }
 \arguments{
-\item{x, y}{coordinates of seed points}
+\item{x, y}{coordinates of seed sites. Duplicate points are not allowed.}
 
-\item{calc_polygons}{calculate polygons from the voronoi vertices and segments
+\item{calc_polygons}{Logical. Should voronoi polygons be calculated?
 Default: TRUE}
 
-\item{match_sites}{logical. SHould the polygons be re-ordered to match 
+\item{match_sites}{Logical. Should the polygons be re-ordered to match 
 the seed points? Default: TRUE}
 }
 \value{
 named list of data.frames.
 \describe{
-  \item{vertex}{data.frame of vertex coordinates in the tessellation}
-  \item{line}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
-  \item{segment}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
-        is the row index into the 'line' data.frame.  'v1' and 'v2' are 
+  \item{sites}{data.frame of original sites}
+  \item{vertices}{data.frame of voronoi vertices. This is the raw output from Fortune's algorithm}
+  \item{segments}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
+        is the row index into the 'lines' data.frame.  'v1' and 'v2' are 
         the indices into 'vertex' which define the endpoints along the 
-        specified 'line'.  If 'v1' or 'v2' are NA this indicates that the 
+        specified 'line'.  If 'v1' or 'v2' are negative this indicates that the 
         segment continues to infinity}
+  \item{polygons}{list of polygon information for each voronoi cell}
+  \item{lines}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
+  \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box encompassing
+  input sites and voronoi vertices}
 }
 }
 \description{
-Voronoi tessellation on an infinite plane
+Voronoi Tessellation
 }
 \examples{
 set.seed(1)

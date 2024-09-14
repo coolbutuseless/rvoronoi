@@ -370,7 +370,7 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   SEXP res_ = PROTECT(
     create_named_list(3, "line", fline_, "v1", fv1_, "v2", fv2_)
   ); nprotect++;
-  set_df_attributes(res_, nsegs_final, nsegs_final);
+  set_df_attributes(res_);
   
   
   UNPROTECT(nprotect);

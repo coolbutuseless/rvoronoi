@@ -243,12 +243,12 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |   itr/sec | mem_alloc |
-|:-----------|--------:|--------:|----------:|----------:|
-| rvoronoi   | 390.2µs | 408.4µs | 2426.6614 |  162.78KB |
-| rvoronoi   | 382.7µs | 393.8µs | 2517.3336 |   23.58KB |
-| rtriangle  | 732.2µs | 767.2µs | 1264.2931 |  292.63KB |
-| deldir     |  16.8ms |  17.1ms |   57.9974 |    5.67MB |
+| expression |     min |  median |    itr/sec | mem_alloc |
+|:-----------|--------:|--------:|-----------:|----------:|
+| rvoronoi   | 394.1µs | 408.5µs | 2422.47701 |  162.78KB |
+| rvoronoi   | 385.5µs | 396.2µs | 2504.87668 |   23.58KB |
+| rtriangle  | 726.2µs | 766.1µs | 1270.11310 |  292.63KB |
+| deldir     |  16.8ms |  17.2ms |   58.18564 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -350,11 +350,11 @@ bench::mark(
 
 | expression | min | median | itr/sec | mem_alloc |
 |:---|---:|---:|---:|---:|
-| voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE) | 3.48ms | 3.57ms | 275.699908 | 235KB |
-| voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE) | 2.44ms | 2.5ms | 391.974728 | 235KB |
-| voronoi(x, y, calc_polygons = FALSE) | 403.77µs | 417.58µs | 2289.465627 | 137.3KB |
-| deldir::cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 172.79ms | 173.88ms | 5.750506 | 52.1MB |
-| RTriangle::triangulate(pslg(P = cbind(x, y))) | 728.2µs | 780.76µs | 1145.850196 | 292.6KB |
+| voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE) | 3.51ms | 3.58ms | 275.725338 | 235KB |
+| voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE) | 2.46ms | 2.53ms | 388.547392 | 235KB |
+| voronoi(x, y, calc_polygons = FALSE) | 408.93µs | 422.87µs | 2269.698365 | 137.3KB |
+| deldir::cvt(deldir(x, y), stopcrit = “maxit”, maxit = 1) | 164.75ms | 168.26ms | 5.961006 | 52.1MB |
+| RTriangle::triangulate(pslg(P = cbind(x, y))) | 719.55µs | 755.1µs | 1236.136801 | 292.6KB |
 
 # Pathological Test Cases
 

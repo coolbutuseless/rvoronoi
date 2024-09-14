@@ -26,18 +26,18 @@ void trim_vec(SEXP vec_, int visible_length, int allocated_length) {
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// @param df_ data.frame object
-// @param N number of rows in data.frame
+// @param df_ named list object which is to be promoted to data.frame
+// @param visible_length trim the data.frame to this number of rows
+// @param allocated length how many rows does each list member have?
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void set_df_attributes(SEXP df_, int visible_length, int allocated_length) {
-  int nprotect = 0;
+void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_length) {
   
   if (!isNewList(df_)) {
-    error("set_df_attributes(): only accepts 'lists' as input");
+    error("set_df_attributes_and_trim(): only accepts 'lists' as input");
   }
   
   if (visible_length > allocated_length) {
-    error("set_df_attributes(): visible_length (%i) cannot be greater than allocated length (%i)",
+    error("set_df_attributes_and_trim(): visible_length (%i) cannot be greater than allocated length (%i)",
           visible_length, allocated_length);
   }
   
@@ -46,20 +46,33 @@ void set_df_attributes(SEXP df_, int visible_length, int allocated_length) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (visible_length != allocated_length) {
     for (int col_idx = 0; col_idx < length(df_); col_idx++) {
-      SEXP col_ = VECTOR_ELT(df_, col_idx);
-      
-      SETLENGTH(col_, visible_length); 
-      SET_TRUELENGTH(col_, allocated_length); 
-      SET_GROWABLE_BIT(col_);
+      trim_vec(VECTOR_ELT(df_, col_idx), visible_length, allocated_length);
     }
   }
+  
+  set_df_attributes(df_);
+} 
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// @param df_ named list object which is to be promoted to data.frame
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void set_df_attributes(SEXP df_) {
+  int nprotect = 0;
+  
+  if (!isNewList(df_)) {
+    error("set_df_attributes(): only accepts 'lists' as input");
+  }
+  
+  int len = length(VECTOR_ELT(df_, 0));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set row.names
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP rownames = PROTECT(allocVector(INTSXP, 2)); nprotect++;
   SET_INTEGER_ELT(rownames, 0, NA_INTEGER);
-  SET_INTEGER_ELT(rownames, 1, -visible_length);
+  SET_INTEGER_ELT(rownames, 1, -len);
   setAttrib(df_, R_RowNamesSymbol, rownames);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,6 +86,9 @@ void set_df_attributes(SEXP df_, int visible_length, int allocated_length) {
   
   UNPROTECT(nprotect);
 } 
+
+
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

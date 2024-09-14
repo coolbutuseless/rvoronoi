@@ -325,7 +325,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
     msegs_ = PROTECT(
       create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
     ); nprotect++;
-    set_df_attributes(msegs_, fnedges, length(v1m_));
+    set_df_attributes_and_trim(msegs_, fnedges, length(v1m_));
     
     
     convert_indexing_c_to_r(linem_);
@@ -340,7 +340,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
   SEXP vert_ = PROTECT(
     create_named_list(2, "x", vert_x_, "y", vert_y_)
   ); nprotect++;
-  set_df_attributes(vert_, ctx.nverts, max_verts);
+  set_df_attributes_and_trim(vert_, ctx.nverts, max_verts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
@@ -348,7 +348,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
   SEXP line_ = PROTECT(
     create_named_list(3, "a", line_a_, "b", line_b_, "c", line_c_)
   ); nprotect++;
-  set_df_attributes(line_, ctx.nlines, max_edges);
+  set_df_attributes_and_trim(line_, ctx.nlines, max_edges);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -357,7 +357,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
   SEXP seg_ = PROTECT(
     create_named_list(3, "line", seg_line_, "v1", seg_v1_, "v2", seg_v2_)
   ); nprotect++;
-  set_df_attributes(seg_, ctx.nsegs, max_edges);
+  set_df_attributes_and_trim(seg_, ctx.nsegs, max_edges);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
@@ -384,6 +384,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_) {
   SEXP sites_ = PROTECT(
     create_named_list(2, "x", x_, "y", y_)  // original site/seed points  
   ); nprotect++;
+  set_df_attributes(sites_);
   
   SEXP res_ = PROTECT(
     create_named_list(

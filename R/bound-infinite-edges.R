@@ -16,7 +16,7 @@
 #'        bounding box of (x, y) points
 #' @param a,b,c line defintion ax + by = c
 #' @return list of new vertices and new edges
-#' @export
+#' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bound_infinite_edges <- function(xmin, ymin, xmax, ymax,
                                  x, y, 

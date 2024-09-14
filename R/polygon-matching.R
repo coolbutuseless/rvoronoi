@@ -6,7 +6,7 @@
 #' @param x,y point
 #' @param xp,yp polygon vertices
 #' @return logical
-#' @export
+#' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 point_in_convex_polygon <- function(x, y, xp, yp) {
   .Call(points_in_convex_polygon_, x, y, xp, yp)

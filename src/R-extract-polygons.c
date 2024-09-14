@@ -657,7 +657,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
         create_named_list(3, "x", x_, "y", y_, "v", v_)
       ); 
       
-      set_df_attributes(ll_, polys[i].nvert, polys[i].nvert);
+      set_df_attributes(ll_);
       
       // Place the polygon in the correct position in the list
       if (polys[i].site_idx < 0) {
@@ -703,7 +703,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
         create_named_list(3, "x", x_, "y", y_, "v", v_)
       ); 
       
-      set_df_attributes(ll_, polys[i].nvert, polys[i].nvert);
+      set_df_attributes(ll_);
       
  
       SET_VECTOR_ELT(polys_, llidx, ll_);

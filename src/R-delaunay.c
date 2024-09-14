@@ -80,7 +80,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   // Indices = data.frame(v1 = integer(), v2 = integer(), v3 = integer())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
-  set_df_attributes(idx_, ctx.ntris, max_tris);
+  set_df_attributes_and_trim(idx_, ctx.ntris, max_tris);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,7 +128,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
     polys_ = PROTECT(
       create_named_list(4, "idx", pidx_, "x", xs_, "y", ys_, "vidx", vs_)
     ); nprotect++;
-    set_df_attributes(polys_, 3 * ctx.ntris, 3 * ctx.ntris);
+    set_df_attributes(polys_);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

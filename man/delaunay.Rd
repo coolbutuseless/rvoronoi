@@ -2,21 +2,25 @@
 % Please edit documentation in R/fortunes.R
 \name{delaunay}
 \alias{delaunay}
-\title{Calculate Voronoi}
+\title{Delaunay Triangulation}
 \usage{
 delaunay(x, y, calc_polygons = TRUE)
 }
 \arguments{
-\item{x, y}{coordinates of seed points}
+\item{x, y}{coordinates of seed sites. Duplicate points are not allowed.}
 
 \item{calc_polygons}{calculate and return polygon coordinates? default: TRUE}
 }
 \value{
-data.frame. Each row specifies the indices of the three seed points
-        which define a single delaunay triangle
+named list of data
+\describe{
+ \item{segments}{data.frame. Each row specifies the indices of the three seed points
+        which define a single delaunay triangle}
+ \item{polygons}{data.frame of polygon coordinates}
+}
 }
 \description{
-Calculate Voronoi
+Delaunay Triangulation
 }
 \examples{
 set.seed(1)
