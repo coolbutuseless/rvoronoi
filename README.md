@@ -83,18 +83,6 @@ grid.raster(nr)
 
 <img src="man/figures/README-romeo-1.png" width="100%" />
 
-### Convert Voronoi to grob (Work in progress)
-
-``` r
-grob <- voronoiGrob(vor)
-# grob$vp <- viewport(default.units = 'snpc', width = 1/1270, height = 1/1270)
-grob$vp <- viewport(default.units = 'points', width = 1270, height = 670)
-grid.newpage()
-grid.draw(grob)
-```
-
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
-
 ## Voronoi Terminology
 
 - Initial **sites** (i.e. seed points)
@@ -136,10 +124,16 @@ y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-plot(vor)
+plot(vor, polys = FALSE, sites = TRUE, labels = TRUE, label_cex = 0.7)
 ```
 
 <img src="man/figures/README-voronoi-1.png" width="100%" />
+
+``` r
+plot(vor, labels = TRUE, label_cex = 0.7)
+```
+
+<img src="man/figures/README-voronoi-2.png" width="100%" />
 
 ## Delaunay Triangulation
 
@@ -260,10 +254,10 @@ bench::mark(
 
 | expression |      min |  median |    itr/sec | mem_alloc |
 |:-----------|---------:|--------:|-----------:|----------:|
-| rvoronoi   |  732.1µs |   740µs | 1237.95320 |  162.78KB |
-| rvoronoi   | 718.65µs | 725.1µs | 1283.55021 |   23.58KB |
-| rtriangle  |   1.46ms |   1.5ms |  612.74846 |  292.63KB |
-| deldir     |  24.04ms |  24.2ms |   38.20938 |    5.67MB |
+| rvoronoi   | 723.95µs | 731.1µs | 1347.70486 |  162.78KB |
+| rvoronoi   | 712.54µs | 718.7µs | 1335.97145 |   23.58KB |
+| rtriangle  |   1.45ms |   1.5ms |  592.42185 |  292.63KB |
+| deldir     |  23.97ms |  24.3ms |   38.98876 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -365,14 +359,14 @@ bench::mark(
 
 | expression                 |      min |   median |   itr/sec | mem_alloc |
 |:---------------------------|---------:|---------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 751.08µs | 760.13µs | 1246.8344 |     137KB |
-| RTriangle                  |   1.46ms |   1.53ms |  609.1203 |     293KB |
+| rvoronoi (match RTriangle) | 743.01µs | 753.12µs | 1278.5718 |     137KB |
+| RTriangle                  |   1.46ms |   1.49ms |  604.7263 |     293KB |
 
 ### Voronoi - polygons
 
 ``` r
 bench::mark(
-  `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  `rvoronoi (matched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
   `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
   deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
   check = FALSE
@@ -383,9 +377,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (full)               |   5.86ms |   5.93ms | 151.023102 |     235KB |
-| rvoronoi (unmatched polygons) |   4.44ms |    4.5ms | 217.318325 |     235KB |
-| deldir                        | 419.88ms | 453.79ms |   2.203687 |    52.1MB |
+| rvoronoi (matched polygons)   |   5.84ms |   5.92ms | 149.738876 |     235KB |
+| rvoronoi (unmatched polygons) |   4.44ms |   4.51ms | 201.237936 |     235KB |
+| deldir                        | 408.89ms | 431.96ms |   2.315004 |    52.1MB |
 
 # Pathological Test Cases
 
@@ -461,7 +455,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-plot(vor)
+plot(vor, labels = TRUE)
 ```
 
 <img src="man/figures/README-path4-1.png" width="100%" />

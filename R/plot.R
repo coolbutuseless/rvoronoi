@@ -7,11 +7,15 @@
 #' Barebones plotting of Voronoi
 #' 
 #' @param x object returned by \code{voronoi()}
+#' @param sites,labels,verts,polys,fsegs,isegs,bounds logical values. Should this geometric feature 
+#'        be plotted? Default: TRUE
 #' @param ... other arguments passed to \code{plot()}
-#' @param pch_site plot character for sites
-#' @param pch_vertex plot character for Voronoi vertices
-#' @param buffer buffer around extents. defualt: 0
-#' @param col_polygons vector of colours for polygons
+#' @param site_pch,site_cex,site_col parameters for sites
+#' @param vert_pch,vert_cex,vert_col parameters for Voronoi vertices
+#' @param fseg_col,iseg_col colours for finite and infinite segments
+#' @param buffer buffer around extents. default: 0
+#' @param poly_col vector of colours for polygons
+#' @param label_cex size of text labels for sites
 #' @return None.
 #' 
 #' @importFrom graphics par rect points segments
@@ -20,10 +24,20 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 plot.vor <- function(
     x, 
-    pch_site   = '.', 
-    pch_vertex = 19, 
-    col_polygons = rainbow(length(vor$polygons)),
-    buffer = 0,
+    sites     = TRUE, 
+    labels    = !sites,
+    verts     = TRUE,
+    polys     = TRUE,
+    fsegs     = !polys,
+    isegs     = !polys,
+    bounds    = TRUE,
+    site_pch  = '.', site_cex = 1.0, site_col = 'black',
+    vert_pch  =  19, vert_cex = 0.3, vert_col = 'black',
+    label_cex = 0.5,
+    fseg_col  = 'black',
+    iseg_col  = 'red',
+    poly_col  = rainbow(length(vor$polygons)),
+    buffer    = 0,
     ...
 ) {
   
@@ -48,7 +62,9 @@ plot.vor <- function(
     asp  = 1, ann = FALSE, axes = FALSE, 
     xlim = xlim, 
     ylim = ylim, 
-    pch  = pch_vertex,
+    pch  = vert_pch,
+    cex  = vert_cex,
+    col  = vert_col,
     ...
   )
   
@@ -56,14 +72,15 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Finite segments
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(fsegs)) {
     fseg <- subset(vor$segments, v1 > 0 & v2 > 0)
     
     graphics::segments(
       vor$vertices$x[fseg$v1],
       vor$vertices$y[fseg$v1],
       vor$vertices$x[fseg$v2],
-      vor$vertices$y[fseg$v2]
+      vor$vertices$y[fseg$v2],
+      col = fseg_col
     )
   }
   
@@ -71,7 +88,7 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Infinte segments
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(isegs)) {
     # Extract segments which are unbounded. i.e. v1 or v2 is NA
     segments <- vor$segments[vor$segments$v1 <=  0 & vor$segments$v2 <= 0, ]
     
@@ -84,7 +101,7 @@ plot.vor <- function(
     yhi <- with(lines, (c - a * xhi)/b)
     
     for (i in seq_len(nrow(segments))) {
-      graphics::segments(xlo, xlo[i], xhi, yhi[i])
+      graphics::segments(xlo, xlo[i], xhi, yhi[i], col = iseg_col)
     }
   }
   
@@ -92,7 +109,7 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Semi-infinite segments
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(isegs)) {
     # Extract segments which are unbounded. i.e. v1 or v2 is NA
     segments <- vor$segments[xor(vor$segments$v1 <=  0, vor$segments$v2 <= 0), ]
     
@@ -109,9 +126,11 @@ plot.vor <- function(
       if (seg$v1 <= 0 && seg$v2 <= 0) {
         # warning("Double NA segment: ", i)
       } else if (seg$v1 > 0) {
-        graphics::segments(vor$vertices$x[seg$v1], vor$vertices$y[seg$v1], xhi, yhi[i])
+        graphics::segments(vor$vertices$x[seg$v1], vor$vertices$y[seg$v1], xhi, yhi[i], 
+                           col = iseg_col)
       } else if (seg$v2 > 0) {
-        graphics::segments(xlo, ylo[i], vor$vertices$x[seg$v2], vor$vertices$y[seg$v2])
+        graphics::segments(xlo, ylo[i], vor$vertices$x[seg$v2], vor$vertices$y[seg$v2], 
+                           col = iseg_col)
       } else {
         stop("Shouldn't get here")
       }
@@ -122,19 +141,19 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Polygons
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(polys) && !is.null(vor$polygons)) {
     
-    if (length(col_polygons) == 1) {
-      col_polygons <- rep(col_polygons, length(vor$polygons))
+    # Setup fill colours for polygon
+    if (length(poly_col) == 1) {
+      poly_col <- rep(poly_col, length(vor$polygons))
     }
     
-    if (length(col_polygons) != length(vor$polygons)) {
-      stop("'col_polygons' must be length 1 or match length(vor$polygons)")
+    if (length(poly_col) != length(vor$polygons)) {
+      stop("'poly_col' must be length 1 or match length(vor$polygons)")
     }
-    
     
     for (i in seq_along(vor$polygons)) {
-      graphics::polygon(vor$polygons[[i]], col = col_polygons[i])
+      graphics::polygon(vor$polygons[[i]], col = poly_col[i])
     }
   }
   
@@ -142,11 +161,13 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Plot sites
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(verts)) {
     graphics::points(
       x    = vor$vertices$x, 
       y    = vor$vertices$y, 
-      pch  = pch_site
+      pch  = vert_pch,
+      cex  = vert_cex,
+      col  = vert_col,
     )
   }
   
@@ -154,11 +175,26 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Plot vertices
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (TRUE) {
+  if (isTRUE(sites)) {
     graphics::points(
       x    = vor$sites$x, 
       y    = vor$sites$y, 
-      pch  = pch_vertex
+      pch  = site_pch,
+      cex  = site_cex,
+      col  = site_col
+    )
+  }
+  
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Draw site labels
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (isTRUE(labels)) {
+    graphics::text(
+      x      = vor$sites$x, 
+      y      = vor$sites$y,
+      labels = seq_along(vor$sites$x),
+      cex    = label_cex
     )
   }
 
@@ -166,11 +202,13 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Tight boundary  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  graphics::rect(
-    vor$extents$xmin, vor$extents$ymin, 
-    vor$extents$xmax, vor$extents$ymax, 
-    lty = 3, border = 'grey80'
-  )
+  if (isTRUE(bounds)) {
+    graphics::rect(
+      vor$extents$xmin, vor$extents$ymin, 
+      vor$extents$xmax, vor$extents$ymax, 
+      lty = 3, border = 'grey80'
+    )
+  }
   
   
 
@@ -187,7 +225,7 @@ if (FALSE) {
   y <- runif(N)
   vor <- voronoi(x, y)
   
-  plot(vor) 
+  plot(vor, polys = FALSE) 
 }
 
 

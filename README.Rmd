@@ -93,17 +93,6 @@ for (i in seq_along(vor$polygons)) {
 grid.raster(nr)
 ```
 
-### Convert Voronoi to grob (Work in progress)
-
-```{r}
-grob <- voronoiGrob(vor)
-# grob$vp <- viewport(default.units = 'snpc', width = 1/1270, height = 1/1270)
-grob$vp <- viewport(default.units = 'points', width = 1270, height = 670)
-grid.newpage()
-grid.draw(grob)
-```
-
-
 
 ## Voronoi Terminology
 
@@ -151,7 +140,8 @@ y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-plot(vor)
+plot(vor, polys = FALSE, sites = TRUE, labels = TRUE, label_cex = 0.7)
+plot(vor, labels = TRUE, label_cex = 0.7)
 ```
 
 
@@ -364,7 +354,7 @@ bench::mark(
 
 ```{r}
 bench::mark(
-  `rvoronoi (full)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
+  `rvoronoi (matched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE),
   `rvoronoi (unmatched polygons)` = voronoi(x, y, calc_polygons = TRUE, match_sites = FALSE),
   deldir    = deldir::cvt(deldir(x, y), stopcrit = 'maxit', maxit = 1),
   check = FALSE
@@ -447,7 +437,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-plot(vor)
+plot(vor, labels = TRUE)
 ```
 
 
