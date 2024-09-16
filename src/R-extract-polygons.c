@@ -719,8 +719,11 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   // then  Calculate cumulative vertices prior to this one
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int cumulative_verts[npolys];
-  memset(cumulative_verts, 0, npolys * sizeof(int));
   
+  for (int i = 0; i < npolys; i++) {
+    cumulative_verts[i] = 0;
+  }
+
   int tt = 0;
   
   if (matching_polygons_to_sites) {
