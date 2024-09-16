@@ -518,6 +518,16 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find largest polygon by bbox and mark for deletion.
+  // The polygon extraction algorithm  extracts the exterior polyon of 
+  // the outside boundary.  It is the largest polygon in the extracted polygons
+  // and does not represent a voronoi cell.
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int max_bbox_area_idx = -1;
+  double max_bbox_area  = -1;
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Calculate polygon coordinates, bbox etc
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   for (int i = 0; i < *npolys; i++) {
@@ -526,8 +536,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     
     polys[i].polygon_idx =  i; // Polygon number in order it was found
     polys[i].taken       =  0; // Has polygon been matched to site
-    polys[i].deleted     =  0; // The algo will produce 1 large, region-bounding polygon which should be deleted
-    polys[i].site_idx   = -1; // Which of the original sites does this polygon match
+    polys[i].site_idx    = -1; // Which of the original sites does this polygon match
     polys[i].cx          =  0; // Centroid x
     polys[i].cy          =  0; // Centroid y
     
@@ -557,7 +566,21 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     
     // compute bbox area
     polys[i].bbox_area = (polys[i].bbox.xmax - polys[i].bbox.xmin) * (polys[i].bbox.ymax - polys[i].bbox.ymin);
+    
+    // Keep track of largest
+    if (polys[i].bbox_area > max_bbox_area) {
+      max_bbox_area = polys[i].bbox_area;
+      max_bbox_area_idx = i;
+    }
   }
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Overwrite the largest polygon with the last polygon
+  // Adjust the 'npoly' count so the final poly in 'polys' is ignored
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  *npolys -= 1;
+  polys[max_bbox_area_idx] = polys[*npolys];
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
@@ -582,6 +605,8 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   int nprotect = 0;
   int npolys = 0;
   
+  bool matching_polygons_to_sites = n_sites > 0;
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extract polygons
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -594,29 +619,26 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Find largest polygon by bbox and mark for deletion.
-  // The polygon extraction algorithm  extracts the exterior polyon of 
-  // the outside boundary.  It is the largest polygon in the extracted polygons
-  // and does not represent a voronoi cell.
+  // Ensure n_sites (if given is the same as the number of valid polys)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int max_bbox_area_idx = -1;
-  double max_bbox_area  = -1;
-  for (int i = 0; i < npolys; i++) {
-    if (polys[i].bbox_area > max_bbox_area) {
-      max_bbox_area = polys[i].bbox_area;
-      max_bbox_area_idx = i;
-    }
+  if (matching_polygons_to_sites && n_sites != npolys) {
+    error("extract-polygons: internal error: n_sites != n_valid_polys: %i != %i\n", n_sites, npolys);
   }
-  polys[max_bbox_area_idx].deleted = true;
-  int n_valid_polys = npolys - 1;  
-  
-  SEXP polys_ = R_NilValue;
-  
+  SEXP individual_polys_ = PROTECT(allocVector(VECSXP, npolys)); nprotect++;
+
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // If seed points given then re-organise polygons in the same order as 
-  // the seed points.  Otherwise a generic compact representation is used
+  // If seed points given then we will re-organise polygons in the same order as
+  // the seed points.  To do so, for each polygon's "poly_t" struct
+  // annotate "poly.site_idx" with the matching site index for each polygon
+  //
+  // If no sites given, just return polygons in the order
+  // they were found
+  //
+  // Remove any deleted polygons while doing this.
+  //  e.g. may have been deleted for being the bounding region rather than a
+  //       single polygon
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (n_sites > 0) {
+  if (matching_polygons_to_sites) {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // For each site, find the polygon it is contained within.
     // The polygon 'site_idx' is set to this site index.
@@ -627,39 +649,18 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
         warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
       }
     }
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // R list of polygons - should be one polygon for each site!
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    polys_ = PROTECT(allocVector(VECSXP, n_sites)); nprotect++;
-  } else {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // No sites given so just return a generic list of polygons in the order 
-    // they were found
-    //
-    // Convert C polygons to an R list of lists of coordinates:
-    //  list(list(x = ..., y = ...), list(x = ..., y = ...))
-    // 
-    // Remove any deleted polygons while doing this.
-    //  e.g. may have been deleted for being the bounding region rather than a
-    //       single polygon
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    polys_ = PROTECT(allocVector(VECSXP, n_valid_polys)); nprotect++;
   }
-  
-  int llidx = 0;  
-  
+
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Each polygon = 
+  // Each polygon =
   //    -  x, y coordinates
   //    -  v: vertex indices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   for (int i = 0; i < npolys; i++) {
-    if (polys[i].deleted) continue;
-    
+
     // Allocate vectors
-    SEXP x_         = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
-    SEXP y_         = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+    SEXP x_         = PROTECT(allocVector(REALSXP, polys[i].nvert));
+    SEXP y_         = PROTECT(allocVector(REALSXP, polys[i].nvert));
     SEXP v_         = PROTECT(allocVector(INTSXP , polys[i].nvert));
     SEXP site_idx_  = PROTECT(ScalarInteger(polys[i].site_idx + 1));
     SEXP cx_        = PROTECT(ScalarReal(polys[i].cx));
@@ -669,20 +670,20 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     SEXP ymin_      = PROTECT(ScalarReal(polys[i].bbox.ymin));
     SEXP xmax_      = PROTECT(ScalarReal(polys[i].bbox.xmax));
     SEXP ymax_      = PROTECT(ScalarReal(polys[i].bbox.ymax));
-    
+
     // Copy from the poly_t struct
     memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
     memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
     memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
-    
+
     convert_indexing_c_to_r(v_);
-    
+
     SEXP ll_ = PROTECT(
       create_named_list(
-        11, 
-        "x"        , x_, 
-        "y"        , y_, 
-        "v"        , v_, 
+        11,
+        "x"        , x_,
+        "y"        , y_,
+        "v"        , v_,
         "cx"       , cx_,
         "cy"       , cy_,
         "xmin"     , xmin_,
@@ -692,24 +693,217 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
         "bbox_area", bbox_area_,
         "site_idx" , site_idx_
       )
-    ); 
-    
-    if (n_sites > 0) {
+    );
+
+    if (matching_polygons_to_sites) {
       // Place the polygon in the correct position in the list
+      // Check if the poly_t.site_idx points to a valid site
       if (polys[i].site_idx < 0) {
-        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);  
+        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);
       } else {
-        SET_VECTOR_ELT(polys_, polys[i].site_idx, ll_);
+        SET_VECTOR_ELT(individual_polys_, polys[i].site_idx, ll_);
       }
     } else {
-      SET_VECTOR_ELT(polys_, llidx, ll_);
-      llidx++;
+      // We're not matching polygons. Just slot it into the next open position
+      SET_VECTOR_ELT(individual_polys_, i, ll_);
+    }
+
+    // Can unprotect as everything as all polygon information SEXPs
+    // are stored as members of a protected list (individual_polys_)
+    UNPROTECT(12);
+  }
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // if    matching_polygons_to_sites
+  // then  Calculate cumulative vertices prior to this one
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  int cumulative_verts[npolys];
+  memset(cumulative_verts, 0, npolys * sizeof(int));
+  
+  int tt = 0;
+  
+  if (matching_polygons_to_sites) {
+    for (int i = 0; i < npolys; i++) {
+      if (polys[i].site_idx < 0) continue;
+      cumulative_verts[polys[i].site_idx] = polys[i].nvert;
+      tt += polys[i].nvert;
+    }
+  }  else {
+    // not matching polygons to sites
+    for (int i = 0; i < npolys; i++) {
+      cumulative_verts[i] = polys[i].nvert;
+      tt += polys[i].nvert;
+    }
+  }
+  
+  // calculate all vertices up to each polygon
+  // this will be used to access the start location to fill
+  int total_verts = 0;
+  for (int i = 0; i < npolys; i++) {
+    int tmp = cumulative_verts[i];
+    cumulative_verts[i] = total_verts;
+    total_verts += tmp;
+  }
+  
+  if (tt != total_verts) {
+    Rprintf("total_verts != tt.  %i != %i\n", total_verts, tt);
+  }
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Data.frame of coordinates of all polygons
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP idx_ = PROTECT(allocVector(INTSXP , total_verts)); nprotect++;
+  SEXP xv_  = PROTECT(allocVector(REALSXP, total_verts)); nprotect++;
+  SEXP yv_  = PROTECT(allocVector(REALSXP, total_verts)); nprotect++;
+  SEXP v_   = PROTECT(allocVector(INTSXP , total_verts)); nprotect++;
+  
+  SEXP coords_ = PROTECT(
+    create_named_list(
+      4,
+      "idx", idx_,
+      "x"  , xv_,
+      "y"  , yv_,
+      "v"  , v_
+    )
+  ); nprotect++;
+  set_df_attributes(coords_);
+  
+  int *idx   = INTEGER(idx_);
+  double *xv = REAL(xv_);
+  double *yv = REAL(yv_);
+  int *v     = INTEGER(v_);
+
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // For each polygon, slot its vertices into the right location in
+  // (xv, yv).  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  for (int i = 0; i < npolys; i++) {
+    
+    int site_idx;
+    if (matching_polygons_to_sites) {
+      site_idx = polys[i].site_idx;
+    } else {
+      site_idx = i;
     }
     
-    // Can unprotect as everything as
-    // everything is now a member of a protected list
-    UNPROTECT(12); 
+    // how many vertices come before this polygon?
+    int loc = cumulative_verts[site_idx];
+    
+    // copy poly_t data into R vectors at the location starting *after*
+    // all the vertices which come before it.
+    memcpy(xv + loc, polys[i].x, polys[i].nvert * sizeof(double));
+    memcpy(yv + loc, polys[i].y, polys[i].nvert * sizeof(double));
+    memcpy(v  + loc, polys[i].v, polys[i].nvert * sizeof(int));
+    
+    for (int j = 0; j < polys[i].nvert; j++) {
+      idx[loc + j] = site_idx ;
+    }
   }
+  
+  convert_indexing_c_to_r(idx_);
+  convert_indexing_c_to_r(v_);
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Bounding boxes
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP bbox_idx_ = PROTECT(allocVector(INTSXP , npolys)); nprotect++;
+  SEXP xmin_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP ymin_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP xmax_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP ymax_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP area_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  
+  SEXP bbox_ = PROTECT(
+    create_named_list(
+      6,
+      "idx", bbox_idx_,
+      "xmin", xmin_,
+      "ymin", ymin_,
+      "xmax", xmax_,
+      "ymax", ymax_,
+      "area", area_
+    )
+  ); nprotect++;
+  set_df_attributes(bbox_);
+  
+  int *bbox_idx = INTEGER(bbox_idx_);
+  double *xmin = REAL(xmin_);
+  double *ymin = REAL(ymin_);
+  double *xmax = REAL(xmax_);
+  double *ymax = REAL(ymax_);
+  double *area = REAL(area_);
+  
+  for (int i = 0; i < npolys; i++) {
+    int site_idx;
+    if (matching_polygons_to_sites) {
+      site_idx = polys[i].site_idx;
+    } else {
+      site_idx = i;
+    }
+    
+    bbox_idx[i] = i + 1;
+    xmin[site_idx] = polys[i].bbox.xmin;
+    ymin[site_idx] = polys[i].bbox.ymin;
+    xmax[site_idx] = polys[i].bbox.xmax;
+    ymax[site_idx] = polys[i].bbox.ymax;
+    area[site_idx] = polys[i].bbox_area;
+    
+  }
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Centroids
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP centroid_idx_ = PROTECT(allocVector(INTSXP, npolys)); nprotect++;
+  SEXP cx_ = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP cy_ = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  
+  SEXP centroids_ = PROTECT(
+    create_named_list(
+      3,
+      "idx", centroid_idx_,
+      "x"  , cx_,
+      "y"  , cy_
+    )
+  ); nprotect++;
+  set_df_attributes(centroids_);
+  
+  int *centroid_idx = INTEGER(centroid_idx_);
+  double *cx = REAL(cx_);
+  double *cy = REAL(cy_);
+  
+  for (int i = 0; i < npolys; i++) {
+    int site_idx;
+    if (matching_polygons_to_sites) {
+      site_idx = polys[i].site_idx;
+    } else {
+      site_idx = i;
+    }
+    
+    centroid_idx[i] = i + 1;
+    cx[site_idx] = polys[i].cx;
+    cy[site_idx] = polys[i].cy;
+  }
+  
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Combine all polygon information in a list
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  SEXP npolys_ = PROTECT(ScalarInteger(npolys)); nprotect++;
+  
+  SEXP polys_ = PROTECT(
+    create_named_list(
+      5,
+      "npolygons" , npolys_,
+      "individual", individual_polys_,
+      "coords"    , coords_,
+      "bbox"      , bbox_,
+      "centroids" , centroids_
+    )
+  ); nprotect++;
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

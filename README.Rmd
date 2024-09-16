@@ -87,8 +87,8 @@ vor <- voronoi(as.double(x), as.double(y))
 # Plot all Voronoi polygons in their appropriate colour
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nr <- nara::nr_new(ncol(rj), nrow(rj))
-for (i in seq_along(vor$polygons)) {
-  nr_polygon(nr, vor$polygons[[i]]$x, vor$polygons[[i]]$y, fill = cols[i])
+for (i in seq_len(vor$polygons$npolygons)) {
+  nr_polygon(nr, vor$polygons$individual[[i]]$x, vor$polygons$individual[[i]]$y, fill = cols[i])
 }
 grid.raster(nr)
 ```
@@ -428,7 +428,7 @@ plot(vor)
 
 ## Pathological 4
 
-* 2 concentric equalateral triangles 
+* 2 concentric equilateral triangles 
 * 1 point at the centre
 
 ```{r path4}

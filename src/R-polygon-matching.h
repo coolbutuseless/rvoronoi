@@ -17,7 +17,6 @@ typedef struct {
   bool taken;       // has this polygon been claimed?
   double cx;        // x centroid
   double cy;        // y centroid
-  bool deleted;     // has this polygon been deleted
 } poly_t;
 
 int find_matching_polygon_for_site(int site_idx, double x, double y, int npolys, poly_t *polys);

@@ -75,8 +75,8 @@ vor <- voronoi(as.double(x), as.double(y))
 # Plot all Voronoi polygons in their appropriate colour
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nr <- nara::nr_new(ncol(rj), nrow(rj))
-for (i in seq_along(vor$polygons)) {
-  nr_polygon(nr, vor$polygons[[i]]$x, vor$polygons[[i]]$y, fill = cols[i])
+for (i in seq_len(vor$polygons$npolygons)) {
+  nr_polygon(nr, vor$polygons$individual[[i]]$x, vor$polygons$individual[[i]]$y, fill = cols[i])
 }
 grid.raster(nr)
 ```
@@ -169,7 +169,9 @@ Compare Delaunay Triangulation using
 - `{deldir}`
 
 <details>
+
 <summary>
+
 Delaunay Triangulation Benchmark
 </summary>
 
@@ -185,9 +187,6 @@ library(deldir)
 #> 
 #>      The syntax of deldir() has changed since version 
 #>      0.0-10.  Read the help!!!.
-```
-
-``` r
 #> deldir 2.0-4      Nickname: "Idol Comparison"
 #> 
 #>      The syntax of deldir() has changed since version 
@@ -252,12 +251,12 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |      min |  median |    itr/sec | mem_alloc |
-|:-----------|---------:|--------:|-----------:|----------:|
-| rvoronoi   | 723.95µs | 731.1µs | 1347.70486 |  162.78KB |
-| rvoronoi   | 712.54µs | 718.7µs | 1335.97145 |   23.58KB |
-| rtriangle  |   1.45ms |   1.5ms |  592.42185 |  292.63KB |
-| deldir     |  23.97ms |  24.3ms |   38.98876 |    5.67MB |
+| expression |     min | median |    itr/sec | mem_alloc |
+|:-----------|--------:|-------:|-----------:|----------:|
+| rvoronoi   | 393.6µs |  413µs | 2391.69026 |  162.78KB |
+| rvoronoi   | 380.4µs |  392µs | 2530.68635 |   23.58KB |
+| rtriangle  | 725.8µs |  760µs | 1286.47986 |  292.63KB |
+| deldir     |  16.7ms |   17ms |   58.67813 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -268,7 +267,9 @@ Compare:
 - `{RTriangle}`
 
 <details>
+
 <summary>
+
 Voronoi Tessellation Benchmark
 </summary>
 
@@ -302,9 +303,6 @@ if (FALSE) {
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
-```
-
-``` r
 
 if (FALSE) {
   plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
@@ -357,10 +355,10 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |      min |   median |   itr/sec | mem_alloc |
-|:---------------------------|---------:|---------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 743.01µs | 753.12µs | 1278.5718 |     137KB |
-| RTriangle                  |   1.46ms |   1.49ms |  604.7263 |     293KB |
+| expression                 |   min | median |  itr/sec | mem_alloc |
+|:---------------------------|------:|-------:|---------:|----------:|
+| rvoronoi (match RTriangle) | 405µs |  420µs | 2359.785 |     137KB |
+| RTriangle                  | 726µs |  762µs | 1290.089 |     293KB |
 
 ### Voronoi - polygons
 
@@ -377,9 +375,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   5.84ms |   5.92ms | 149.738876 |     235KB |
-| rvoronoi (unmatched polygons) |   4.44ms |   4.51ms | 201.237936 |     235KB |
-| deldir                        | 408.89ms | 431.96ms |   2.315004 |    52.1MB |
+| rvoronoi (matched polygons)   |   3.65ms |   3.75ms | 258.514177 |   438.2KB |
+| rvoronoi (unmatched polygons) |    2.6ms |    2.7ms | 361.096330 |   438.2KB |
+| deldir                        | 165.82ms | 169.37ms |   5.556186 |    52.1MB |
 
 # Pathological Test Cases
 
@@ -446,7 +444,7 @@ plot(vor)
 
 ## Pathological 4
 
-- 2 concentric equalateral triangles
+- 2 concentric equilateral triangles
 - 1 point at the centre
 
 ``` r

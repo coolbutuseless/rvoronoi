@@ -73,7 +73,7 @@ polygon(mypoly)
 vor <- voronoi(xs, ys, match_sites = TRUE)
 
 plot(xs, ys, ann = F, axes = F, asp = 1)
-polygon(vor$polygons[[1]])
+polygon(vor$polygons$individual[[1]])
 
 
 
@@ -83,7 +83,7 @@ plot(vor)
 
 
 
-ints <- lapply(vor$polygons, function(poly) {
+ints <- lapply(vor$polygons$individual, function(poly) {
   polyclip::polyclip(mypoly, poly) 
 })
 ints <- unlist(ints, recursive = FALSE)

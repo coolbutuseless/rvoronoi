@@ -22,7 +22,7 @@
   label_cex = 0.5,
   fseg_col = "black",
   iseg_col = "red",
-  poly_col = rainbow(length(vor$polygons)),
+  poly_col = rainbow(vor$polygons$npolygons),
   buffer = 0,
   ...
 )

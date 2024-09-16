@@ -36,7 +36,7 @@ plot.vor <- function(
     label_cex = 0.5,
     fseg_col  = 'black',
     iseg_col  = 'red',
-    poly_col  = rainbow(length(vor$polygons)),
+    poly_col  = rainbow(vor$polygons$npolygons),
     buffer    = 0,
     ...
 ) {
@@ -141,19 +141,19 @@ plot.vor <- function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Polygons
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (isTRUE(polys) && !is.null(vor$polygons)) {
+  if (isTRUE(polys) && vor$polygons$npolygons > 0) {
     
     # Setup fill colours for polygon
     if (length(poly_col) == 1) {
-      poly_col <- rep(poly_col, length(vor$polygons))
+      poly_col <- rep(poly_col, vor$polygons$npolygons)
     }
     
-    if (length(poly_col) != length(vor$polygons)) {
-      stop("'poly_col' must be length 1 or match length(vor$polygons)")
+    if (length(poly_col) != vor$polygons$npolygons) {
+      stop("'poly_col' must be length 1 or match vor$polygons$npolygons")
     }
     
-    for (i in seq_along(vor$polygons)) {
-      graphics::polygon(vor$polygons[[i]], col = poly_col[i])
+    for (i in seq_len(vor$polygons$npolygons)) {
+      graphics::polygon(vor$polygons$individual[[i]], col = poly_col[i])
     }
   }
   
@@ -226,6 +226,10 @@ if (FALSE) {
   vor <- voronoi(x, y)
   
   plot(vor, polys = FALSE) 
+  
+  dim(vor$polygons$coords)
+    
+  
 }
 
 

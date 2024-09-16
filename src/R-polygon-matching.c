@@ -110,7 +110,7 @@ int find_matching_polygon_for_site(int site_idx, double x, double y, int npolys,
     // has been claimed by another point.  
     // Remember: For a voronoi tessellation a seed point can only match one
     // polygon (and vice versa)
-    if (polys[i].deleted || polys[i].taken) continue;
+    if (polys[i].taken) continue;
     
     bbox_t bbox = polys[i].bbox;
     
