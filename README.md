@@ -136,10 +136,7 @@ y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.2)
+plot(vor)
 ```
 
 <img src="man/figures/README-voronoi-1.png" width="100%" />
@@ -178,9 +175,7 @@ Compare Delaunay Triangulation using
 - `{deldir}`
 
 <details>
-
 <summary>
-
 Delaunay Triangulation Benchmark
 </summary>
 
@@ -196,6 +191,9 @@ library(deldir)
 #> 
 #>      The syntax of deldir() has changed since version 
 #>      0.0-10.  Read the help!!!.
+```
+
+``` r
 #> deldir 2.0-4      Nickname: "Idol Comparison"
 #> 
 #>      The syntax of deldir() has changed since version 
@@ -260,12 +258,12 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |    itr/sec | mem_alloc |
-|:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 393.9µs | 409.5µs | 2420.96987 |  162.78KB |
-| rvoronoi   |   386µs | 394.5µs | 2510.46808 |   23.58KB |
-| rtriangle  | 724.6µs | 761.2µs | 1271.85978 |  292.63KB |
-| deldir     |  16.9ms |  17.2ms |   58.01351 |    5.67MB |
+| expression |      min |  median |    itr/sec | mem_alloc |
+|:-----------|---------:|--------:|-----------:|----------:|
+| rvoronoi   |  732.1µs |   740µs | 1237.95320 |  162.78KB |
+| rvoronoi   | 718.65µs | 725.1µs | 1283.55021 |   23.58KB |
+| rtriangle  |   1.46ms |   1.5ms |  612.74846 |  292.63KB |
+| deldir     |  24.04ms |  24.2ms |   38.20938 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -276,9 +274,7 @@ Compare:
 - `{RTriangle}`
 
 <details>
-
 <summary>
-
 Voronoi Tessellation Benchmark
 </summary>
 
@@ -312,6 +308,9 @@ if (FALSE) {
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
+```
+
+``` r
 
 if (FALSE) {
   plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
@@ -364,10 +363,10 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |   min | median |  itr/sec | mem_alloc |
-|:---------------------------|------:|-------:|---------:|----------:|
-| rvoronoi (match RTriangle) | 407µs |  419µs | 2361.973 |     137KB |
-| RTriangle                  | 721µs |  752µs | 1316.743 |     293KB |
+| expression                 |      min |   median |   itr/sec | mem_alloc |
+|:---------------------------|---------:|---------:|----------:|----------:|
+| rvoronoi (match RTriangle) | 751.08µs | 760.13µs | 1246.8344 |     137KB |
+| RTriangle                  |   1.46ms |   1.53ms |  609.1203 |     293KB |
 
 ### Voronoi - polygons
 
@@ -384,9 +383,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (full)               |   3.49ms |   3.56ms | 276.602575 |     235KB |
-| rvoronoi (unmatched polygons) |   2.46ms |   2.51ms | 387.872008 |     235KB |
-| deldir                        | 169.49ms | 176.25ms |   5.721694 |    52.1MB |
+| rvoronoi (full)               |   5.86ms |   5.93ms | 151.023102 |     235KB |
+| rvoronoi (unmatched polygons) |   4.44ms |    4.5ms | 217.318325 |     235KB |
+| deldir                        | 419.88ms | 453.79ms |   2.203687 |    52.1MB |
 
 # Pathological Test Cases
 
@@ -400,11 +399,7 @@ x <- cos(theta)
 y <- sin(theta)
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites(text = FALSE) |>
-  draw_vertices()
+plot(vor)
 ```
 
 <img src="man/figures/README-path1-1.png" width="100%" />
@@ -420,11 +415,7 @@ x <- c(0, cos(theta))
 y <- c(0, sin(theta))
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.3)
+plot(vor)
 ```
 
 <img src="man/figures/README-path2-1.png" width="100%" />
@@ -440,12 +431,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.3)
+plot(vor)
 ```
 
 <img src="man/figures/README-path2a-1.png" width="100%" />
@@ -459,11 +445,7 @@ x <- seq(0, 2*pi, length.out = 100)
 y <- 0.5 * x  
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices()
+plot(vor)
 ```
 
 <img src="man/figures/README-path3-1.png" width="100%" />
@@ -479,12 +461,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices()
+plot(vor)
 ```
 
 <img src="man/figures/README-path4-1.png" width="100%" />

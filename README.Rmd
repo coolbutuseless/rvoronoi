@@ -151,10 +151,7 @@ y <- runif(20)
 
 vor <- voronoi(x, y) 
 
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.2)
+plot(vor)
 ```
 
 
@@ -390,11 +387,7 @@ x <- cos(theta)
 y <- sin(theta)
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites(text = FALSE) |>
-  draw_vertices()
+plot(vor)
 ```
 
 
@@ -411,11 +404,7 @@ x <- c(0, cos(theta))
 y <- c(0, sin(theta))
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.3)
+plot(vor)
 ```
 
 ## Pathological 2a
@@ -429,12 +418,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices(cex = 0.3)
+plot(vor)
 ```
 
 
@@ -447,11 +431,7 @@ x <- seq(0, 2*pi, length.out = 100)
 y <- 0.5 * x  
 
 vor <- voronoi(x, y)
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices()
+plot(vor)
 ```
 
 
@@ -467,12 +447,7 @@ x <- c(0, cos(theta), 2 * cos(theta))
 y <- c(0, sin(theta), 2 * sin(theta))
 
 vor <- voronoi(x, y)
-
-
-plot_vor(vor) |>
-  draw_polygons() |>
-  draw_sites() |>
-  draw_vertices()
+plot(vor)
 ```
 
 

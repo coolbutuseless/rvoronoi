@@ -78,13 +78,7 @@ polygon(vor$polygons[[1]])
 
 
 # png("working/02-voronoi.png")
-plot_vor(vor) |>
-  draw_finite_segments() |>
-  draw_semi_infinite_segments(col = 'hotpink') |>
-  draw_infinite_segments(col = 'red') |>
-  draw_polygons() |>
-  draw_sites(text = TRUE) |>
-  draw_vertices()
+plot(vor)
 # invisible(dev.off())
 
 
@@ -97,13 +91,7 @@ ints <- unlist(ints, recursive = FALSE)
 cols <- rainbow(length(ints))
 
 # png("working/03-intersect.png")
-plot_vor(vor) |>
-  draw_finite_segments() |>
-  draw_semi_infinite_segments(col = 'hotpink') |>
-  draw_infinite_segments(col = 'red') |>
-  draw_polygons() |>
-  draw_sites(text = TRUE) |>
-  draw_vertices()
+plot(vor)
 
 for (i in seq_along(ints)) {
   polygon(ints[[i]], col = cols[i])

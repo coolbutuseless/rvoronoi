@@ -92,8 +92,5 @@ test_that("voronoi pathological4 works", {
 
 if (FALSE) {
   
-  plot_vor(vor) |>
-    draw_polygons() |>
-    draw_sites() |>
-    draw_vertices()
+  plot(vor)
 }
