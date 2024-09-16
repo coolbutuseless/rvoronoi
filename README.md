@@ -144,16 +144,9 @@ set.seed(2024)
 x <- runif(10)
 y <- runif(10)
 
-del <- delaunay(x, y)$segment
+del <- delaunay(x, y)
 
-# Plot the sites
-plot(x, y, asp = 1, col = 'red', ann = F, axes = F, pch = 19)
-
-# Plot all finite segments.  
-# This will not plot any of the segments which do not converge
-segments(x[del$v1], y[del$v1], x[del$v2], y[del$v2])
-segments(x[del$v3], y[del$v3], x[del$v2], y[del$v2])
-segments(x[del$v1], y[del$v1], x[del$v3], y[del$v3])
+plot(del)
 ```
 
 <img src="man/figures/README-delaunay-1.png" width="100%" />
@@ -169,9 +162,7 @@ Compare Delaunay Triangulation using
 - `{deldir}`
 
 <details>
-
 <summary>
-
 Delaunay Triangulation Benchmark
 </summary>
 
@@ -187,6 +178,9 @@ library(deldir)
 #> 
 #>      The syntax of deldir() has changed since version 
 #>      0.0-10.  Read the help!!!.
+```
+
+``` r
 #> deldir 2.0-4      Nickname: "Idol Comparison"
 #> 
 #>      The syntax of deldir() has changed since version 
@@ -251,12 +245,12 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min | median |    itr/sec | mem_alloc |
-|:-----------|--------:|-------:|-----------:|----------:|
-| rvoronoi   | 393.6µs |  413µs | 2391.69026 |  162.78KB |
-| rvoronoi   | 380.4µs |  392µs | 2530.68635 |   23.58KB |
-| rtriangle  | 725.8µs |  760µs | 1286.47986 |  292.63KB |
-| deldir     |  16.7ms |   17ms |   58.67813 |    5.67MB |
+| expression |      min |   median |    itr/sec | mem_alloc |
+|:-----------|---------:|---------:|-----------:|----------:|
+| rvoronoi   | 723.88µs | 730.38µs | 1332.92870 |  162.78KB |
+| rvoronoi   | 709.92µs | 715.07µs | 1373.32857 |   23.58KB |
+| rtriangle  |   1.45ms |   1.48ms |  646.63560 |  292.63KB |
+| deldir     |  24.01ms |  25.68ms |   35.80489 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -267,9 +261,7 @@ Compare:
 - `{RTriangle}`
 
 <details>
-
 <summary>
-
 Voronoi Tessellation Benchmark
 </summary>
 
@@ -303,6 +295,9 @@ if (FALSE) {
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
+```
+
+``` r
 
 if (FALSE) {
   plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
@@ -355,10 +350,10 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |   min | median |  itr/sec | mem_alloc |
-|:---------------------------|------:|-------:|---------:|----------:|
-| rvoronoi (match RTriangle) | 405µs |  420µs | 2359.785 |     137KB |
-| RTriangle                  | 726µs |  762µs | 1290.089 |     293KB |
+| expression                 |      min |   median |   itr/sec | mem_alloc |
+|:---------------------------|---------:|---------:|----------:|----------:|
+| rvoronoi (match RTriangle) | 739.86µs | 753.31µs | 1214.9616 |     137KB |
+| RTriangle                  |   1.45ms |   1.49ms |  644.6148 |     293KB |
 
 ### Voronoi - polygons
 
@@ -375,9 +370,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   3.65ms |   3.75ms | 258.514177 |   438.2KB |
-| rvoronoi (unmatched polygons) |    2.6ms |    2.7ms | 361.096330 |   438.2KB |
-| deldir                        | 165.82ms | 169.37ms |   5.556186 |    52.1MB |
+| rvoronoi (matched polygons)   |   6.04ms |   6.16ms | 143.681611 |   438.2KB |
+| rvoronoi (unmatched polygons) |   4.66ms |    4.8ms | 175.725119 |   438.2KB |
+| deldir                        | 391.59ms | 393.07ms |   2.544085 |    52.1MB |
 
 # Pathological Test Cases
 

@@ -154,16 +154,9 @@ set.seed(2024)
 x <- runif(10)
 y <- runif(10)
 
-del <- delaunay(x, y)$segment
+del <- delaunay(x, y)
 
-# Plot the sites
-plot(x, y, asp = 1, col = 'red', ann = F, axes = F, pch = 19)
-
-# Plot all finite segments.  
-# This will not plot any of the segments which do not converge
-segments(x[del$v1], y[del$v1], x[del$v2], y[del$v2])
-segments(x[del$v3], y[del$v3], x[del$v2], y[del$v2])
-segments(x[del$v1], y[del$v1], x[del$v3], y[del$v3])
+plot(del)
 ```
 
 

@@ -134,9 +134,28 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // List of delaunay results: list(vertex = data.frame(), coords = data.frame())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP res_ = PROTECT(
-    create_named_list(2, "segment", idx_, "polygon", polys_)
+  SEXP sites_ = PROTECT(
+    create_named_list(
+      2,
+      "x", x_,
+      "y", y_
+    )
   ); nprotect++;
+  set_df_attributes(sites_);
+  
+  SEXP ntris_ = PROTECT(ScalarInteger(ctx.ntris)); nprotect++;
+  
+  SEXP res_ = PROTECT(
+    create_named_list(
+      4, 
+      "sites"  , sites_,
+      "ntris"  , ntris_,
+      "segment", idx_, 
+      "polygon", polys_
+    )
+  ); nprotect++;
+  
+  setAttrib(res_, R_ClassSymbol, mkString("del"));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations
