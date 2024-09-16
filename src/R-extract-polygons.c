@@ -100,9 +100,12 @@ int wedge_comparison(const void *p1, const void *p2) {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Free the C array-of-structs holding the poly_t polygon definition
+// Remember that there are actually "npolys + 1" polygons allocated.
+// One polygon is always ignored as it is the "boudning region" and 
+// not a voronoi cell
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void free_polys(int npolys, poly_t *polys) {
-  for (int i = 0; i < npolys; i++) {
+  for (int i = 0; i < npolys + 1; i++) {
     free(polys[i].v);
     free(polys[i].x);
     free(polys[i].y);
@@ -576,11 +579,13 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Overwrite the largest polygon with the last polygon
-  // Adjust the 'npoly' count so the final poly in 'polys' is ignored
+  // Adjust the 'npoly' count so the final poly in 'polys' is ignored.
+  // Still need to keep it around when we free it in 'free_polys'
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *npolys -= 1;
+  poly_t tmp = polys[max_bbox_area_idx];
   polys[max_bbox_area_idx] = polys[*npolys];
-  
+  polys[*npolys] = tmp;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
