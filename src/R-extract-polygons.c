@@ -629,46 +629,9 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     }
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // R list of polygons
+    // R list of polygons - should be one polygon for each site!
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     polys_ = PROTECT(allocVector(VECSXP, n_sites)); nprotect++;
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Each polygon = 
-    //    -  x, y coordinates
-    //    -  v: vertex indices
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    for (int i = 0; i < npolys; i++) {
-      if (polys[i].deleted) continue;
-      
-      // Allocate vectors
-      SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
-      SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
-      SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
-      
-      // Copy from the poly_t struct
-      memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
-      memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
-      memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
-      
-      convert_indexing_c_to_r(v_);
-      
-      SEXP ll_ = PROTECT(
-        create_named_list(3, "x", x_, "y", y_, "v", v_)
-      ); 
-      
-      set_df_attributes(ll_);
-      
-      // Place the polygon in the correct position in the list
-      if (polys[i].site_idx < 0) {
-        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);  
-      } else {
-        SET_VECTOR_ELT(polys_, polys[i].site_idx, ll_);
-      }
-      
-      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
-    }
-    
   } else {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // No sites given so just return a generic list of polygons in the order 
@@ -682,37 +645,72 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     //       single polygon
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     polys_ = PROTECT(allocVector(VECSXP, n_valid_polys)); nprotect++;
+  }
+  
+  int llidx = 0;  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Each polygon = 
+  //    -  x, y coordinates
+  //    -  v: vertex indices
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  for (int i = 0; i < npolys; i++) {
+    if (polys[i].deleted) continue;
     
-    int llidx = 0;  
-    for (int i = 0; i < npolys; i++) {
-      if (polys[i].deleted) continue;
-      
-      // Allocate R space
-      SEXP x_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
-      SEXP y_ = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
-      SEXP v_ = PROTECT(allocVector(INTSXP , polys[i].nvert));
-      
-      // Copy from the poly_t struct
-      memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
-      memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
-      memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
-      
-      convert_indexing_c_to_r(v_);
-      
-      SEXP ll_ = PROTECT(
-        create_named_list(3, "x", x_, "y", y_, "v", v_)
-      ); 
-      
-      set_df_attributes(ll_);
-      
- 
+    // Allocate vectors
+    SEXP x_         = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+    SEXP y_         = PROTECT(allocVector(REALSXP, polys[i].nvert)); 
+    SEXP v_         = PROTECT(allocVector(INTSXP , polys[i].nvert));
+    SEXP site_idx_  = PROTECT(ScalarInteger(polys[i].site_idx + 1));
+    SEXP cx_        = PROTECT(ScalarReal(polys[i].cx));
+    SEXP cy_        = PROTECT(ScalarReal(polys[i].cy));
+    SEXP bbox_area_ = PROTECT(ScalarReal(polys[i].bbox_area));
+    SEXP xmin_      = PROTECT(ScalarReal(polys[i].bbox.xmin));
+    SEXP ymin_      = PROTECT(ScalarReal(polys[i].bbox.ymin));
+    SEXP xmax_      = PROTECT(ScalarReal(polys[i].bbox.xmax));
+    SEXP ymax_      = PROTECT(ScalarReal(polys[i].bbox.ymax));
+    
+    // Copy from the poly_t struct
+    memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
+    memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
+    memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
+    
+    convert_indexing_c_to_r(v_);
+    
+    SEXP ll_ = PROTECT(
+      create_named_list(
+        11, 
+        "x"        , x_, 
+        "y"        , y_, 
+        "v"        , v_, 
+        "cx"       , cx_,
+        "cy"       , cy_,
+        "xmin"     , xmin_,
+        "ymin"     , ymin_,
+        "xmax"     , xmax_,
+        "ymax"     , ymax_,
+        "bbox_area", bbox_area_,
+        "site_idx" , site_idx_
+      )
+    ); 
+    
+    if (n_sites > 0) {
+      // Place the polygon in the correct position in the list
+      if (polys[i].site_idx < 0) {
+        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);  
+      } else {
+        SET_VECTOR_ELT(polys_, polys[i].site_idx, ll_);
+      }
+    } else {
       SET_VECTOR_ELT(polys_, llidx, ll_);
-      
-      UNPROTECT(4); // everything is protected as they're now members of list 'res_'
       llidx++;
     }
+    
+    // Can unprotect as everything as
+    // everything is now a member of a protected list
+    UNPROTECT(12); 
   }
-
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return
