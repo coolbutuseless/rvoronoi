@@ -49,7 +49,7 @@ int vpair_comparison(const void *v1, const void *v2) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Delauney Triangulation
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
+SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP calc_segments_) {
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
@@ -107,8 +107,35 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Indices = data.frame(v1 = integer(), v2 = integer(), v3 = integer())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
+  SEXP idx_  = R_NilValue;
+  SEXP area_ = R_NilValue;
+  if (asLogical(calc_areas_)) {
+    area_ = PROTECT(allocVector(REALSXP, ctx.ntris)); nprotect++;
+    idx_  = PROTECT(create_named_list(4, "v1", v1_, "v2", v2_, "v3", v3_, "area", area_)); nprotect++;
+  } else {
+    idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
+  }
   set_df_attributes_and_trim(idx_, ctx.ntris, max_tris);
+  
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Area
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (asLogical(calc_areas_)) {
+    double *area  = REAL(area_);
+    
+    double *x = REAL(x_);
+    double *y = REAL(y_);
+    
+    for (int i = 0; i < ctx.ntris; i++) {
+      area[i] = 0.5 * (
+        x[ ctx.v1[i] ] * (y[ ctx.v2[i] ] - y[ ctx.v3[i] ]) +
+          x[ ctx.v2[i] ] * (y[ ctx.v3[i] ] - y[ ctx.v1[i] ]) +
+          x[ ctx.v3[i] ] * (y[ ctx.v1[i] ] - y[ ctx.v2[i] ]) 
+      );
+      area[i] = fabs(area[i]);
+    }
+  }
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,153 +189,125 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Area
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP area_idx_ = PROTECT(allocVector(INTSXP , ctx.ntris)); nprotect++;
-  SEXP area_     = PROTECT(allocVector(REALSXP, ctx.ntris)); nprotect++;
-  
-  int *area_idx = INTEGER(area_idx_);
-  double *area  = REAL(area_);
-  
-  double *x = REAL(x_);
-  double *y = REAL(y_);
-  
-  for (int i = 0; i < ctx.ntris; i++) {
-    area_idx[i] = i + 1;
-    area[i] = 0.5 * (
-        x[ ctx.v1[i] ] * (y[ ctx.v2[i] ] - y[ ctx.v3[i] ]) +
-        x[ ctx.v2[i] ] * (y[ ctx.v3[i] ] - y[ ctx.v1[i] ]) +
-        x[ ctx.v3[i] ] * (y[ ctx.v1[i] ] - y[ ctx.v2[i] ]) 
-    );
-    area[i] = fabs(area[i]);
-  }
-  
-  
-  SEXP areas_ = PROTECT(
-    create_named_list(
-      2,
-      "idx", area_idx_,
-      "area", area_
-    )
-  ); nprotect++;
-  set_df_attributes(areas_);
-  
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Each segment (each segment should only appear once even though 
   // it might take part in 2 triangles).
   // Only keep vertex pairs where va < vb
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  vpair_t *vpairs = malloc(ctx.ntris * 3 * sizeof(vpair_t));
-  if (vpairs == NULL) {
-    error("couldn't allocate vpairs");
-  }
+  SEXP segs_ = R_NilValue;
   
-  
-  int nvpairs = 0;
-  for (int i = 0; i < ctx.ntris; i++) {
-    if (ctx.v1[i] < ctx.v2[i]) {
-      vpairs[nvpairs].v1 = ctx.v1[i];
-      vpairs[nvpairs].v2 = ctx.v2[i];
-    } else {
-      vpairs[nvpairs].v1 = ctx.v2[i];
-      vpairs[nvpairs].v2 = ctx.v1[i];
+  if (asLogical(calc_segments_)) {
+    vpair_t *vpairs = malloc(ctx.ntris * 3 * sizeof(vpair_t));
+    if (vpairs == NULL) {
+      error("couldn't allocate vpairs");
     }
-    nvpairs++;
     
-    if (ctx.v2[i] < ctx.v3[i]) {
-      vpairs[nvpairs].v1 = ctx.v2[i];
-      vpairs[nvpairs].v2 = ctx.v3[i];
-    } else {
-      vpairs[nvpairs].v1 = ctx.v3[i];
-      vpairs[nvpairs].v2 = ctx.v2[i];
+    
+    int nvpairs = 0;
+    for (int i = 0; i < ctx.ntris; i++) {
+      if (ctx.v1[i] < ctx.v2[i]) {
+        vpairs[nvpairs].v1 = ctx.v1[i];
+        vpairs[nvpairs].v2 = ctx.v2[i];
+      } else {
+        vpairs[nvpairs].v1 = ctx.v2[i];
+        vpairs[nvpairs].v2 = ctx.v1[i];
+      }
+      nvpairs++;
+      
+      if (ctx.v2[i] < ctx.v3[i]) {
+        vpairs[nvpairs].v1 = ctx.v2[i];
+        vpairs[nvpairs].v2 = ctx.v3[i];
+      } else {
+        vpairs[nvpairs].v1 = ctx.v3[i];
+        vpairs[nvpairs].v2 = ctx.v2[i];
+      }
+      nvpairs++;
+      
+      if (ctx.v3[i] < ctx.v1[i]) {
+        vpairs[nvpairs].v1 = ctx.v3[i];
+        vpairs[nvpairs].v2 = ctx.v1[i];
+      } else {
+        vpairs[nvpairs].v1 = ctx.v1[i];
+        vpairs[nvpairs].v2 = ctx.v3[i];
+      }
+      nvpairs++;
     }
-    nvpairs++;
     
-    if (ctx.v3[i] < ctx.v1[i]) {
-      vpairs[nvpairs].v1 = ctx.v3[i];
-      vpairs[nvpairs].v2 = ctx.v1[i];
-    } else {
-      vpairs[nvpairs].v1 = ctx.v1[i];
-      vpairs[nvpairs].v2 = ctx.v3[i];
+    qsort(vpairs, nvpairs, sizeof(vpair_t), vpair_comparison);
+    
+    int nsegs = 1;
+    for (int i=1; i < nvpairs; i++) {
+      // Rprintf("vpair[%2i] %2i -> %2i\n", i, vpairs[i].v1, vpairs[i].v2);
+      if (vpairs[i].v1 == vpairs[i-1].v1 && vpairs[i].v2 == vpairs[i-1].v2) continue;
+      nsegs++;
     }
-    nvpairs++;
-  }
-  
-  qsort(vpairs, nvpairs, sizeof(vpair_t), vpair_comparison);
-  
-  int nsegs = 1;
-  for (int i=1; i < nvpairs; i++) {
-    // Rprintf("vpair[%2i] %2i -> %2i\n", i, vpairs[i].v1, vpairs[i].v2);
-    if (vpairs[i].v1 == vpairs[i-1].v1 && vpairs[i].v2 == vpairs[i-1].v2) continue;
-    nsegs++;
-  }
-  
-  
-  SEXP sv1_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
-  SEXP sv2_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
-  SEXP x1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-  SEXP y1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-  SEXP x2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-  SEXP y2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-  SEXP dist_ = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-  SEXP segs_ = PROTECT(
-    create_named_list(
-      7,
-      "v1", sv1_,
-      "v2", sv2_,
-      "x1", x1_,
-      "y1", y1_,
-      "x2", x2_,
-      "y2", y2_,
-      "dist", dist_
-    )
-  ); nprotect++;
-  set_df_attributes(segs_);
-  
-  int *sv1 = INTEGER(sv1_);
-  int *sv2 = INTEGER(sv2_);
-  double *x1 = REAL(x1_);
-  double *y1 = REAL(y1_);
-  double *x2 = REAL(x2_);
-  double *y2 = REAL(y2_);
-  double *dist = REAL(dist_);
-  
-  
-  sv1[0]  = vpairs[0].v1;
-  sv2[0]  = vpairs[0].v2;
-  x1[0]   = x[ sv1[0] ];
-  y1[0]   = y[ sv1[0] ];
-  x2[0]   = x[ sv2[0] ];
-  y2[0]   = y[ sv2[0] ];
-  dist[0] = sqrt(
-    (x2[0] - x1[0]) * (x2[0] - x1[0]) + 
-    (y2[0] - y1[0]) * (y2[0] - y1[0])
-  );
-  nsegs = 1;
-  
-  for (int i=1; i < nvpairs; i++) {
-    if (vpairs[i].v1 == vpairs[i-1].v1 && vpairs[i].v2 == vpairs[i-1].v2) continue;
     
-    sv1[nsegs] = vpairs[i].v1;
-    sv2[nsegs] = vpairs[i].v2;
     
-    x1[nsegs] = x[ sv1[nsegs] ];
-    y1[nsegs] = y[ sv1[nsegs] ];
-    x2[nsegs] = x[ sv2[nsegs] ];
-    y2[nsegs] = y[ sv2[nsegs] ];
+    SEXP sv1_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
+    SEXP sv2_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
+    SEXP x1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP y1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP x2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP y2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP dist_ = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    segs_ = PROTECT(
+      create_named_list(
+        7,
+        "v1", sv1_,
+        "v2", sv2_,
+        "x1", x1_,
+        "y1", y1_,
+        "x2", x2_,
+        "y2", y2_,
+        "dist", dist_
+      )
+    ); nprotect++;
+    set_df_attributes(segs_);
     
-    dist[nsegs] = sqrt(
-      (x2[nsegs] - x1[nsegs]) * (x2[nsegs] - x1[nsegs]) +
-      (y2[nsegs] - y1[nsegs]) * (y2[nsegs] - y1[nsegs])
+    int *sv1 = INTEGER(sv1_);
+    int *sv2 = INTEGER(sv2_);
+    double *x1 = REAL(x1_);
+    double *y1 = REAL(y1_);
+    double *x2 = REAL(x2_);
+    double *y2 = REAL(y2_);
+    double *dist = REAL(dist_);
+    
+    double *x = REAL(x_);
+    double *y = REAL(y_);
+    
+    sv1[0]  = vpairs[0].v1;
+    sv2[0]  = vpairs[0].v2;
+    x1[0]   = x[ sv1[0] ];
+    y1[0]   = y[ sv1[0] ];
+    x2[0]   = x[ sv2[0] ];
+    y2[0]   = y[ sv2[0] ];
+    dist[0] = sqrt(
+      (x2[0] - x1[0]) * (x2[0] - x1[0]) + 
+        (y2[0] - y1[0]) * (y2[0] - y1[0])
     );
+    nsegs = 1;
     
-    nsegs++;
+    for (int i=1; i < nvpairs; i++) {
+      if (vpairs[i].v1 == vpairs[i-1].v1 && vpairs[i].v2 == vpairs[i-1].v2) continue;
+      
+      sv1[nsegs] = vpairs[i].v1;
+      sv2[nsegs] = vpairs[i].v2;
+      
+      x1[nsegs] = x[ sv1[nsegs] ];
+      y1[nsegs] = y[ sv1[nsegs] ];
+      x2[nsegs] = x[ sv2[nsegs] ];
+      y2[nsegs] = y[ sv2[nsegs] ];
+      
+      dist[nsegs] = sqrt(
+        (x2[nsegs] - x1[nsegs]) * (x2[nsegs] - x1[nsegs]) +
+          (y2[nsegs] - y1[nsegs]) * (y2[nsegs] - y1[nsegs])
+      );
+      
+      nsegs++;
+    }
+    
+    
+    free(vpairs);
   }
-
-
-  free(vpairs);
-  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // data.frame of initial sites
@@ -330,13 +329,12 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP res_ = PROTECT(
     create_named_list(
-      6, 
+      5, 
       "sites"   , sites_,
       "ntris"   , ntris_,
       "tris"    , idx_, 
       "polygons", polys_,
-      "segments", segs_,
-      "areas"   , areas_
+      "segments", segs_
     )
   ); nprotect++;
   
@@ -368,5 +366,5 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
 
 
 
- 
+
 

@@ -37,7 +37,9 @@ voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE) {
 #' Delaunay Triangulation
 #' 
 #' @inheritParams voronoi
-#' @param calc_polygons calculate and return polygon coordinates? default: TRUE
+#' @param calc_polygons calculate polygon coordinates default: TRUE
+#' @param calc_areas calculate the areas of each triangle. Default: FALSE
+#' @param calc_segments calculate segments. Default: FALSE
 #' @return named list of data
 #' \describe{
 #'  \item{segments}{data.frame. Each row specifies the indices of the three seed points
@@ -51,8 +53,9 @@ voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE) {
 #' delaunay(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-delaunay <- function(x, y, calc_polygons = TRUE) {
-  .Call(delaunay_, x, y, calc_polygons)
+delaunay <- function(x, y, calc_polygons = TRUE, calc_areas = FALSE, 
+                     calc_segments = FALSE) {
+  .Call(delaunay_, x, y, calc_polygons, calc_areas, calc_segments)
 }
 
 

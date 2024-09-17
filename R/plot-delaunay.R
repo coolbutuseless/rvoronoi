@@ -103,8 +103,6 @@ if (FALSE) {
   y <- runif(N)
   del <- delaunay(x, y)
   
-  tri <- del$tris
-  
 }
 
 

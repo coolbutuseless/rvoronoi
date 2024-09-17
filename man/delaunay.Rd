@@ -4,12 +4,16 @@
 \alias{delaunay}
 \title{Delaunay Triangulation}
 \usage{
-delaunay(x, y, calc_polygons = TRUE)
+delaunay(x, y, calc_polygons = TRUE, calc_areas = FALSE, calc_segments = FALSE)
 }
 \arguments{
 \item{x, y}{coordinates of seed sites. Duplicate points are not allowed.}
 
-\item{calc_polygons}{calculate and return polygon coordinates? default: TRUE}
+\item{calc_polygons}{calculate polygon coordinates default: TRUE}
+
+\item{calc_areas}{calculate the areas of each triangle. Default: FALSE}
+
+\item{calc_segments}{calculate segments. Default: FALSE}
 }
 \value{
 named list of data
