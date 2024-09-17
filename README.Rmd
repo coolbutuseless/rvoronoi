@@ -144,6 +144,23 @@ plot(vor, polys = FALSE, sites = TRUE, labels = TRUE, label_cex = 0.7)
 plot(vor, labels = TRUE, label_cex = 0.7)
 ```
 
+```{r}
+library(ggplot2)
+
+ggplot() + 
+  geom_polygon(data = vor$polygons$coords, 
+               aes(x, y, group = idx, fill = as.factor(idx)), 
+               col = 'black') +
+  theme_void() + 
+  coord_equal(xlim = c(-0.2, 1.2), ylim = c(-0.2, 1.2)) +
+  theme(
+    legend.position = 'none'
+  )
+
+
+```
+
+
 
 ## Delaunay Triangulation
 
@@ -338,7 +355,7 @@ if (FALSE) {
 
 ```{r}
 bench::mark(
-  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
+  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE, bound_segments = FALSE),
   RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()

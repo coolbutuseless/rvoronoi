@@ -4,7 +4,7 @@
 \alias{voronoi}
 \title{Voronoi Tessellation}
 \usage{
-voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE)
+voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE)
 }
 \arguments{
 \item{x, y}{coordinates of seed sites. Duplicate points are not allowed.}
@@ -13,7 +13,11 @@ voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE)
 Default: TRUE}
 
 \item{match_sites}{Logical. Should the polygons be re-ordered to match 
-the seed points? Default: TRUE}
+the seed points? Default: TRUE. This option only makes sense
+when \code{calc_polygons = TRUE}.}
+
+\item{bound_segments}{logical. Default: TRUE.  If \code{calc_polygons = TRUE}
+then this option is always TRUE.}
 }
 \value{
 named list of data.frames.

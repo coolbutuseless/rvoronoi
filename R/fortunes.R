@@ -6,7 +6,10 @@
 #' @param calc_polygons Logical. Should voronoi polygons be calculated?
 #'        Default: TRUE
 #' @param match_sites Logical. Should the polygons be re-ordered to match 
-#'        the seed points? Default: TRUE
+#'        the seed points? Default: TRUE. This option only makes sense
+#'        when \code{calc_polygons = TRUE}.
+#' @param bound_segments logical. Default: TRUE.  If \code{calc_polygons = TRUE}
+#'        then this option is always TRUE.
 #' @return named list of data.frames.
 #' \describe{
 #'   \item{sites}{data.frame of original sites}
@@ -28,8 +31,8 @@
 #' voronoi(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE) {
-  .Call(voronoi_, x, y, calc_polygons, match_sites)
+voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE) {
+  .Call(voronoi_, x, y, calc_polygons, match_sites, bound_segments)
 }
 
 

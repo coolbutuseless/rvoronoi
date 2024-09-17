@@ -73,15 +73,28 @@ plot.vor <- function(
   # Finite segments
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (isTRUE(fsegs)) {
-    fseg <- subset(vor$segments, v1 > 0 & v2 > 0)
     
-    graphics::segments(
-      vor$vertices$x[fseg$v1],
-      vor$vertices$y[fseg$v1],
-      vor$vertices$x[fseg$v2],
-      vor$vertices$y[fseg$v2],
-      col = fseg_col
-    )
+    if (!is.null(vor$mvertices)) {
+      # DRaw with merged vertices/segments
+      fseg <- subset(vor$msegments, v1 > 0 & v2 > 0)
+      graphics::segments(
+        vor$mvertices$x[fseg$v1],
+        vor$mvertices$y[fseg$v1],
+        vor$mvertices$x[fseg$v2],
+        vor$mvertices$y[fseg$v2],
+        col = fseg_col
+      )
+    } else {
+      # Daaw with raw vertices/segments
+      fseg <- subset(vor$segments, v1 > 0 & v2 > 0)
+      graphics::segments(
+        vor$vertices$x[fseg$v1],
+        vor$vertices$y[fseg$v1],
+        vor$vertices$x[fseg$v2],
+        vor$vertices$y[fseg$v2],
+        col = fseg_col
+      )
+    }
   }
   
   
@@ -225,7 +238,7 @@ if (FALSE) {
   y <- runif(N)
   vor <- voronoi(x, y)
   
-  plot(vor, polys = FALSE) 
+  plot(vor, polys = FALSE, isegs = TRUE, fsegs = FALSE) 
   
   dim(vor$polygons$coords)
     

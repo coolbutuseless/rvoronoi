@@ -135,6 +135,22 @@ plot(vor, labels = TRUE, label_cex = 0.7)
 
 <img src="man/figures/README-voronoi-2.png" width="100%" />
 
+``` r
+library(ggplot2)
+
+ggplot() + 
+  geom_polygon(data = vor$polygons$coords, 
+               aes(x, y, group = idx, fill = as.factor(idx)), 
+               col = 'black') +
+  theme_void() + 
+  coord_equal(xlim = c(-0.2, 1.2), ylim = c(-0.2, 1.2)) +
+  theme(
+    legend.position = 'none'
+  )
+```
+
+<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+
 ## Delaunay Triangulation
 
 ``` r
@@ -162,7 +178,9 @@ Compare Delaunay Triangulation using
 - `{deldir}`
 
 <details>
+
 <summary>
+
 Delaunay Triangulation Benchmark
 </summary>
 
@@ -178,9 +196,6 @@ library(deldir)
 #> 
 #>      The syntax of deldir() has changed since version 
 #>      0.0-10.  Read the help!!!.
-```
-
-``` r
 #> deldir 2.0-4      Nickname: "Idol Comparison"
 #> 
 #>      The syntax of deldir() has changed since version 
@@ -239,18 +254,22 @@ bench::mark(
   # delone    = xy_tri  (x, y),
   rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE),
+  rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_areas = TRUE),
+  rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_segments = TRUE),
   rtriangle = triangulate(pslg(cbind(x, y))),
   deldir    = deldir(x, y),
   check = FALSE
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |   itr/sec | mem_alloc |
-|:-----------|--------:|--------:|----------:|----------:|
-| rvoronoi   |  1.17ms |  1.67ms | 641.77194 |  325.88KB |
-| rvoronoi   |  1.17ms |  1.67ms | 460.29576 |  186.67KB |
-| rtriangle  |  1.45ms |  2.18ms | 481.33641 |  292.63KB |
-| deldir     | 24.11ms | 24.62ms |  36.79566 |    5.67MB |
+| expression |     min | median |    itr/sec | mem_alloc |
+|:-----------|--------:|-------:|-----------:|----------:|
+| rvoronoi   | 395.7µs |  410µs | 2411.95936 |  162.78KB |
+| rvoronoi   | 385.9µs |  397µs | 2496.34054 |   23.58KB |
+| rvoronoi   | 390.7µs |  400µs | 2476.09776 |   39.07KB |
+| rvoronoi   |   741µs |  766µs | 1299.42519 |  163.41KB |
+| rtriangle  | 726.1µs |  770µs | 1271.69056 |  292.63KB |
+| deldir     |  16.7ms |   17ms |   58.64941 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -261,7 +280,9 @@ Compare:
 - `{RTriangle}`
 
 <details>
+
 <summary>
+
 Voronoi Tessellation Benchmark
 </summary>
 
@@ -295,9 +316,6 @@ if (FALSE) {
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
-```
-
-``` r
 
 if (FALSE) {
   plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
@@ -344,16 +362,16 @@ if (FALSE) {
 
 ``` r
 bench::mark(
-  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE),
+  `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE, bound_segments = FALSE),
   RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
   check = FALSE
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |      min |  median |   itr/sec | mem_alloc |
-|:---------------------------|---------:|--------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 745.68µs | 766.6µs | 1207.0144 |     137KB |
-| RTriangle                  |   1.44ms |   1.5ms |  620.6917 |     293KB |
+| expression                 |   min | median |  itr/sec | mem_alloc |
+|:---------------------------|------:|-------:|---------:|----------:|
+| rvoronoi (match RTriangle) | 406µs |  418µs | 2374.728 |     137KB |
+| RTriangle                  | 722µs |  766µs | 1273.205 |     293KB |
 
 ### Voronoi - polygons
 
@@ -368,11 +386,11 @@ bench::mark(
 #> disabled.
 ```
 
-| expression                    |      min |   median |    itr/sec | mem_alloc |
-|:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   5.48ms |   5.67ms | 165.831662 |   438.2KB |
-| rvoronoi (unmatched polygons) |   4.12ms |   4.36ms | 200.388300 |   438.2KB |
-| deldir                        | 379.92ms | 381.52ms |   2.621101 |    52.1MB |
+| expression                    |     min |   median |    itr/sec | mem_alloc |
+|:------------------------------|--------:|---------:|-----------:|----------:|
+| rvoronoi (matched polygons)   |  3.63ms |   3.73ms | 262.563950 |   438.2KB |
+| rvoronoi (unmatched polygons) |  2.58ms |   2.65ms | 369.351644 |   438.2KB |
+| deldir                        | 178.2ms | 184.16ms |   5.457693 |    52.1MB |
 
 # Pathological Test Cases
 
