@@ -178,7 +178,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_) {
     area[i] = 0.5 * (
         x[ ctx.v1[i] ] * (y[ ctx.v2[i] ] - y[ ctx.v3[i] ]) +
         x[ ctx.v2[i] ] * (y[ ctx.v3[i] ] - y[ ctx.v1[i] ]) +
-        x[ ctx.v3[i] ] * (y[ ctx.v2[i] ] - y[ ctx.v2[i] ]) 
+        x[ ctx.v3[i] ] * (y[ ctx.v1[i] ] - y[ ctx.v2[i] ]) 
     );
     area[i] = fabs(area[i]);
   }
