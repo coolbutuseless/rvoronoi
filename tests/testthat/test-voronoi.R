@@ -6,7 +6,7 @@ test_that("Voronoi works", {
 
   expect_identical(
     names(vor), 
-    c("sites", "vertices", "segments", "polygons", "lines", "extents", "msegments")
+    c("sites", "vertices", "segments", "polygons", "lines", "extents", "mvertices", "msegments")
   )
 
   expect_equal(nrow(vor$vertices), 187)
