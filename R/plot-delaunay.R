@@ -28,9 +28,9 @@ plot.del <- function(x,
   x <- del$sites$x
   y <- del$sites$y
   
-  v1 <- del$segment$v1
-  v2 <- del$segment$v2
-  v3 <- del$segment$v3
+  v1 <- del$tris$v1
+  v2 <- del$tris$v2
+  v3 <- del$tris$v3
   
   # Plot the sites
   plot(
@@ -54,7 +54,7 @@ plot.del <- function(x,
       stop("Bad length for tri_col");
     }
     
-    tris <- split(del$polygon, del$polygon$idx)
+    tris <- split(del$polygons, del$polygons$idx)
     for (i in seq_along(tris)) {
       polygon(tris[[i]]$x, tris[[i]]$y, col = tri_col[i])
     }
@@ -79,11 +79,30 @@ plot.del <- function(x,
 if (FALSE) {
   
   set.seed(1)
-  N <- 10
+  N <- 100
   x <- runif(N)
   y <- runif(N)
   del <- delaunay(x, y)
   plot(del, tris = FALSE, segments = TRUE)
+  
+  plot(x, y, asp = 1, ann = F, axes = F)
+  with(del$segments, segments(x1, y1, x2, y2, col = grey(del$segments$dist), lwd = 2))
 }
+
+
+
+if (FALSE) {
+  set.seed(1)
+  N <- 10
+  x <- runif(N)
+  y <- runif(N)
+  del <- delaunay(x, y)
+  
+  tri <- del$tris
+  
+}
+
+
+
 
 

@@ -55,9 +55,9 @@ test_that("Delaunay works", {
   
   del <- delaunay(tpoints$x, tpoints$y) 
   
-  expect_equal(names(del$segment), c('v1', 'v2', 'v3'))
+  expect_equal(names(del$tris), c('v1', 'v2', 'v3'))
   
-  del <- rvoronoi:::normalise_del(del$segment)
+  del <- rvoronoi:::normalise_del(del$tris)
   ref <- rvoronoi:::normalise_del(delaunay_ref)
   
   expect_identical(del, ref)
