@@ -30,15 +30,22 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) <= 1) {
-    error("Must be at least 2 seed points");
-  }
-  
   if (length(x_) != length(y_)) {
     error("x & y are not the same length");
   }
   
   int nprotect = 0;
+  
+  bool calc_polygons  = asLogical(calc_polygons_);
+  bool match_sites    = asLogical(match_sites_);
+  bool bound_segments = asLogical(bound_segments_);
+  
+  if (length(x_) == 0) {
+    // Can't form any polygons if there are no sites!
+    calc_polygons  = false;
+    match_sites    = false;
+    bound_segments = false;
+  }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialise the calculation context
@@ -193,7 +200,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   int *linem = NULL;
 
   
-  if (asLogical(calc_polygons_) || asLogical(bound_segments_)) {
+  if (calc_polygons || bound_segments) {
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Set up the "working area" for the merging of vertices
@@ -305,7 +312,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     set_df_attributes(mverts_);
   }
   
-  if (asLogical(calc_polygons_)) {
+  if (calc_polygons) {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Extract the polygons using the (temporary) merged vertices
     // 
@@ -315,7 +322,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //    int seed_n, double *seed_x, double *seed_y   // voronoi seed points
     //  )
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (asLogical(match_sites_)) {
+    if (match_sites) {
       polys_ = PROTECT(
         extract_polygons_internal(
           ctx.nverts + nbverts, xf, yf,       // Voronoi vertices + perimeter intersections

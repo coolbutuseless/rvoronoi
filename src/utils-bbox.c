@@ -59,7 +59,7 @@ void bbox_expand(bbox_t *bbox, double factor) {
   double maxd = w > h ? w : h;
   if (maxd == 0) {
     // bbox has no area!
-    warning("bbox has zero area\n");
+    maxd = 1;
   }
   
   if (w == 0) {
