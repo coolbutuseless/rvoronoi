@@ -11,7 +11,7 @@
 
 #include "defs.h"
 #include "output.h"
-
+#include "utils.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // 
@@ -37,8 +37,8 @@ void out_ep(context_t *ctx, struct Edge *e) {
     // Rprintf("%d\n", e->ep[re] != NULL ? e->ep[re]->sitenbr : -1);
     
     ctx->seg_line[ctx->nsegs] = e->edgenbr; 
-    ctx->seg_v1  [ctx->nsegs] = e->ep[le] != NULL ? e->ep[le]->sitenbr : -999;
-    ctx->seg_v2  [ctx->nsegs] = e->ep[re] != NULL ? e->ep[re]->sitenbr : -999;
+    ctx->seg_v1  [ctx->nsegs] = e->ep[le] != NULL ? e->ep[le]->sitenbr : INVALID_VIDX;
+    ctx->seg_v2  [ctx->nsegs] = e->ep[re] != NULL ? e->ep[re]->sitenbr : INVALID_VIDX;
     
     ctx->nsegs++;
     

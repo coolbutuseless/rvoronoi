@@ -17,7 +17,15 @@ bool valid_idx(int x) {
     error("Not expecting NA here!");
   }
   
-  return x >= 0;
+  if (x == INVALID_VIDX) {
+    return false;
+  }
+  
+  if (x < 0) {
+    error("Not expecting -ve here");
+  }
+  
+  return true;
 }
 
 
@@ -124,6 +132,47 @@ void convert_indexing_r_to_c(SEXP ivec_) {
     ivec[i]--;
   }
 }
+
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Increment integer values by 1 to convert from C 0-indexing to
+// R 1-indexing
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void convert_indexing_c_to_r_with_NA(SEXP ivec_) {
+  int *ivec = INTEGER(ivec_);
+  
+  for (int i = 0; i < length(ivec_); i++) {
+    if (ivec[i] == INVALID_VIDX) {
+      ivec[i] = NA_INTEGER;
+    } else {
+      ivec[i]++;
+    }
+  }
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Decrement integer values by 1 to convert from R 1-indexing to
+// C 0-indexing
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void convert_indexing_r_to_c_with_NA(SEXP ivec_) {
+  int *ivec = INTEGER(ivec_);
+  
+  for (int i = 0; i < length(ivec_); i++) {
+    if (ivec[i] == NA_INTEGER) {
+      ivec[i] = INVALID_VIDX;
+    } else {
+      ivec[i]--;
+    }
+  }
+}
+
+
+
+
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

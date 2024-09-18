@@ -265,12 +265,12 @@ bench::mark(
 
 | expression |      min |   median |    itr/sec | mem_alloc |
 |:-----------|---------:|---------:|-----------:|----------:|
-| rvoronoi   | 735.29µs | 742.65µs | 1319.14148 |  162.78KB |
-| rvoronoi   | 723.24µs | 732.34µs | 1301.60028 |   23.58KB |
-| rvoronoi   | 725.76µs | 738.18µs | 1254.40019 |   39.07KB |
-| rvoronoi   |   1.16ms |   1.19ms |  773.77391 |  163.41KB |
-| rtriangle  |   1.47ms |   1.51ms |  614.66796 |  292.63KB |
-| deldir     |  23.97ms |  24.43ms |   38.92315 |    5.67MB |
+| rvoronoi   | 736.29µs | 743.75µs | 1296.01386 |  162.78KB |
+| rvoronoi   | 725.64µs | 732.97µs | 1340.86983 |   23.58KB |
+| rvoronoi   |  729.8µs | 736.36µs | 1326.22029 |   39.07KB |
+| rvoronoi   |   1.17ms |   1.19ms |  801.66649 |  163.41KB |
+| rtriangle  |   1.46ms |   1.51ms |  624.80380 |  292.63KB |
+| deldir     |  24.02ms |  24.44ms |   40.53842 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -372,8 +372,8 @@ bench::mark(
 
 | expression                 |      min |   median |   itr/sec | mem_alloc |
 |:---------------------------|---------:|---------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 752.89µs | 769.96µs | 1145.7376 |     137KB |
-| RTriangle                  |   1.46ms |   1.53ms |  577.6209 |     293KB |
+| rvoronoi (match RTriangle) | 753.59µs | 765.63µs | 1160.7206 |     137KB |
+| RTriangle                  |   1.47ms |   1.53ms |  554.1623 |     293KB |
 
 ### Voronoi - polygons
 
@@ -388,11 +388,11 @@ bench::mark(
 #> disabled.
 ```
 
-| expression                    |      min |   median |    itr/sec | mem_alloc |
-|:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   5.59ms |   6.05ms | 158.255684 |   438.2KB |
-| rvoronoi (unmatched polygons) |   4.18ms |   4.33ms | 199.266783 |   438.2KB |
-| deldir                        | 378.14ms | 387.38ms |   2.581476 |    52.1MB |
+| expression                    |     min |   median |    itr/sec | mem_alloc |
+|:------------------------------|--------:|---------:|-----------:|----------:|
+| rvoronoi (matched polygons)   |  5.55ms |   5.91ms | 165.316634 |   438.2KB |
+| rvoronoi (unmatched polygons) |  4.21ms |   4.32ms | 221.682578 |   438.2KB |
+| deldir                        | 373.8ms | 388.63ms |   2.573106 |    52.1MB |
 
 # Pathological Test Cases
 
