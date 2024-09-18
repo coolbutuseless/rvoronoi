@@ -12,6 +12,15 @@
 #include "utils.h"
 
 
+bool valid_idx(int x) {
+  if (x == NA_INTEGER) {
+    error("Not expecting NA here!");
+  }
+  
+  return x >= 0;
+}
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Trim a vector to the given length
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

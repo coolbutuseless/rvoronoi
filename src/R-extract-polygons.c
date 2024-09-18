@@ -145,11 +145,10 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // How many finite segments are there? 
-  //   i.e. vertex index >= 0
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int n_finite_segments = 0;
   for (int i = 0; i < n_vor_segs; i++) {
-    n_finite_segments += v1vor[i] >= 0 && v2vor[i] >= 0;
+    n_finite_segments += valid_idx(v1vor[i]) && valid_idx(v2vor[i]);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +184,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     int v2 = v2vor[i];
     
     // Don't process semi-infinite or infinite segments
-    if (v1 < 0 || v2 < 0)
+    if (!valid_idx(v1) || !valid_idx(v2))
       continue;
     
     // Sanity check. There should not be any zero-length segments 

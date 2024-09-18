@@ -93,7 +93,7 @@ void calc_space_for_bound_infinite_segments(int nsegs, int *v1, int *v2, int *nb
   
   for (int i = 0; i < nsegs; i++) {
     // Ignore finite segments
-    if (v1[i] >= 0 && v2[i] >= 0) continue; 
+    if (valid_idx(v1[i]) && valid_idx(v2[i])) continue; 
     
     // Each infinite segment adds one segment and one vertex
     (*nbsegs)++;
@@ -101,7 +101,7 @@ void calc_space_for_bound_infinite_segments(int nsegs, int *v1, int *v2, int *nb
     
     // If this is a truly infinite segment (infinite in both directions)
     // then it adds a second intersection vertex
-    if (v1[i] < 0 && v2[i] < 0) {
+    if (!valid_idx(v1[i]) && !valid_idx(v2[i])) {
       // Infinite segment adds 2 vertices
       (*nbverts)++;
     }
@@ -203,7 +203,7 @@ void bound_infinite_segments(
   for (int i = 0; i < nsegs; i++) {
     
     // Ignore finite segments
-    if (v1[i] >= 0 && v2[i] >= 0) continue;
+    if (valid_idx(v1[i]) && valid_idx(v2[i])) continue;
     
     int type      = 0;
     int v1_anchor = 0;
@@ -216,10 +216,10 @@ void bound_infinite_segments(
     // is the first or second vertex on the segment.
     // if this is a true infinite segment with neither vertex known then type = 0
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (v1[i] >= 0) {
+    if (valid_idx(v1[i])) {
       type = 2;
       v1_anchor = v1[i];
-    } else if (v2[i] >= 0) {
+    } else if (valid_idx(v2[i])) {
       type = 1;
       v1_anchor = v2[i];
     }

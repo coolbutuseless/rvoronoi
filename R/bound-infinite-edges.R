@@ -58,7 +58,7 @@ if (FALSE) {
   
   # Finite segments
   fseg <- vor$segment
-  fseg <- subset(fseg, v1 > 0 & v2 > 0)
+  fseg <- subset(fseg, valid_idx(v1) & valid_idx(v2))
   
   segments(
     vor$vertices$x[fseg$v1], vor$vertices$y[fseg$v1],
@@ -96,11 +96,11 @@ if (FALSE) {
     type <- 0
     x0   <- NA_real_
     y0   <- NA_real_
-    if (seg$v1 > 0) {
+    if (valid_idx(seg$v1)) {
       type <- 2
       x0   <- vor$vertices$x[seg$v1]
       y0   <- vor$vertices$y[seg$v1]
-    } else if (seg$v2 > 0) {
+    } else if (valid_idx(seg$v2)) {
       type <- 1
       x0   <- vor$vertices$x[seg$v2]
       y0   <- vor$vertices$y[seg$v2]

@@ -140,7 +140,7 @@ void merge_vertices_core_(double tol,
       int i2 = v2[i];
       
       // If this is an infinite 'ray', then the distance between endpoints is INF
-      if (i1 < 0 || i2 < 0) continue;
+      if (!valid_idx(i1) || !valid_idx(i2)) continue;
       
       // Sanity check
       if ( (i1 >= nverts) || (i2 >= nverts) || (i1 < 0) || (i2 < 0) ) {
@@ -182,7 +182,7 @@ void merge_vertices_core_(double tol,
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if (verbosity > 0) {
       for (int i = 0; i < nverts; i++) {
-        if (remap[i] >= 0) {
+        if (valid_idx(remap[i])) {
           Rprintf("Remap: %i => %i\n", i, remap[i]);
         }
       }
@@ -229,7 +229,7 @@ void merge_vertices_core_(double tol,
   bool line_used[nsegs];
   for (int i = 0; i < nsegs; i++) line_used[i] = false;
   for (int i = 0; i < nsegs; i++) {
-    if (v1[i] >= 0 || v2[i] >= 0) continue;
+    if (valid_idx(v1[i]) || valid_idx(v2[i])) continue;
     if (line_used[line[i]]) {
       discard[i] = true;
     }

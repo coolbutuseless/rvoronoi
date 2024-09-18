@@ -1,5 +1,17 @@
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Is a vertex index valid?
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+valid_idx <- function(x) {
+  if (anyNA(x)) {
+    stop("not expecting na in R valid_idx()")
+  }
+  
+  x > 0
+}
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Plot a Voronoi tessellation
@@ -76,7 +88,7 @@ plot.vor <- function(
     
     if (!is.null(vor$mvertices)) {
       # DRaw with merged vertices/segments
-      fseg <- subset(vor$msegments, v1 > 0 & v2 > 0)
+      fseg <- subset(vor$msegments, valid_idx(v1) & valid_idx(v2))
       graphics::segments(
         vor$mvertices$x[fseg$v1],
         vor$mvertices$y[fseg$v1],
@@ -86,7 +98,7 @@ plot.vor <- function(
       )
     } else {
       # Daaw with raw vertices/segments
-      fseg <- subset(vor$segments, v1 > 0 & v2 > 0)
+      fseg <- subset(vor$segments, valid_idx(v1) & valid_idx(v2))
       graphics::segments(
         vor$vertices$x[fseg$v1],
         vor$vertices$y[fseg$v1],
@@ -138,10 +150,10 @@ plot.vor <- function(
       seg <- segments[i, ]
       if (seg$v1 <= 0 && seg$v2 <= 0) {
         # warning("Double NA segment: ", i)
-      } else if (seg$v1 > 0) {
+      } else if (valid_idx(seg$v1)) {
         graphics::segments(vor$vertices$x[seg$v1], vor$vertices$y[seg$v1], xhi, yhi[i], 
                            col = iseg_col)
-      } else if (seg$v2 > 0) {
+      } else if (valid_idx(seg$v2)) {
         graphics::segments(xlo, ylo[i], vor$vertices$x[seg$v2], vor$vertices$y[seg$v2], 
                            col = iseg_col)
       } else {

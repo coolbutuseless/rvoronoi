@@ -36,8 +36,8 @@ merge_vertices_r <- function(vor) {
   ss <- vor$segment 
   for (i in rev(seq_len(nrow(pairs)))) {
     row <- pairs[i, ]
-    ss$v1[ ss$v1 > 0 & ss$v1 == row$v2 ] <- row$v1
-    ss$v2[ ss$v2 > 0 & ss$v2 == row$v2 ] <- row$v1
+    ss$v1[ valid_idx(ss$v1) & ss$v1 == row$v2 ] <- row$v1
+    ss$v2[ valid_idx(ss$v2) & ss$v2 == row$v2 ] <- row$v1
   }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
