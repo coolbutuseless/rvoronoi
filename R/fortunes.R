@@ -10,6 +10,8 @@
 #'        when \code{calc_polygons = TRUE}.
 #' @param bound_segments logical. Default: TRUE.  If \code{calc_polygons = TRUE}
 #'        then this option is always TRUE.
+#' @param merge_tolerance Limit of how close the ends of a segment must be
+#'        before the segment is collapsed to a single vertex Default: 1e-10
 #' @return named list of data.frames.
 #' \describe{
 #'   \item{sites}{data.frame of original sites}
@@ -31,8 +33,9 @@
 #' voronoi(x, y)
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE) {
-  .Call(voronoi_, x, y, calc_polygons, match_sites, bound_segments)
+voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE,
+                    merge_tolerance = 1e-10) {
+  .Call(voronoi_, x, y, calc_polygons, match_sites, bound_segments, merge_tolerance)
 }
 
 

@@ -4,7 +4,14 @@
 \alias{voronoi}
 \title{Voronoi Tessellation}
 \usage{
-voronoi(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE)
+voronoi(
+  x,
+  y,
+  calc_polygons = TRUE,
+  match_sites = TRUE,
+  bound_segments = TRUE,
+  merge_tolerance = 1e-10
+)
 }
 \arguments{
 \item{x, y}{coordinates of seed sites. Duplicate points are not allowed.}
@@ -18,6 +25,9 @@ when \code{calc_polygons = TRUE}.}
 
 \item{bound_segments}{logical. Default: TRUE.  If \code{calc_polygons = TRUE}
 then this option is always TRUE.}
+
+\item{merge_tolerance}{Limit of how close the ends of a segment must be
+before the segment is collapsed to a single vertex Default: 1e-10}
 }
 \value{
 named list of data.frames.
