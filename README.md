@@ -179,7 +179,9 @@ Compare Delaunay Triangulation using
 - `{deldir}`
 
 <details>
+
 <summary>
+
 Delaunay Triangulation Benchmark
 </summary>
 
@@ -195,9 +197,6 @@ library(deldir)
 #> 
 #>      The syntax of deldir() has changed since version 
 #>      0.0-10.  Read the help!!!.
-```
-
-``` r
 #> deldir 2.0-4      Nickname: "Idol Comparison"
 #> 
 #>      The syntax of deldir() has changed since version 
@@ -264,14 +263,14 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |      min |   median |    itr/sec | mem_alloc |
-|:-----------|---------:|---------:|-----------:|----------:|
-| rvoronoi   | 730.68µs |    748µs | 1102.31136 |  162.78KB |
-| rvoronoi   | 719.06µs | 738.46µs | 1146.56672 |   23.58KB |
-| rvoronoi   | 722.85µs | 730.56µs | 1280.73666 |   39.07KB |
-| rvoronoi   |   1.17ms |   1.21ms |  730.22603 |  163.41KB |
-| rtriangle  |   1.46ms |    1.5ms |  643.54908 |  292.63KB |
-| deldir     |  24.28ms |  24.64ms |   39.52491 |    5.67MB |
+| expression |     min |  median |    itr/sec | mem_alloc |
+|:-----------|--------:|--------:|-----------:|----------:|
+| rvoronoi   | 397.9µs | 413.6µs | 2397.09618 |  162.78KB |
+| rvoronoi   | 385.9µs | 396.2µs | 2499.56380 |   23.58KB |
+| rvoronoi   |   392µs | 400.1µs | 2475.19530 |   39.07KB |
+| rvoronoi   | 743.4µs | 768.9µs | 1293.61878 |  163.41KB |
+| rtriangle  | 725.9µs | 763.2µs | 1278.59166 |  292.63KB |
+| deldir     |  16.8ms |  17.1ms |   58.32546 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -282,7 +281,9 @@ Compare:
 - `{RTriangle}`
 
 <details>
+
 <summary>
+
 Voronoi Tessellation Benchmark
 </summary>
 
@@ -316,9 +317,6 @@ if (FALSE) {
 # deldir
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vor_deldir   <- deldir::cvt(deldir::deldir(x, y), stopcrit = 'maxit', maxit = 1, verb = TRUE)
-```
-
-``` r
 
 if (FALSE) {
   plot(x, y, asp = 1, ann = F, axes = F, pch = '.')
@@ -371,10 +369,10 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |      min |  median |   itr/sec | mem_alloc |
-|:---------------------------|---------:|--------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 751.48µs | 764.5µs | 1264.8985 |     137KB |
-| RTriangle                  |   1.46ms |   1.5ms |  627.5248 |     293KB |
+| expression                 |   min | median |  itr/sec | mem_alloc |
+|:---------------------------|------:|-------:|---------:|----------:|
+| rvoronoi (match RTriangle) | 410µs |  423µs | 2339.006 |     137KB |
+| RTriangle                  | 723µs |  762µs | 1283.569 |     293KB |
 
 ### Voronoi - polygons
 
@@ -389,11 +387,11 @@ bench::mark(
 #> disabled.
 ```
 
-| expression                    |      min |   median |    itr/sec | mem_alloc |
-|:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   5.55ms |   7.08ms | 130.893118 |   430.3KB |
-| rvoronoi (unmatched polygons) |   4.16ms |   4.23ms | 226.940595 |   430.3KB |
-| deldir                        | 382.36ms | 418.79ms |   2.387818 |    52.1MB |
+| expression                    |      min |   median |   itr/sec | mem_alloc |
+|:------------------------------|---------:|---------:|----------:|----------:|
+| rvoronoi (matched polygons)   |   3.32ms |   3.39ms | 292.10744 |   430.3KB |
+| rvoronoi (unmatched polygons) |   2.26ms |   2.33ms | 419.63734 |   430.3KB |
+| deldir                        | 162.26ms | 164.18ms |   6.03546 |    52.1MB |
 
 # Pathological Test Cases
 
