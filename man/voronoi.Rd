@@ -30,19 +30,30 @@ then this option is always TRUE.}
 before the segment is collapsed to a single vertex Default: 1e-10}
 }
 \value{
-named list of data.frames.
+An object of class "vor" which is a named list of data.frames.
 \describe{
   \item{sites}{data.frame of original sites}
   \item{vertices}{data.frame of voronoi vertices. This is the raw output from Fortune's algorithm}
   \item{segments}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
         is the row index into the 'lines' data.frame.  'v1' and 'v2' are 
-        the indices into 'vertex' which define the endpoints along the 
-        specified 'line'.  If 'v1' or 'v2' are negative this indicates that the 
+        the indices into 'vertices' which define the endpoints along the 
+        specified 'line'.  If 'v1' or 'v2' are NA this indicates that the 
         segment continues to infinity}
-  \item{polygons}{list of polygon information for each voronoi cell}
-  \item{lines}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
-  \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box encompassing
-  input sites and voronoi vertices}
+  \item{polygons}{
+     polygon information for each voronoi cell. Only calculated when
+     \code{calc_polygons = TRUE}
+     \describe{
+       \item{npolygons}{Number of polygons}
+       \item{coords}{data.frame of x,y coordiantes and polygon index for all polygons}
+       \item{bbox}{data.frame of polygon bounding box information. Each row represents a polygon}
+       \item{centrois}{data.frame of polygon centroids. Each row represents a polygon}
+     }
+  }
+  \item{lines}{data.frame of line equations in the voronoi diagram of the form 'ax + by = c'}
+  \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box which encompasses
+        all input sites and voronoi vertices}
+  \item{mvertices}{Merged and bounded vertices used to calculate polygons} 
+  \item{msegments}{Merged and bounded segments used to calculate polygons} 
 }
 }
 \description{
@@ -52,5 +63,7 @@ Voronoi Tessellation
 set.seed(1)
 x <- runif(10)
 y <- runif(10)
-voronoi(x, y)
+vor <- voronoi(x, y)
+plot(vor)
+vor
 }

@@ -1,4 +1,5 @@
 
+globalVariables(c('v1', 'v2'))
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Is a vertex index valid?
@@ -177,8 +178,9 @@ plot.vor <- function(
       stop("'poly_col' must be length 1 or match vor$polygons$npolygons")
     }
     
-    for (i in seq_len(vor$polygons$npolygons)) {
-      graphics::polygon(vor$polygons$individual[[i]], col = poly_col[i])
+    polys <- split(vor$polygons$coords, vor$polygons$coords$idx)
+    for (i in seq_along(polys)) {
+      graphics::polygon(polys[[i]]$x, polys[[i]]$y, col = poly_col[i])
     }
   }
   
@@ -250,11 +252,7 @@ if (FALSE) {
   y <- runif(N)
   vor <- voronoi(x, y)
   
-  plot(vor, polys = FALSE, isegs = TRUE, fsegs = FALSE) 
-  
-  dim(vor$polygons$coords)
-    
-  
+  plot(vor, polys = TRUE, isegs = TRUE, fsegs = FALSE) 
 }
 
 

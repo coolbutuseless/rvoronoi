@@ -18,9 +18,21 @@ delaunay(x, y, calc_polygons = TRUE, calc_areas = FALSE, calc_segments = FALSE)
 \value{
 named list of data
 \describe{
- \item{segments}{data.frame. Each row specifies the indices of the three seed points
-        which define a single delaunay triangle}
- \item{polygons}{data.frame of polygon coordinates}
+ \item{sites}{coordinates of sites}
+ \item{ntris}{Number of triangles in this delaunay triangulation} 
+ \item{tris}{data.frame. Each row specifies the indices of the three sites
+        which define a single delaunay triangle. If \code{calc_areas = TRUE} then
+        this data.frame also includes an \code{area} column}
+ \item{polygons}{data.frame of polygon coordinates with x,y and 
+       polygon index. Only calculated when \code{calc_polygons = TRUE}}
+ \item{segments}{The end-points and length of each unique undirected 
+       edge in the triangulation. Only calculated when \code{calc_segments = TRUE}
+    \describe{
+       \item{v1,v2}{vertex indices referencing the original \code{sites}}
+       \item{x1,y1,x2,y2}{coordinates of ends of segment}
+       \item{len}{length of this segment}
+    }      
+ } 
 }
 }
 \description{
@@ -30,5 +42,7 @@ Delaunay Triangulation
 set.seed(1)
 x <- runif(10)
 y <- runif(10)
-delaunay(x, y)
+del <- delaunay(x, y)
+plot(del)
+del
 }

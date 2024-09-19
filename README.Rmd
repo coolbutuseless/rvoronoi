@@ -87,9 +87,8 @@ vor <- voronoi(as.double(x), as.double(y))
 # Plot all Voronoi polygons in their appropriate colour
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nr <- nara::nr_new(ncol(rj), nrow(rj))
-for (i in seq_len(vor$polygons$npolygons)) {
-  nr_polygon(nr, vor$polygons$individual[[i]]$x, vor$polygons$individual[[i]]$y, fill = cols[i])
-}
+nr_polygon(nr, x = vor$polygons$coords$x, y = vor$polygons$coords$y,
+           id = vor$polygons$coords$idx, fill = cols)
 grid.raster(nr)
 ```
 
@@ -123,6 +122,8 @@ grid.raster(nr)
 |----------------------------------|----------|--------|-----------|
 | site indices (defining polygons) |  Yes     | Yes    |  Yes      |
 | polygon coordinates              |  Yes     |        |           |
+| triangle areas                   |  Yes     |        |           |
+| segment lengths                  |  Yes     |        |           |
 
 
 

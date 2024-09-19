@@ -258,7 +258,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
         "y1", y1_,
         "x2", x2_,
         "y2", y2_,
-        "dist", dist_
+        "len", dist_
       )
     ); nprotect++;
     set_df_attributes(segs_);

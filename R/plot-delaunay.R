@@ -76,6 +76,9 @@ plot.del <- function(x,
 }
 
 
+
+
+
 if (FALSE) {
   
   set.seed(1)
@@ -83,7 +86,7 @@ if (FALSE) {
   x <- runif(N)
   y <- runif(N)
   del <- delaunay(x, y)
-  plot(del, tris = FALSE, segments = TRUE)
+  plot(del, tris = TRUE, segments = TRUE)
   
   plot(x, y, asp = 1, ann = F, axes = F)
   with(del$segments, segments(x1, y1, x2, y2, col = grey(del$segments$dist), lwd = 2))

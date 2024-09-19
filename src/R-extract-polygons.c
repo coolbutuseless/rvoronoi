@@ -628,7 +628,6 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   if (matching_polygons_to_sites && n_sites != npolys) {
     error("extract-polygons: internal error: n_sites != n_valid_polys: %i != %i\n", n_sites, npolys);
   }
-  SEXP individual_polys_ = PROTECT(allocVector(VECSXP, npolys)); nprotect++;
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // If seed points given then we will re-organise polygons in the same order as
@@ -653,68 +652,6 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
         warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
       }
     }
-  }
-
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Each polygon =
-  //    -  x, y coordinates
-  //    -  v: vertex indices
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  for (int i = 0; i < npolys; i++) {
-
-    // Allocate vectors
-    SEXP x_         = PROTECT(allocVector(REALSXP, polys[i].nvert));
-    SEXP y_         = PROTECT(allocVector(REALSXP, polys[i].nvert));
-    SEXP v_         = PROTECT(allocVector(INTSXP , polys[i].nvert));
-    SEXP site_idx_  = PROTECT(ScalarInteger(polys[i].site_idx + 1));
-    SEXP cx_        = PROTECT(ScalarReal(polys[i].cx));
-    SEXP cy_        = PROTECT(ScalarReal(polys[i].cy));
-    SEXP bbox_area_ = PROTECT(ScalarReal(polys[i].bbox_area));
-    SEXP xmin_      = PROTECT(ScalarReal(polys[i].bbox.xmin));
-    SEXP ymin_      = PROTECT(ScalarReal(polys[i].bbox.ymin));
-    SEXP xmax_      = PROTECT(ScalarReal(polys[i].bbox.xmax));
-    SEXP ymax_      = PROTECT(ScalarReal(polys[i].bbox.ymax));
-
-    // Copy from the poly_t struct
-    memcpy(REAL(x_)   , polys[i].x, polys[i].nvert * sizeof(double));
-    memcpy(REAL(y_)   , polys[i].y, polys[i].nvert * sizeof(double));
-    memcpy(INTEGER(v_), polys[i].v, polys[i].nvert * sizeof(int));
-
-    convert_indexing_c_to_r(v_);
-
-    SEXP ll_ = PROTECT(
-      create_named_list(
-        11,
-        "x"        , x_,
-        "y"        , y_,
-        "v"        , v_,
-        "cx"       , cx_,
-        "cy"       , cy_,
-        "xmin"     , xmin_,
-        "ymin"     , ymin_,
-        "xmax"     , xmax_,
-        "ymax"     , ymax_,
-        "bbox_area", bbox_area_,
-        "site_idx" , site_idx_
-      )
-    );
-
-    if (matching_polygons_to_sites) {
-      // Place the polygon in the correct position in the list
-      // Check if the poly_t.site_idx points to a valid site
-      if (polys[i].site_idx < 0) {
-        warning("Poly [%i] has a point index of %i\n", i, polys[i].site_idx);
-      } else {
-        SET_VECTOR_ELT(individual_polys_, polys[i].site_idx, ll_);
-      }
-    } else {
-      // We're not matching polygons. Just slot it into the next open position
-      SET_VECTOR_ELT(individual_polys_, i, ll_);
-    }
-
-    // Can unprotect as everything as all polygon information SEXPs
-    // are stored as members of a protected list (individual_polys_)
-    UNPROTECT(12);
   }
   
   
@@ -903,9 +840,8 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   
   SEXP polys_ = PROTECT(
     create_named_list(
-      5,
+      4,
       "npolygons" , npolys_,
-      "individual", individual_polys_,
       "coords"    , coords_,
       "bbox"      , bbox_,
       "centroids" , centroids_

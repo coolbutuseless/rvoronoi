@@ -75,9 +75,8 @@ vor <- voronoi(as.double(x), as.double(y))
 # Plot all Voronoi polygons in their appropriate colour
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nr <- nara::nr_new(ncol(rj), nrow(rj))
-for (i in seq_len(vor$polygons$npolygons)) {
-  nr_polygon(nr, vor$polygons$individual[[i]]$x, vor$polygons$individual[[i]]$y, fill = cols[i])
-}
+nr_polygon(nr, x = vor$polygons$coords$x, y = vor$polygons$coords$y,
+           id = vor$polygons$coords$idx, fill = cols)
 grid.raster(nr)
 ```
 
@@ -265,12 +264,12 @@ bench::mark(
 
 | expression |      min |   median |    itr/sec | mem_alloc |
 |:-----------|---------:|---------:|-----------:|----------:|
-| rvoronoi   | 730.22µs | 750.96µs | 1149.70138 |  162.78KB |
-| rvoronoi   | 720.98µs |  726.9µs | 1361.28321 |   23.58KB |
-| rvoronoi   | 724.89µs | 731.71µs | 1299.46875 |   39.07KB |
-| rvoronoi   |   1.17ms |   1.19ms |  828.60914 |  163.41KB |
-| rtriangle  |   1.47ms |   1.51ms |  598.98552 |  292.63KB |
-| deldir     |   24.1ms |  24.46ms |   40.66308 |    5.67MB |
+| rvoronoi   | 722.68µs | 728.76µs | 1357.13445 |  162.78KB |
+| rvoronoi   | 711.51µs |  717.3µs | 1367.18123 |   23.58KB |
+| rvoronoi   | 716.43µs | 731.81µs | 1181.57687 |   39.07KB |
+| rvoronoi   |   1.16ms |   1.19ms |  767.16503 |  163.41KB |
+| rtriangle  |   1.47ms |   1.51ms |  615.15915 |  292.63KB |
+| deldir     |  24.07ms |  24.75ms |   37.42093 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -370,10 +369,10 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |      min |  median |   itr/sec | mem_alloc |
-|:---------------------------|---------:|--------:|----------:|----------:|
-| rvoronoi (match RTriangle) | 753.48µs | 765.2µs | 1216.5381 |     137KB |
-| RTriangle                  |   1.47ms |  1.55ms |  560.3937 |     293KB |
+| expression                 |      min |   median |   itr/sec | mem_alloc |
+|:---------------------------|---------:|---------:|----------:|----------:|
+| rvoronoi (match RTriangle) | 743.06µs | 754.49µs | 1262.8443 |     137KB |
+| RTriangle                  |   1.47ms |   1.52ms |  584.3073 |     293KB |
 
 ### Voronoi - polygons
 
@@ -390,9 +389,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   6.16ms |   6.35ms | 151.668695 |   438.2KB |
-| rvoronoi (unmatched polygons) |   4.77ms |   4.86ms | 189.400776 |   438.2KB |
-| deldir                        | 370.86ms | 371.92ms |   2.688763 |    52.1MB |
+| rvoronoi (matched polygons)   |   5.56ms |   5.75ms | 152.800846 |   430.3KB |
+| rvoronoi (unmatched polygons) |   4.19ms |   4.25ms | 212.232269 |   430.3KB |
+| deldir                        | 460.86ms | 479.67ms |   2.084753 |    52.1MB |
 
 # Pathological Test Cases
 

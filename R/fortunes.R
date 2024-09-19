@@ -12,29 +12,46 @@
 #'        then this option is always TRUE.
 #' @param merge_tolerance Limit of how close the ends of a segment must be
 #'        before the segment is collapsed to a single vertex Default: 1e-10
-#' @return named list of data.frames.
+#' @return An object of class "vor" which is a named list of data.frames.
 #' \describe{
 #'   \item{sites}{data.frame of original sites}
 #'   \item{vertices}{data.frame of voronoi vertices. This is the raw output from Fortune's algorithm}
 #'   \item{segments}{data.frame of segments defined by 'line', 'v1' and 'v2'.  'line'
 #'         is the row index into the 'lines' data.frame.  'v1' and 'v2' are 
-#'         the indices into 'vertex' which define the endpoints along the 
-#'         specified 'line'.  If 'v1' or 'v2' are negative this indicates that the 
+#'         the indices into 'vertices' which define the endpoints along the 
+#'         specified 'line'.  If 'v1' or 'v2' are NA this indicates that the 
 #'         segment continues to infinity}
-#'   \item{polygons}{list of polygon information for each voronoi cell}
-#'   \item{lines}{data.frame of line equations in the tessellation of the form 'ax + by = c'}
-#'   \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box encompassing
-#'   input sites and voronoi vertices}
+#'   \item{polygons}{
+#'      polygon information for each voronoi cell. Only calculated when
+#'      \code{calc_polygons = TRUE}
+#'      \describe{
+#'        \item{npolygons}{Number of polygons}
+#'        \item{coords}{data.frame of x,y coordiantes and polygon index for all polygons}
+#'        \item{bbox}{data.frame of polygon bounding box information. Each row represents a polygon}
+#'        \item{centrois}{data.frame of polygon centroids. Each row represents a polygon}
+#'      }
+#'   }
+#'   \item{lines}{data.frame of line equations in the voronoi diagram of the form 'ax + by = c'}
+#'   \item{extents}{list of (xmin, ymin), (xmax, ymax) bounding box which encompasses
+#'         all input sites and voronoi vertices}
+#'   \item{mvertices}{Merged and bounded vertices used to calculate polygons} 
+#'   \item{msegments}{Merged and bounded segments used to calculate polygons} 
 #' }
 #' @examples
 #' set.seed(1)
 #' x <- runif(10)
 #' y <- runif(10)
-#' voronoi(x, y)
+#' vor <- voronoi(x, y)
+#' plot(vor)
+#' vor
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segments = TRUE,
                     merge_tolerance = 1e-10) {
+  
+  if (anyNA(x) || anyNA(y)) {
+    stop("voronoi(): 'x' and 'y' cannot contain NA values")
+  }
   .Call(voronoi_, x, y, calc_polygons, match_sites, bound_segments, merge_tolerance)
 }
 
@@ -48,19 +65,38 @@ voronoi <- function(x, y, calc_polygons = TRUE, match_sites = TRUE, bound_segmen
 #' @param calc_segments calculate segments. Default: FALSE
 #' @return named list of data
 #' \describe{
-#'  \item{segments}{data.frame. Each row specifies the indices of the three seed points
-#'         which define a single delaunay triangle}
-#'  \item{polygons}{data.frame of polygon coordinates}
+#'  \item{sites}{coordinates of sites}
+#'  \item{ntris}{Number of triangles in this delaunay triangulation} 
+#'  \item{tris}{data.frame. Each row specifies the indices of the three sites
+#'         which define a single delaunay triangle. If \code{calc_areas = TRUE} then
+#'         this data.frame also includes an \code{area} column}
+#'  \item{polygons}{data.frame of polygon coordinates with x,y and 
+#'        polygon index. Only calculated when \code{calc_polygons = TRUE}}
+#'  \item{segments}{The end-points and length of each unique undirected 
+#'        edge in the triangulation. Only calculated when \code{calc_segments = TRUE}
+#'     \describe{
+#'        \item{v1,v2}{vertex indices referencing the original \code{sites}}
+#'        \item{x1,y1,x2,y2}{coordinates of ends of segment}
+#'        \item{len}{length of this segment}
+#'     }      
+#'  } 
 #' }
 #' @examples
 #' set.seed(1)
 #' x <- runif(10)
 #' y <- runif(10)
-#' delaunay(x, y)
+#' del <- delaunay(x, y)
+#' plot(del)
+#' del
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 delaunay <- function(x, y, calc_polygons = TRUE, calc_areas = FALSE, 
                      calc_segments = FALSE) {
+  
+  if (anyNA(x) || anyNA(y)) {
+    stop("voronoi(): 'x' and 'y' cannot contain NA values")
+  }
+  
   .Call(delaunay_, x, y, calc_polygons, calc_areas, calc_segments)
 }
 
@@ -85,6 +121,4 @@ normalise_del <- function(del) {
   rownames(del) <- NULL
   del
 }
-
-
 

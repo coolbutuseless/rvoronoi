@@ -1,7 +1,7 @@
 Package: rvoronoi
 Type: Package
-Title: Fast Voronoi Tessellation and Delaunty Triangulation using Fortune's Algorithm
-Version: 0.1.0.9004
+Title: Fast Voronoi Tessellation and Delaunay Triangulation using Fortune's Algorithm
+Version: 0.1.0.9005
 Authors@R: c(
     person("Mike", "Cheng", role = c("aut", "cre", 'cph'), email = "mikefc@coolbutuseless.com"),
     person("Steven", "Fortune", role = c("aut"), comment = "Author of included code for sweep algorithm"),
@@ -15,12 +15,7 @@ RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 Suggests: 
-    knitr,
-    rmarkdown,
-    polyclip,
-    ggplot2,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Copyright: The include voronoi C code was written by Steven Fortune. 
+Copyright: The included voronoi C code was written by Steven Fortune and is
     Copyright (c) 1994 by AT&T Bell Laboratories.
-VignetteBuilder: knitr
