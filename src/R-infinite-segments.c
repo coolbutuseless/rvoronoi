@@ -568,8 +568,8 @@ SEXP bound_infinite_segments_(
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Segment
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  convert_indexing_c_to_r(rv1_);
-  convert_indexing_c_to_r(rv2_);
+  convert_indexing_c_to_r_with_NA(rv1_);
+  convert_indexing_c_to_r_with_NA(rv2_);
 
   
   SEXP segments_ = PROTECT(

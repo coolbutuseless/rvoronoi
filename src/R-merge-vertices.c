@@ -342,9 +342,9 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   memcpy(INTEGER(fline_), INTEGER(line_), nsegs * sizeof(int));
   
   // Convert them to C 0-indexing for processing
-  convert_indexing_r_to_c(fv1_);
-  convert_indexing_r_to_c(fv2_);
-  convert_indexing_r_to_c(fline_);
+  convert_indexing_r_to_c_with_NA(fv1_);
+  convert_indexing_r_to_c_with_NA(fv2_);
+  convert_indexing_r_to_c_with_NA(fline_);
   
   // for (int i = 0; i < length(fv2_); i++) {
   //   Rprintf("(%i) v2[%i] = %i    =   fv2[%i] = %i\n", nsegs, i, INTEGER(v2_)[i], i, INTEGER(fv2_)[i]);
@@ -362,9 +362,9 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   trim_vec(fv2_  , nsegs_final, nsegs);
   trim_vec(fline_, nsegs_final, nsegs);
   
-  convert_indexing_c_to_r(fv1_);
-  convert_indexing_c_to_r(fv2_);
-  convert_indexing_c_to_r(fline_);
+  convert_indexing_c_to_r_with_NA(fv1_);
+  convert_indexing_c_to_r_with_NA(fv2_);
+  convert_indexing_c_to_r_with_NA(fline_);
   
   
   SEXP res_ = PROTECT(

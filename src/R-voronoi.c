@@ -281,9 +281,8 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     memcpy(v1m   + fnedges, rv1, nbsegs * sizeof(int));
     memcpy(v2m   + fnedges, rv2, nbsegs * sizeof(int));
     for (int i = 0; i < nbsegs; i++) {
-      (linem + fnedges)[i] = -99;
+      (linem + fnedges)[i] = INVALID_VIDX;
     }
-    // memset(linem + fnedges, -99, nbsegs * sizeof(int));
     
     free(xb);
     free(yb);
@@ -341,9 +340,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     }
     
     
-    convert_indexing_c_to_r(linem_);
-    convert_indexing_c_to_r(v1m_);
-    convert_indexing_c_to_r(v2m_);
+    convert_indexing_c_to_r_with_NA(linem_);
+    convert_indexing_c_to_r_with_NA(v1m_);
+    convert_indexing_c_to_r_with_NA(v2m_);
     
   }  // End: if (calc_polygons)
   
@@ -424,9 +423,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert C 0-indexing to R 1-indexing
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  convert_indexing_c_to_r(seg_line_);
-  convert_indexing_c_to_r(seg_v1_);
-  convert_indexing_c_to_r(seg_v2_);
+  convert_indexing_c_to_r_with_NA(seg_line_);
+  convert_indexing_c_to_r_with_NA(seg_v1_);
+  convert_indexing_c_to_r_with_NA(seg_v2_);
   
   
   

@@ -4,11 +4,11 @@
 # Is a vertex index valid?
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 valid_idx <- function(x) {
-  if (anyNA(x)) {
-    stop("not expecting na in R valid_idx()")
+  if (any(x[!is.na(x)] < 1)) {
+    stop("not expecting na <= 0 in R valid_idx()")
   }
   
-  x > 0
+  !is.na(x)
 }
 
 
@@ -148,7 +148,7 @@ plot.vor <- function(
     
     for (i in seq_len(nrow(segments))) {
       seg <- segments[i, ]
-      if (seg$v1 <= 0 && seg$v2 <= 0) {
+      if (!valid_idx(seg$v1) && !valid_idx(seg$v2)) {
         # warning("Double NA segment: ", i)
       } else if (valid_idx(seg$v1)) {
         graphics::segments(vor$vertices$x[seg$v1], vor$vertices$y[seg$v1], xhi, yhi[i], 

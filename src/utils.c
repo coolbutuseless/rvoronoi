@@ -139,6 +139,7 @@ void convert_indexing_r_to_c(SEXP ivec_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Increment integer values by 1 to convert from C 0-indexing to
 // R 1-indexing
+// C values of INVALID_VIDX are translated to integer NA
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void convert_indexing_c_to_r_with_NA(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
@@ -156,6 +157,7 @@ void convert_indexing_c_to_r_with_NA(SEXP ivec_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Decrement integer values by 1 to convert from R 1-indexing to
 // C 0-indexing
+// Integer NA values are translated to INVALID_VIDX
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void convert_indexing_r_to_c_with_NA(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
