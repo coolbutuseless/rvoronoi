@@ -249,9 +249,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     v2m   = INTEGER(v2m_);
     linem = INTEGER(linem_);
     
-    memcpy(v1m  , ctx.seg_v1  , ctx.nsegs * sizeof(int));
-    memcpy(v2m  , ctx.seg_v2  , ctx.nsegs * sizeof(int));
-    memcpy(linem, ctx.seg_line, ctx.nsegs * sizeof(int));
+    memcpy(v1m  , ctx.seg_v1  , (size_t)ctx.nsegs * sizeof(int));
+    memcpy(v2m  , ctx.seg_v2  , (size_t)ctx.nsegs * sizeof(int));
+    memcpy(linem, ctx.seg_line, (size_t)ctx.nsegs * sizeof(int));
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Merge close vertices which are an artefact of the tessellation
@@ -273,10 +273,10 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Allocate the bounded vertices and segment vertex indices
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    double *xb = calloc(nbverts , sizeof(double));
-    double *yb = calloc(nbverts , sizeof(double));
-    int *rv1   = calloc(nbsegs  , sizeof(int));
-    int *rv2   = calloc(nbsegs  , sizeof(int));
+    double *xb = calloc((size_t)nbverts , sizeof(double));
+    double *yb = calloc((size_t)nbverts , sizeof(double));
+    int *rv1   = calloc((size_t)nbsegs  , sizeof(int));
+    int *rv2   = calloc((size_t)nbsegs  , sizeof(int));
     
     bound_infinite_segments(
       &bounds,
@@ -298,16 +298,16 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     xf  = REAL(xf_);
     yf  = REAL(yf_);
     
-    memcpy(xf + 0         , ctx.vert_x, ctx.nverts * sizeof(double));
-    memcpy(yf + 0         , ctx.vert_y, ctx.nverts * sizeof(double));
-    memcpy(xf + ctx.nverts,         xb,    nbverts * sizeof(double));
-    memcpy(yf + ctx.nverts,         yb,    nbverts * sizeof(double));
+    memcpy(xf + 0         , ctx.vert_x, (size_t)ctx.nverts * sizeof(double));
+    memcpy(yf + 0         , ctx.vert_y, (size_t)ctx.nverts * sizeof(double));
+    memcpy(xf + ctx.nverts,         xb, (size_t)   nbverts * sizeof(double));
+    memcpy(yf + ctx.nverts,         yb, (size_t)   nbverts * sizeof(double));
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Append the new exterior segments to the merged vertex list
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    memcpy(v1m + fnedges, rv1, nbsegs * sizeof(int));
-    memcpy(v2m + fnedges, rv2, nbsegs * sizeof(int));
+    memcpy(v1m + fnedges, rv1, (size_t)nbsegs * sizeof(int));
+    memcpy(v2m + fnedges, rv2, (size_t)nbsegs * sizeof(int));
     for (int i = 0; i < nbsegs; i++) {
       (linem + fnedges)[i] = INVALID_VIDX;
     }

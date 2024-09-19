@@ -397,7 +397,7 @@ void bound_infinite_segments(
   if (verbosity > 0) {
     Rprintf("Points on top perimeter: %i\n", npoints);
   }
-  qsort(points, npoints, sizeof(point_t), horizontal_comparison);
+  qsort(points, (size_t)npoints, sizeof(point_t), horizontal_comparison);
   
   // Add segments
   for (int i = 0; i < npoints - 1; i++) {
@@ -424,7 +424,7 @@ void bound_infinite_segments(
   if (verbosity > 0) {
     Rprintf("Points on bottom perimeter: %i\n", npoints);
   }
-  qsort(points, npoints, sizeof(point_t), horizontal_comparison);
+  qsort(points, (size_t)npoints, sizeof(point_t), horizontal_comparison);
   
   // Add segments
   for (int i = 0; i < npoints - 1; i++) {
@@ -451,7 +451,7 @@ void bound_infinite_segments(
   if (verbosity > 0) {
     Rprintf("Points on left perimeter: %i\n", npoints);
   }
-  qsort(points, npoints, sizeof(point_t), vertical_comparison);
+  qsort(points, (size_t)npoints, sizeof(point_t), vertical_comparison);
   
   // Add segments
   for (int i = 0; i < npoints - 1; i++) {
@@ -478,7 +478,7 @@ void bound_infinite_segments(
   if (verbosity > 0) {
     Rprintf("Points on right perimeter: %i\n", npoints);
   }
-  qsort(points, npoints, sizeof(point_t), vertical_comparison);
+  qsort(points, (size_t)npoints, sizeof(point_t), vertical_comparison);
   
   // Add segments
   for (int i = 0; i < npoints - 1; i++) {

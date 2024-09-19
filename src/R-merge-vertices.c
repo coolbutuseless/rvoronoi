@@ -337,9 +337,9 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   // int *fline = INTEGER(fline_);
   
   // These are initially copies of the input vectors 
-  memcpy(INTEGER(fv1_)  , INTEGER(v1_)  , nsegs * sizeof(int));
-  memcpy(INTEGER(fv2_)  , INTEGER(v2_)  , nsegs * sizeof(int));
-  memcpy(INTEGER(fline_), INTEGER(line_), nsegs * sizeof(int));
+  memcpy(INTEGER(fv1_)  , INTEGER(v1_)  , (size_t)nsegs * sizeof(int));
+  memcpy(INTEGER(fv2_)  , INTEGER(v2_)  , (size_t)nsegs * sizeof(int));
+  memcpy(INTEGER(fline_), INTEGER(line_), (size_t)nsegs * sizeof(int));
   
   // Convert them to C 0-indexing for processing
   convert_indexing_r_to_c_with_NA(fv1_);

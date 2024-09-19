@@ -53,7 +53,7 @@ char *myalloc(context_t *ctx, unsigned n) {
             ctx->siteidx, ctx->total_alloc);
   };
   
-  ctx->total_alloc += n;
+  ctx->total_alloc += (int)n;
   
   // keep track of memory allocations to free at end
   if (ctx->alloc_count == ctx->alloc_capacity) {

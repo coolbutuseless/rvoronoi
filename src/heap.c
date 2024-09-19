@@ -49,7 +49,7 @@ void PQdelete(context_t *ctx, struct Halfedge *he) {
 int PQbucket(context_t *ctx, struct Halfedge *he) {
   int bucket;
 
-  bucket = (he->ystar - ctx->ymin) / ctx->deltay * ctx->PQhashsize;
+  bucket = (int)( (he->ystar - ctx->ymin) / ctx->deltay * ctx->PQhashsize );
   if (bucket < 0)
     bucket = 0;
   if (bucket >= ctx->PQhashsize)

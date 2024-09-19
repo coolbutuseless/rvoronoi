@@ -311,7 +311,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   int nbounds = max_vert_num + 1;
 
   // Allocate the 'bounds'
-  bounds = calloc(nbounds, sizeof(bounds_t));
+  bounds = calloc((size_t)nbounds, sizeof(bounds_t));
   if (bounds == NULL) error("Failed to allocate %i 'bounds' for %i undirected edges", nbounds, n_dir_edges);
 
   // Initialise the cvert (current vertex) to be the first seen vertex
@@ -544,8 +544,8 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     
     polys[i].bbox = bbox_new(); // Bounding box - used to accelerate matching to initial sites
     
-    polys[i].x = malloc(nvert * sizeof(double));
-    polys[i].y = malloc(nvert * sizeof(double));
+    polys[i].x = malloc((size_t)nvert * sizeof(double));
+    polys[i].y = malloc((size_t)nvert * sizeof(double));
     if (polys[i].x == NULL || polys[i].y == NULL) {
       error("Could not allocate mem for polys[i].x and .y");
     }
@@ -737,9 +737,9 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     
     // copy poly_t data into R vectors at the location starting *after*
     // all the vertices which come before it.
-    memcpy(xv + loc, polys[i].x, polys[i].nvert * sizeof(double));
-    memcpy(yv + loc, polys[i].y, polys[i].nvert * sizeof(double));
-    memcpy(v  + loc, polys[i].v, polys[i].nvert * sizeof(int));
+    memcpy(xv + loc, polys[i].x, (size_t)polys[i].nvert * sizeof(double));
+    memcpy(yv + loc, polys[i].y, (size_t)polys[i].nvert * sizeof(double));
+    memcpy(v  + loc, polys[i].v, (size_t)polys[i].nvert * sizeof(int));
     
     for (int j = 0; j < polys[i].nvert; j++) {
       idx[loc + j] = site_idx ;

@@ -1,4 +1,6 @@
 
+#include <stddef.h>
+
 #include "defs.h"
 #include "edgelist.h"
 #include "memory.h"
@@ -11,7 +13,7 @@
 void ELinitialize(context_t *ctx) {
   freeinit(&ctx->hfl, sizeof **ctx->ELhash);
   ctx->ELhashsize = 2 * ctx->sqrt_nsites;
-  ctx->ELhash = (struct Halfedge **)myalloc(ctx, sizeof *ctx->ELhash * ctx->ELhashsize);
+  ctx->ELhash = (struct Halfedge **)myalloc(ctx, (unsigned int) (sizeof *ctx->ELhash * (size_t)ctx->ELhashsize));
   for (int i = 0; i < ctx->ELhashsize; i++)
     ctx->ELhash[i] = NULL;
   ctx->ELleftend = HEcreate(ctx, NULL, 0);
@@ -32,7 +34,7 @@ struct Halfedge *HEcreate(context_t *ctx, struct Edge *e, int pm) {
   struct Halfedge *answer;
   answer = (struct Halfedge *)getfree(ctx, &ctx->hfl);
   answer->ELedge = e;
-  answer->ELpm = pm;
+  answer->ELpm = (char)pm;
   answer->PQnext = NULL;
   answer->vertex = NULL;
   answer->ELrefcnt = 0;
@@ -78,7 +80,7 @@ struct Halfedge *ELleftbnd(context_t *ctx, struct Point *p) {
   struct Halfedge *he;
 
   /* Use hash table to get close to desired halfedge */
-  int bucket = (p->x - ctx->xmin) / ctx->deltax * ctx->ELhashsize;
+  int bucket = (int)( (p->x - ctx->xmin) / ctx->deltax * ctx->ELhashsize );
   if (bucket < 0)
     bucket = 0;
   if (bucket >= ctx->ELhashsize)

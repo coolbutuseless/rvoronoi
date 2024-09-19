@@ -184,7 +184,7 @@ void convert_indexing_r_to_c_with_NA(SEXP ivec_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int *create_c_index(SEXP ivec_) {
   
-  int *ivec = malloc(length(ivec_) * sizeof(int));
+  int *ivec = malloc((size_t)length(ivec_) * sizeof(int));
   if (ivec == NULL) {
     error("create_c_index(): Couldn't allocate %i members", length(ivec_));
   }

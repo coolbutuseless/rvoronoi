@@ -196,7 +196,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   SEXP segs_ = R_NilValue;
   
   if (asLogical(calc_segments_)) {
-    vpair_t *vpairs = malloc(ctx.ntris * 3 * sizeof(vpair_t));
+    vpair_t *vpairs = malloc((long unsigned int)ctx.ntris * 3 * sizeof(vpair_t));
     if (vpairs == NULL) {
       error("couldn't allocate vpairs");
     }
@@ -232,7 +232,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
       nvpairs++;
     }
     
-    qsort(vpairs, nvpairs, sizeof(vpair_t), vpair_comparison);
+    qsort(vpairs, (size_t)nvpairs, sizeof(vpair_t), vpair_comparison);
     
     int nsegs = 1;
     for (int i=1; i < nvpairs; i++) {
