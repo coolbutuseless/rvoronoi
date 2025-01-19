@@ -11,7 +11,7 @@
 #' @param ... other arguments passed to \code{plot()}
 #' 
 #' @return None
-#' @examplesIf 
+#' @examples
 #' set.seed(1)
 #' x <- runif(10)
 #' y <- runif(10)
