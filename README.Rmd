@@ -15,6 +15,27 @@ knitr::opts_chunk$set(
 )
 
 library(rvoronoi)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Generate the pkgdown documentation
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if (FALSE) {
+  pkgdown::build_site(
+    # devel = TRUE,
+    override = list(destination = "../coolbutuseless.github.io/package/nara")
+  )
+}
+
+if (FALSE) {
+  # Check for functions which do not have an @examples block for roxygen
+  system("grep -c examples man/*Rd", intern = TRUE) |> 
+    grep(":0$", x = _, value = TRUE)
+}
+
+
+if (FALSE) {
+  covr::report()
+}
 ```
 
 # rvoronoi

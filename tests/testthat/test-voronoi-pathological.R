@@ -14,6 +14,7 @@ test_that("voronoi pathological1 works", {
     })
   })
   
+  expect_true(TRUE)
 })
 
 
@@ -32,6 +33,7 @@ test_that("voronoi pathological2 works", {
     })
   })
   
+  expect_true(TRUE)
 })
 
 
@@ -52,6 +54,7 @@ test_that("voronoi pathological2a works", {
     })
   })
   
+  expect_true(TRUE)
 })
 
 
@@ -68,6 +71,7 @@ test_that("voronoi pathological3 works", {
     })
   })
   
+  expect_true(TRUE)
 })
 
 
@@ -87,10 +91,6 @@ test_that("voronoi pathological4 works", {
     })
   })
   
+  expect_true(TRUE)
 })
 
-
-if (FALSE) {
-  
-  plot(vor)
-}

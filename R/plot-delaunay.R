@@ -11,6 +11,12 @@
 #' @param ... other arguments passed to \code{plot()}
 #' 
 #' @return None
+#' @examplesIf 
+#' set.seed(1)
+#' x <- runif(10)
+#' y <- runif(10)
+#' del <- delaunay(x, y)
+#' plot(del)
 #' @importFrom graphics segments points polygon
 #' @importFrom grDevices rainbow
 #' @export

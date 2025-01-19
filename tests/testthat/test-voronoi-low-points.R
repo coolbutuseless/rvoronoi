@@ -31,4 +31,5 @@ test_that("Voronois with low point counts behave sanely", {
     vor <- voronoi(x, y)
   })
   
+  expect_true(TRUE)
 })

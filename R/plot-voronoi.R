@@ -30,7 +30,12 @@ valid_idx <- function(x) {
 #' @param poly_col vector of colours for polygons
 #' @param label_cex size of text labels for sites
 #' @return None.
-#' 
+#' @examples
+#' set.seed(1)
+#' x <- runif(10)
+#' y <- runif(10)
+#' vor <- voronoi(x, y)
+#' plot(vor)
 #' @importFrom graphics par rect points segments
 #' @importFrom grDevices rainbow
 #' @export

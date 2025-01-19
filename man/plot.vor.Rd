@@ -53,3 +53,10 @@ None.
 \description{
 Barebones plotting of Voronoi
 }
+\examples{
+set.seed(1)
+x <- runif(10)
+y <- runif(10)
+vor <- voronoi(x, y)
+plot(vor)
+}

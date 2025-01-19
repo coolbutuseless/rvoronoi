@@ -35,3 +35,12 @@ None
 \description{
 Simple plot of Delaunay triangulation
 }
+\examples{
+\dontshow{if () (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+set.seed(1)
+x <- runif(10)
+y <- runif(10)
+del <- delaunay(x, y)
+plot(del)
+\dontshow{\}) # examplesIf}
+}

@@ -26,5 +26,4 @@ test_that("Delaunays with low point counts behave sanely", {
   y <- runif(N)
   del <- delaunay(x, y)
   expect_equal(del$ntris, 1)
-  
 })
