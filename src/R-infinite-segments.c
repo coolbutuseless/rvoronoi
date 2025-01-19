@@ -1,4 +1,5 @@
 
+#define R_NO_REMAP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -335,7 +336,7 @@ void bound_infinite_segments(
       rv2[ray_idx] = nverts + vert_idx - 1;
       ray_idx++;
     } else {
-      error("Impossible 12");
+      Rf_error("Impossible 12");
     }
   } // next seg
   
@@ -373,7 +374,7 @@ void bound_infinite_segments(
   
   
   if (vert_idx > *nbverts) {
-    error("Expecting vert_idx <= nbverts :: %i == %i", vert_idx, *nbverts);
+    Rf_error("Expecting vert_idx <= nbverts :: %i == %i", vert_idx, *nbverts);
   }
   
   // How many verts did we actaully add
@@ -489,7 +490,7 @@ void bound_infinite_segments(
   
   
   if (ray_idx > *nbsegs) {
-    error("Expecting ray_idx <= nbsegs :: %i == %i", ray_idx, *nbsegs);
+    Rf_error("Expecting ray_idx <= nbsegs :: %i == %i", ray_idx, *nbsegs);
   }
   
   *nbsegs  = ray_idx;
@@ -509,36 +510,36 @@ SEXP bound_infinite_segments_(
   
   int nprotect = 0;
   
-  if (length(x_) != length(y_)) {
-    error("bound_infinite_segments_(): bad length for x/y");
+  if (Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("bound_infinite_segments_(): bad length for x/y");
   }
   
-  if (length(v1_) == 0 || length(v1_) != length(v2_) || 
-      length(li_) != length(v1_)) {
-    error("bound_infinite_segments_(): bad length for li/v1/v2");
+  if (Rf_length(v1_) == 0 || Rf_length(v1_) != Rf_length(v2_) || 
+      Rf_length(li_) != Rf_length(v1_)) {
+    Rf_error("bound_infinite_segments_(): bad length for li/v1/v2");
   }
   
-  if (length(a_) == 0 || length(a_) != length(b_) || 
-      length(a_) != length(c_)) {
-    error("bound_infinite_segments_(): bad length for a/b/c");
+  if (Rf_length(a_) == 0 || Rf_length(a_) != Rf_length(b_) || 
+      Rf_length(a_) != Rf_length(c_)) {
+    Rf_error("bound_infinite_segments_(): bad length for a/b/c");
   }
   
   bbox_t bounds = {
-    .xmin = asReal(xmin_),
-    .ymin = asReal(ymin_),
-    .xmax = asReal(xmax_),
-    .ymax = asReal(ymax_)
+    .xmin = Rf_asReal(xmin_),
+    .ymin = Rf_asReal(ymin_),
+    .xmax = Rf_asReal(xmax_),
+    .ymax = Rf_asReal(ymax_)
   };
   
   int nbverts = 0;
   int nbsegs = 0;
   
-  calc_space_for_bound_infinite_segments(length(v1_), INTEGER(v1_), INTEGER(v2_), &nbverts, &nbsegs);
-  SEXP xb_ = PROTECT(allocVector(REALSXP, nbverts)); nprotect++;
-  SEXP yb_ = PROTECT(allocVector(REALSXP, nbverts)); nprotect++;
+  calc_space_for_bound_infinite_segments(Rf_length(v1_), INTEGER(v1_), INTEGER(v2_), &nbverts, &nbsegs);
+  SEXP xb_ = PROTECT(Rf_allocVector(REALSXP, nbverts)); nprotect++;
+  SEXP yb_ = PROTECT(Rf_allocVector(REALSXP, nbverts)); nprotect++;
   
-  SEXP rv1_ = PROTECT(allocVector(INTSXP, nbsegs)); nprotect++;
-  SEXP rv2_ = PROTECT(allocVector(INTSXP, nbsegs)); nprotect++;
+  SEXP rv1_ = PROTECT(Rf_allocVector(INTSXP, nbsegs)); nprotect++;
+  SEXP rv2_ = PROTECT(Rf_allocVector(INTSXP, nbsegs)); nprotect++;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert R 1-indexing to C 0-indexing
@@ -550,9 +551,9 @@ SEXP bound_infinite_segments_(
   
   bound_infinite_segments(
     &bounds,
-    length(x_), REAL(x_), REAL(y_),
-    length(v1_), li, v1, v2,
-    length(a_), REAL(a_), REAL(b_), REAL(c_),
+    Rf_length(x_), REAL(x_), REAL(y_),
+    Rf_length(v1_), li, v1, v2,
+    Rf_length(a_), REAL(a_), REAL(b_), REAL(c_),
     &nbverts, REAL(xb_), REAL(yb_),
     &nbsegs, INTEGER(rv1_), INTEGER(rv2_)
   );

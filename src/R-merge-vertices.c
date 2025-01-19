@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -103,7 +105,7 @@ void merge_vertices_core_(double tol,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int *remap = malloc((unsigned long)nverts * sizeof(int));
   if (remap == NULL) {
-    error("merge_vertices_core_(): could not allocate 'remap'");
+    Rf_error("merge_vertices_core_(): could not allocate 'remap'");
   }
   for (int i = 0; i < nverts; i++) {
     remap[i] = NOT_REMAPPED;
@@ -122,7 +124,7 @@ void merge_vertices_core_(double tol,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int ndiscard = 0;
   bool *discard = calloc((unsigned int)nsegs, sizeof(bool));
-  if (discard == NULL) error("merge_vertices_core_(): could not allocate 'discard'");
+  if (discard == NULL) Rf_error("merge_vertices_core_(): could not allocate 'discard'");
   
   
   
@@ -144,7 +146,7 @@ void merge_vertices_core_(double tol,
       
       // Sanity check
       if ( (i1 >= nverts) || (i2 >= nverts) || (i1 < 0) || (i2 < 0) ) {
-        error("merge_vertices_core_(): [%i] Vertex index out of bounds: %i, %i [0, %i]", 
+        Rf_error("merge_vertices_core_(): [%i] Vertex index out of bounds: %i, %i [0, %i]", 
               i, i1, i2, nverts);
       }
       
@@ -311,26 +313,26 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   
   int nprotect = 0;
   
-  if (length(x_) == 0 || length(x_) != length(y_)) {
-    error("merge_vertices_() x & y must be equal length");
+  if (Rf_length(x_) == 0 || Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("merge_vertices_() x & y must be equal length");
   }
-  if (length(v1_) == 0) {
-    warning("merge_vertices_(): No vertices to process\n");
+  if (Rf_length(v1_) == 0) {
+    Rf_warning("merge_vertices_(): No vertices to process\n");
     return R_NilValue;
   }
-  if (length(v1_) != length(v2_) || length(v1_) != length(line_)) {
-    error("merge_vertices_():line, v1 & v2 must be equal length");
+  if (Rf_length(v1_) != Rf_length(v2_) || Rf_length(v1_) != Rf_length(line_)) {
+    Rf_error("merge_vertices_():line, v1 & v2 must be equal length");
   }
   
   double *x = REAL(x_);
   double *y = REAL(y_);
   
-  int nverts = length(x_);
-  int nsegs = length(v1_);
+  int nverts = Rf_length(x_);
+  int nsegs = Rf_length(v1_);
   
-  SEXP fv1_   = PROTECT(allocVector(INTSXP, nsegs)); nprotect++;
-  SEXP fv2_   = PROTECT(allocVector(INTSXP, nsegs)); nprotect++;
-  SEXP fline_ = PROTECT(allocVector(INTSXP, nsegs)); nprotect++;
+  SEXP fv1_   = PROTECT(Rf_allocVector(INTSXP, nsegs)); nprotect++;
+  SEXP fv2_   = PROTECT(Rf_allocVector(INTSXP, nsegs)); nprotect++;
+  SEXP fline_ = PROTECT(Rf_allocVector(INTSXP, nsegs)); nprotect++;
   
   // int *fv1   = INTEGER(fv1_);
   // int *fv2   = INTEGER(fv2_);
@@ -346,17 +348,17 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
   convert_indexing_r_to_c_with_NA(fv2_);
   convert_indexing_r_to_c_with_NA(fline_);
   
-  // for (int i = 0; i < length(fv2_); i++) {
+  // for (int i = 0; i < Rf_length(fv2_); i++) {
   //   Rprintf("(%i) v2[%i] = %i    =   fv2[%i] = %i\n", nsegs, i, INTEGER(v2_)[i], i, INTEGER(fv2_)[i]);
   // }
   
   // This will contain the final number of vertices after merging  
   int nsegs_final = 0;
   
-  merge_vertices_core_(asReal(tol_), 
+  merge_vertices_core_(Rf_asReal(tol_), 
                        nverts, x, y, 
                        nsegs, INTEGER(fline_), INTEGER(fv1_), INTEGER(fv2_), 
-                       &nsegs_final, asInteger(verbosity_));
+                       &nsegs_final, Rf_asInteger(verbosity_));
   
   trim_vec(fv1_  , nsegs_final, nsegs);
   trim_vec(fv2_  , nsegs_final, nsegs);

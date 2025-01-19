@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -31,18 +33,18 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) != length(y_)) {
-    error("x & y are not the same length");
+  if (Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("x & y are not the same length");
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // setup
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int nprotect = 0;
-  bool calc_polygons  = asLogical(calc_polygons_);
-  bool match_sites    = asLogical(match_sites_);
-  bool bound_segments = asLogical(bound_segments_);
-  double merge_tolerance = asReal(merge_tolerance_);
+  bool calc_polygons  = Rf_asLogical(calc_polygons_);
+  bool match_sites    = Rf_asLogical(match_sites_);
+  bool bound_segments = Rf_asLogical(bound_segments_);
+  double merge_tolerance = Rf_asReal(merge_tolerance_);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,7 +52,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // We still go through the motions of this function in order
   // to return data to R in the right form
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) == 0) {
+  if (Rf_length(x_) == 0) {
     calc_polygons  = false;
     match_sites    = false;
     bound_segments = false;
@@ -75,7 +77,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // bbox for bounding the unbounded polygos
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   bbox_t bounds = bbox_new();
-  bbox_add(&bounds, length(x_), REAL(x_), REAL(y_));
+  bbox_add(&bounds, Rf_length(x_), REAL(x_), REAL(y_));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Memory allocation for vertices in voronoi diagram.
@@ -128,7 +130,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //
   // Add a margin of '10' just to widely avoid off-by-one errors in my thinking.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n = length(x_); // number of seed points
+  int n = Rf_length(x_); // number of seed points
   
   int max_interior_verts = 2 * n - 5;
   int max_interior_edges = 3 * n - 6;
@@ -142,8 +144,8 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Voronoi Vertices (x, y)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP vert_x_ = PROTECT(allocVector(REALSXP, max_verts)); nprotect++;
-  SEXP vert_y_ = PROTECT(allocVector(REALSXP, max_verts)); nprotect++;
+  SEXP vert_x_ = PROTECT(Rf_allocVector(REALSXP, max_verts)); nprotect++;
+  SEXP vert_y_ = PROTECT(Rf_allocVector(REALSXP, max_verts)); nprotect++;
   ctx.nverts = 0;
   ctx.vert_x = REAL(vert_x_);
   ctx.vert_y = REAL(vert_y_);
@@ -151,9 +153,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Voronoi lines (a, b, c) => ax + by = c
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP line_a_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
-  SEXP line_b_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
-  SEXP line_c_ = PROTECT(allocVector(REALSXP, max_edges)); nprotect++;
+  SEXP line_a_ = PROTECT(Rf_allocVector(REALSXP, max_edges)); nprotect++;
+  SEXP line_b_ = PROTECT(Rf_allocVector(REALSXP, max_edges)); nprotect++;
+  SEXP line_c_ = PROTECT(Rf_allocVector(REALSXP, max_edges)); nprotect++;
   
   ctx.nlines = 0;
   ctx.line_a = REAL(line_a_);
@@ -163,9 +165,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // The segments within each line
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP seg_line_ = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
-  SEXP seg_v1_   = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
-  SEXP seg_v2_   = PROTECT(allocVector(INTSXP, max_edges)); nprotect++;
+  SEXP seg_line_ = PROTECT(Rf_allocVector(INTSXP, max_edges)); nprotect++;
+  SEXP seg_v1_   = PROTECT(Rf_allocVector(INTSXP, max_edges)); nprotect++;
+  SEXP seg_v2_   = PROTECT(Rf_allocVector(INTSXP, max_edges)); nprotect++;
   
   ctx.nsegs    = 0;
   ctx.seg_line = INTEGER(seg_line_);
@@ -176,7 +178,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // Calculate voronoi tessellation using Fortune's Sweep algorithm 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   freeinit(&ctx.sfl, sizeof *ctx.sites);
-  init_sites(&ctx, REAL(x_), REAL(y_), length(x_));
+  init_sites(&ctx, REAL(x_), REAL(y_), Rf_length(x_));
   ctx.siteidx = 0;
   geominit(&ctx);
   voronoi(&ctx, ctx.triangulate);
@@ -237,9 +239,9 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Set up the "working area" for the merging of vertices
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    v1m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
-    v2m_   = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
-    linem_ = PROTECT(allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    v1m_   = PROTECT(Rf_allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    v2m_   = PROTECT(Rf_allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
+    linem_ = PROTECT(Rf_allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
     
     msegs_ = PROTECT(
       create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
@@ -293,8 +295,8 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //   * the voronoi vertices
     //   * the exterior vertices
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    xf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
-    yf_ = PROTECT(allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
+    xf_ = PROTECT(Rf_allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
+    yf_ = PROTECT(Rf_allocVector(REALSXP, ctx.nverts + nbverts)); nprotect++;
     xf  = REAL(xf_);
     yf  = REAL(yf_);
     
@@ -322,7 +324,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Trim the merged indices to size (and make into a data.frame)
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    set_df_attributes_and_trim(msegs_, fnedges, length(v1m_));
+    set_df_attributes_and_trim(msegs_, fnedges, Rf_length(v1m_));
     
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,7 +351,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
         extract_polygons_internal(
           ctx.nverts + nbverts, xf, yf,       // Voronoi vertices + perimeter intersections
           fnedges, v1m, v2m,                  // Voronoi edges + perimeter edges
-          length(x_), REAL(x_), REAL(y_)      // Seed points
+          Rf_length(x_), REAL(x_), REAL(y_)      // Seed points
         )
       ); nprotect++;
     } else {
@@ -398,10 +400,10 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
   // Covers all seed points and voronoi vertices
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP xmin_ = PROTECT(ScalarReal(bounds.xmin)); nprotect++;
-  SEXP xmax_ = PROTECT(ScalarReal(bounds.xmax)); nprotect++;
-  SEXP ymin_ = PROTECT(ScalarReal(bounds.ymin)); nprotect++;
-  SEXP ymax_ = PROTECT(ScalarReal(bounds.ymax)); nprotect++;
+  SEXP xmin_ = PROTECT(Rf_ScalarReal(bounds.xmin)); nprotect++;
+  SEXP xmax_ = PROTECT(Rf_ScalarReal(bounds.xmax)); nprotect++;
+  SEXP ymin_ = PROTECT(Rf_ScalarReal(bounds.ymin)); nprotect++;
+  SEXP ymax_ = PROTECT(Rf_ScalarReal(bounds.ymax)); nprotect++;
   
   SEXP ext_ = PROTECT(
     create_named_list(4, "xmin", xmin_, "xmax", xmax_, "ymin", ymin_, "ymax", ymax_)
@@ -431,7 +433,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
       "msegments", msegs_
     )
   ); nprotect++;
-  setAttrib(res_, R_ClassSymbol, mkString("vor"));
+  Rf_setAttrib(res_, R_ClassSymbol, Rf_mkString("vor"));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' memory

@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -50,7 +52,7 @@ void bbox_add(bbox_t *bbox, int n, double *x, double *y) {
 void bbox_expand(bbox_t *bbox, double factor) {
   
   if (factor <= 0) {
-    error("box_expand(): factor must be > 0");
+    Rf_error("box_expand(): factor must be > 0");
   }
   
   double w = bbox->xmax - bbox->xmin;

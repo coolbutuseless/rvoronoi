@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -54,8 +56,8 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(x_) != length(y_)) {
-    error("x/y lengths must be the same");
+  if (Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("x/y lengths must be the same");
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,15 +79,15 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   // Maximum number of triangles = 2 * n - 2 - b
   // where 'b' is number of vertices on the convex hull
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n = length(x_);
+  int n = Rf_length(x_);
   int max_tris = 2 * n;
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices of each triangles
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP v1_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
-  SEXP v2_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
-  SEXP v3_ = PROTECT(allocVector(INTSXP, max_tris)); nprotect++; 
+  SEXP v1_ = PROTECT(Rf_allocVector(INTSXP, max_tris)); nprotect++; 
+  SEXP v2_ = PROTECT(Rf_allocVector(INTSXP, max_tris)); nprotect++; 
+  SEXP v3_ = PROTECT(Rf_allocVector(INTSXP, max_tris)); nprotect++; 
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialize context
@@ -99,7 +101,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   // Use Fortune's algo to calculate delaunay triangulation
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   freeinit(&ctx.sfl, sizeof *ctx.sites);
-  init_sites(&ctx, REAL(x_), REAL(y_), length(x_));
+  init_sites(&ctx, REAL(x_), REAL(y_), Rf_length(x_));
   ctx.siteidx = 0;
   geominit(&ctx);
   voronoi(&ctx, ctx.triangulate);
@@ -109,8 +111,8 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP idx_  = R_NilValue;
   SEXP area_ = R_NilValue;
-  if (asLogical(calc_areas_)) {
-    area_ = PROTECT(allocVector(REALSXP, ctx.ntris)); nprotect++;
+  if (Rf_asLogical(calc_areas_)) {
+    area_ = PROTECT(Rf_allocVector(REALSXP, ctx.ntris)); nprotect++;
     idx_  = PROTECT(create_named_list(4, "v1", v1_, "v2", v2_, "v3", v3_, "area", area_)); nprotect++;
   } else {
     idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
@@ -121,7 +123,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Area
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (asLogical(calc_areas_)) {
+  if (Rf_asLogical(calc_areas_)) {
     double *area  = REAL(area_);
     
     double *x = REAL(x_);
@@ -143,11 +145,11 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP polys_ = R_NilValue;
   
-  if (asLogical(calc_polygons_)) {
-    SEXP pidx_ = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
-    SEXP xs_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
-    SEXP ys_   = PROTECT(allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
-    SEXP vs_   = PROTECT(allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
+  if (Rf_asLogical(calc_polygons_)) {
+    SEXP pidx_ = PROTECT(Rf_allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
+    SEXP xs_   = PROTECT(Rf_allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
+    SEXP ys_   = PROTECT(Rf_allocVector(REALSXP, 3 * ctx.ntris)); nprotect++;
+    SEXP vs_   = PROTECT(Rf_allocVector(INTSXP , 3 * ctx.ntris)); nprotect++;
     
     double *xs = REAL(xs_);
     double *ys = REAL(ys_);
@@ -195,10 +197,10 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP segs_ = R_NilValue;
   
-  if (asLogical(calc_segments_)) {
+  if (Rf_asLogical(calc_segments_)) {
     vpair_t *vpairs = malloc((long unsigned int)ctx.ntris * 3 * sizeof(vpair_t));
     if (vpairs == NULL) {
-      error("couldn't allocate vpairs");
+      Rf_error("couldn't allocate vpairs");
     }
     
     
@@ -242,13 +244,13 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
     }
     
     
-    SEXP sv1_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
-    SEXP sv2_  = PROTECT(allocVector(INTSXP , nsegs)); nprotect++;
-    SEXP x1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-    SEXP y1_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-    SEXP x2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-    SEXP y2_   = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
-    SEXP dist_ = PROTECT(allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP sv1_  = PROTECT(Rf_allocVector(INTSXP , nsegs)); nprotect++;
+    SEXP sv2_  = PROTECT(Rf_allocVector(INTSXP , nsegs)); nprotect++;
+    SEXP x1_   = PROTECT(Rf_allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP y1_   = PROTECT(Rf_allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP x2_   = PROTECT(Rf_allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP y2_   = PROTECT(Rf_allocVector(REALSXP, nsegs)); nprotect++;
+    SEXP dist_ = PROTECT(Rf_allocVector(REALSXP, nsegs)); nprotect++;
     segs_ = PROTECT(
       create_named_list(
         7,
@@ -321,7 +323,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   ); nprotect++;
   set_df_attributes(sites_);
   
-  SEXP ntris_ = PROTECT(ScalarInteger(ctx.ntris)); nprotect++;
+  SEXP ntris_ = PROTECT(Rf_ScalarInteger(ctx.ntris)); nprotect++;
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,7 +340,7 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
     )
   ); nprotect++;
   
-  setAttrib(res_, R_ClassSymbol, mkString("del"));
+  Rf_setAttrib(res_, R_ClassSymbol, Rf_mkString("del"));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations

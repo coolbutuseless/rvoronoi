@@ -1,4 +1,5 @@
 
+#define R_NO_REMAP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 
 bool valid_idx(int x) {
   if (x == NA_INTEGER) {
-    error("Not expecting NA here!");
+    Rf_error("Not expecting NA here!");
   }
   
   if (x == INVALID_VIDX) {
@@ -22,7 +23,7 @@ bool valid_idx(int x) {
   }
   
   if (x < 0) {
-    error("Not expecting -ve here");
+    Rf_error("Not expecting -ve here");
   }
   
   return true;
@@ -49,12 +50,12 @@ void trim_vec(SEXP vec_, int visible_length, int allocated_length) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_length) {
   
-  if (!isNewList(df_)) {
-    error("set_df_attributes_and_trim(): only accepts 'lists' as input");
+  if (!Rf_isNewList(df_)) {
+    Rf_error("set_df_attributes_and_trim(): only accepts 'lists' as input");
   }
   
   if (visible_length > allocated_length) {
-    error("set_df_attributes_and_trim(): visible_length (%i) cannot be greater than allocated length (%i)",
+    Rf_error("set_df_attributes_and_trim(): visible_length (%i) cannot be greater than allocated length (%i)",
           visible_length, allocated_length);
   }
   
@@ -62,7 +63,7 @@ void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_leng
   // Truncate all the vectors to visible length
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (visible_length != allocated_length) {
-    for (int col_idx = 0; col_idx < length(df_); col_idx++) {
+    for (int col_idx = 0; col_idx < Rf_length(df_); col_idx++) {
       trim_vec(VECTOR_ELT(df_, col_idx), visible_length, allocated_length);
     }
   }
@@ -78,27 +79,27 @@ void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_leng
 void set_df_attributes(SEXP df_) {
   int nprotect = 0;
   
-  if (!isNewList(df_)) {
-    error("set_df_attributes(): only accepts 'lists' as input");
+  if (!Rf_isNewList(df_)) {
+    Rf_error("set_df_attributes(): only accepts 'lists' as input");
   }
   
-  int len = length(VECTOR_ELT(df_, 0));
+  int len = Rf_length(VECTOR_ELT(df_, 0));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set row.names
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP rownames = PROTECT(allocVector(INTSXP, 2)); nprotect++;
+  SEXP rownames = PROTECT(Rf_allocVector(INTSXP, 2)); nprotect++;
   SET_INTEGER_ELT(rownames, 0, NA_INTEGER);
   SET_INTEGER_ELT(rownames, 1, -len);
-  setAttrib(df_, R_RowNamesSymbol, rownames);
+  Rf_setAttrib(df_, R_RowNamesSymbol, rownames);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set as tibble
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP classnames = PROTECT(allocVector(STRSXP, 3)); nprotect++;
-  SET_STRING_ELT(classnames, 0, mkChar("tbl_df"));
-  SET_STRING_ELT(classnames, 1, mkChar("tbl"));
-  SET_STRING_ELT(classnames, 2, mkChar("data.frame"));
+  SEXP classnames = PROTECT(Rf_allocVector(STRSXP, 3)); nprotect++;
+  SET_STRING_ELT(classnames, 0, Rf_mkChar("tbl_df"));
+  SET_STRING_ELT(classnames, 1, Rf_mkChar("tbl"));
+  SET_STRING_ELT(classnames, 2, Rf_mkChar("data.frame"));
   SET_CLASS(df_, classnames);
   
   UNPROTECT(nprotect);
@@ -115,7 +116,7 @@ void set_df_attributes(SEXP df_) {
 void convert_indexing_c_to_r(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
   
-  for (int i = 0; i < length(ivec_); i++) {
+  for (int i = 0; i < Rf_length(ivec_); i++) {
     ivec[i]++;
   }
 }
@@ -128,7 +129,7 @@ void convert_indexing_c_to_r(SEXP ivec_) {
 void convert_indexing_r_to_c(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
   
-  for (int i = 0; i < length(ivec_); i++) {
+  for (int i = 0; i < Rf_length(ivec_); i++) {
     ivec[i]--;
   }
 }
@@ -144,7 +145,7 @@ void convert_indexing_r_to_c(SEXP ivec_) {
 void convert_indexing_c_to_r_with_NA(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
   
-  for (int i = 0; i < length(ivec_); i++) {
+  for (int i = 0; i < Rf_length(ivec_); i++) {
     if (ivec[i] == INVALID_VIDX) {
       ivec[i] = NA_INTEGER;
     } else {
@@ -162,7 +163,7 @@ void convert_indexing_c_to_r_with_NA(SEXP ivec_) {
 void convert_indexing_r_to_c_with_NA(SEXP ivec_) {
   int *ivec = INTEGER(ivec_);
   
-  for (int i = 0; i < length(ivec_); i++) {
+  for (int i = 0; i < Rf_length(ivec_); i++) {
     if (ivec[i] == NA_INTEGER) {
       ivec[i] = INVALID_VIDX;
     } else {
@@ -184,13 +185,13 @@ void convert_indexing_r_to_c_with_NA(SEXP ivec_) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int *create_c_index(SEXP ivec_) {
   
-  int *ivec = malloc((size_t)length(ivec_) * sizeof(int));
+  int *ivec = malloc((size_t)Rf_length(ivec_) * sizeof(int));
   if (ivec == NULL) {
-    error("create_c_index(): Couldn't allocate %i members", length(ivec_));
+    Rf_error("create_c_index(): Couldn't allocate %i members", Rf_length(ivec_));
   }
   
   int *ivecp = INTEGER(ivec_);
-  for (int i = 0; i < length(ivec_); i++) {
+  for (int i = 0; i < Rf_length(ivec_); i++) {
     ivec[i] = ivecp[i] - 1;
   }
   
@@ -207,16 +208,16 @@ SEXP create_named_list(int n, ...) {
   va_start(args, n);
   
   int nprotect = 0;
-  SEXP res_ = PROTECT(allocVector(VECSXP, n)); nprotect++;
-  SEXP nms_ = PROTECT(allocVector(STRSXP, n)); nprotect++;
-  setAttrib(res_, R_NamesSymbol, nms_);
+  SEXP res_ = PROTECT(Rf_allocVector(VECSXP, n)); nprotect++;
+  SEXP nms_ = PROTECT(Rf_allocVector(STRSXP, n)); nprotect++;
+  Rf_setAttrib(res_, R_NamesSymbol, nms_);
   
   for (int i = 0; i < n; i++) {
     
     const char *nm = va_arg(args, const char *);
     SEXP val_ = va_arg(args, SEXP);
     
-    SET_STRING_ELT(nms_, i, mkChar(nm));
+    SET_STRING_ELT(nms_, i, Rf_mkChar(nm));
     SET_VECTOR_ELT(res_, i, val_);
   }
   

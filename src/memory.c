@@ -1,3 +1,6 @@
+
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -49,7 +52,7 @@ void makefree(struct Freenode *curr, struct Freelist *fl) {
 char *myalloc(context_t *ctx, unsigned n) {
   char *t;
   if ((t = malloc(n)) == (char *)0) {
-    error("myalloc(): Insufficient memory processing site %d (%d bytes in use)\n",
+    Rf_error("myalloc(): Insufficient memory processing site %d (%d bytes in use)\n",
             ctx->siteidx, ctx->total_alloc);
   };
   

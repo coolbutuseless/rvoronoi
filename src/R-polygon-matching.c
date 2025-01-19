@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -55,29 +57,29 @@ bool point_in_polygon_core_(double x, double y, int N, double *xp, double *yp) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP points_in_convex_polygon_(SEXP x_, SEXP y_, SEXP xp_, SEXP yp_) {
   
-  if (length(x_) != length(y_)) {
-    error("points_in_convex_polygon_(): x and y must be same length");
+  if (Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("points_in_convex_polygon_(): x and y must be same length");
   }
-  if (length(x_) == 0) {
-    error("points_in_convex_polygon_(): need at least one point");
-  }
-  
-  if (length(xp_) != length(yp_)) {
-    error("points_in_convex_polygon_(): xp and yp must be same length");
-  }
-  if (length(xp_) < 3) {
-    error("points_in_convex_polygon_(): not a polygon");
+  if (Rf_length(x_) == 0) {
+    Rf_error("points_in_convex_polygon_(): need at least one point");
   }
   
-  SEXP res_ = PROTECT(allocVector(LGLSXP, length(x_)));
+  if (Rf_length(xp_) != Rf_length(yp_)) {
+    Rf_error("points_in_convex_polygon_(): xp and yp must be same length");
+  }
+  if (Rf_length(xp_) < 3) {
+    Rf_error("points_in_convex_polygon_(): not a polygon");
+  }
+  
+  SEXP res_ = PROTECT(Rf_allocVector(LGLSXP, Rf_length(x_)));
   int *resp = LOGICAL(res_);
   double *x = REAL(x_);
   double *y = REAL(y_);
   double *xp = REAL(xp_);
   double *yp = REAL(yp_);
   
-  for (int i = 0; i < length(x_); i++) {
-    resp[i] = point_in_polygon_core_(x[i], y[i], length(xp_), xp, yp);
+  for (int i = 0; i < Rf_length(x_); i++) {
+    resp[i] = point_in_polygon_core_(x[i], y[i], Rf_length(xp_), xp, yp);
   }
   
   UNPROTECT(1);

@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -171,7 +173,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   // Allocate space for directed edges
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   edge_t *edge = calloc((unsigned long)n_dir_edges, sizeof(edge_t));
-  if (edge == NULL) error("extract_polygons_core(): Could not allocate edge memory");
+  if (edge == NULL) Rf_error("extract_polygons_core(): Could not allocate edge memory");
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Copy edges in primary direction and calculate angle
@@ -189,7 +191,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     
     // Sanity check. There should not be any zero-length segments 
     if (v1 == v2) {
-      error("extract_polygons_core(): dupe vertex at C index %i. Use `merge_vertices()`?", i);
+      Rf_error("extract_polygons_core(): dupe vertex at C index %i. Use `merge_vertices()`?", i);
     }
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,7 +218,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   // Sanity check 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (idx != n_finite_segments) {
-    error("extract_polygons() poly: sanity idx != nedges.  %i != %i", idx, n_finite_segments);
+    Rf_error("extract_polygons() poly: sanity idx != nedges.  %i != %i", idx, n_finite_segments);
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,7 +241,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   // Create wedges
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   wedge_t *wedge = calloc((unsigned long)n_dir_edges, sizeof(wedge_t));
-  if (wedge == NULL) error("Could not allocated wedge memory");
+  if (wedge == NULL) Rf_error("Could not allocated wedge memory");
   
   idx = 0;
   int v1_group = edge[0].v1;
@@ -312,7 +314,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
 
   // Allocate the 'bounds'
   bounds = calloc((size_t)nbounds, sizeof(bounds_t));
-  if (bounds == NULL) error("Failed to allocate %i 'bounds' for %i undirected edges", nbounds, n_dir_edges);
+  if (bounds == NULL) Rf_error("Failed to allocate %i 'bounds' for %i undirected edges", nbounds, n_dir_edges);
 
   // Initialise the cvert (current vertex) to be the first seen vertex
   int cvert = wedge[0].v1;
@@ -346,7 +348,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
   poly_t *polys;
   int poly_capacity = 32;
   polys = calloc((unsigned long)poly_capacity, sizeof(poly_t));
-  if (polys == NULL) error("Couldn't allocate polys");
+  if (polys == NULL) Rf_error("Couldn't allocate polys");
   
   // Temp storage for the current set of vertex indices
 #define MAX_VERTS_PER_POLY 4096
@@ -415,7 +417,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
       if (capturing) {
         vidx[nvert++] = wedge[i].v3;
         if (nvert == MAX_VERTS_PER_POLY) {
-          error("Number of vertices for a single polygon exceeds limit of 16384. Please file an issue");
+          Rf_error("Number of vertices for a single polygon exceeds limit of 16384. Please file an issue");
         }
       }
       
@@ -461,7 +463,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
       }
       
       if (!match_found) {
-        error("Internal error: no 'match' wedge found");
+        Rf_error("Internal error: no 'match' wedge found");
       }
       
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -509,7 +511,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     // accumulated (i.e. 'vidx') and set the vertex count for this poly_t struct
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     polys[*npolys].v = malloc((unsigned long)nvert * sizeof(int));
-    if (polys[*npolys].v == NULL) error("polys[npolys] failed allocation");
+    if (polys[*npolys].v == NULL) Rf_error("polys[npolys] failed allocation");
     memcpy(polys[*npolys].v, &vidx, (unsigned long)nvert * sizeof(int));
     polys[*npolys].nvert = nvert;
     
@@ -547,7 +549,7 @@ poly_t *extract_polygons_core(int n_vor_verts, double *xvor, double *yvor,
     polys[i].x = malloc((size_t)nvert * sizeof(double));
     polys[i].y = malloc((size_t)nvert * sizeof(double));
     if (polys[i].x == NULL || polys[i].y == NULL) {
-      error("Could not allocate mem for polys[i].x and .y");
+      Rf_error("Could not allocate mem for polys[i].x and .y");
     }
     
     // Calculate actual coordinates of each polygon vertex
@@ -626,7 +628,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   // Ensure n_sites (if given is the same as the number of valid polys)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (matching_polygons_to_sites && n_sites != npolys) {
-    error("extract-polygons: internal error: n_sites != n_valid_polys: %i != %i\n", n_sites, npolys);
+    Rf_error("extract-polygons: internal error: n_sites != n_valid_polys: %i != %i\n", n_sites, npolys);
   }
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -649,7 +651,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
     for (int i = 0; i < n_sites; i++) {
       int res = find_matching_polygon_for_site(i, xsite[i], ysite[i], npolys, polys);
       if (res < 0) {
-        warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
+        Rf_warning("extract_polygons_internal(): Seed [%i] unmatched\n", i);
       }
     }
   }
@@ -697,10 +699,10 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Data.frame of coordinates of all polygons
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP idx_ = PROTECT(allocVector(INTSXP , total_verts)); nprotect++;
-  SEXP xv_  = PROTECT(allocVector(REALSXP, total_verts)); nprotect++;
-  SEXP yv_  = PROTECT(allocVector(REALSXP, total_verts)); nprotect++;
-  SEXP v_   = PROTECT(allocVector(INTSXP , total_verts)); nprotect++;
+  SEXP idx_ = PROTECT(Rf_allocVector(INTSXP , total_verts)); nprotect++;
+  SEXP xv_  = PROTECT(Rf_allocVector(REALSXP, total_verts)); nprotect++;
+  SEXP yv_  = PROTECT(Rf_allocVector(REALSXP, total_verts)); nprotect++;
+  SEXP v_   = PROTECT(Rf_allocVector(INTSXP , total_verts)); nprotect++;
   
   SEXP coords_ = PROTECT(
     create_named_list(
@@ -753,12 +755,12 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Bounding boxes
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP bbox_idx_ = PROTECT(allocVector(INTSXP , npolys)); nprotect++;
-  SEXP xmin_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
-  SEXP ymin_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
-  SEXP xmax_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
-  SEXP ymax_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
-  SEXP area_     = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP bbox_idx_ = PROTECT(Rf_allocVector(INTSXP , npolys)); nprotect++;
+  SEXP xmin_     = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
+  SEXP ymin_     = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
+  SEXP xmax_     = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
+  SEXP ymax_     = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
+  SEXP area_     = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
   
   SEXP bbox_ = PROTECT(
     create_named_list(
@@ -800,9 +802,9 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Centroids
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP centroid_idx_ = PROTECT(allocVector(INTSXP, npolys)); nprotect++;
-  SEXP cx_ = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
-  SEXP cy_ = PROTECT(allocVector(REALSXP, npolys)); nprotect++;
+  SEXP centroid_idx_ = PROTECT(Rf_allocVector(INTSXP, npolys)); nprotect++;
+  SEXP cx_ = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
+  SEXP cy_ = PROTECT(Rf_allocVector(REALSXP, npolys)); nprotect++;
   
   SEXP centroids_ = PROTECT(
     create_named_list(
@@ -836,7 +838,7 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Combine all polygon information in a list
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SEXP npolys_ = PROTECT(ScalarInteger(npolys)); nprotect++;
+  SEXP npolys_ = PROTECT(Rf_ScalarInteger(npolys)); nprotect++;
   
   SEXP polys_ = PROTECT(
     create_named_list(
@@ -866,15 +868,15 @@ SEXP extract_polygons_internal(int n_vor_verts, double *xvor, double *yvor,
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP xseed_, SEXP yseed_, SEXP verbosity_) {
 
-  if (length(x_) == 0 || length(x_) != length(y_)) {
-    error("merge_vertices_() x & y must be equal length");
+  if (Rf_length(x_) == 0 || Rf_length(x_) != Rf_length(y_)) {
+    Rf_error("merge_vertices_() x & y must be equal length");
   }
-  if (length(v1_) == 0) {
-    warning("merge_vertices_(): No vertices to process\n");
+  if (Rf_length(v1_) == 0) {
+    Rf_warning("merge_vertices_(): No vertices to process\n");
     return R_NilValue;
   }
-  if (length(v1_) != length(v2_)) {
-    error("merge_vertices_(): v1 & v2 must be equal length");
+  if (Rf_length(v1_) != Rf_length(v2_)) {
+    Rf_error("merge_vertices_(): v1 & v2 must be equal length");
   }
   
   int *v1 = create_c_index(v1_);
@@ -882,19 +884,19 @@ SEXP extract_polygons_(SEXP x_, SEXP y_, SEXP v1_, SEXP v2_, SEXP xseed_, SEXP y
 
   SEXP polys_ = R_NilValue;
   
-  if (isNull(xseed_) || isNull(yseed_)) {  
+  if (Rf_isNull(xseed_) || Rf_isNull(yseed_)) {  
     // Calculate compact unordered polygons
     polys_ = extract_polygons_internal(
-      length(x_), REAL(x_), REAL(y_), // voronoi vertices
-      length(v1_), v1, v2,            // voronoi edges
+      Rf_length(x_), REAL(x_), REAL(y_), // voronoi vertices
+      Rf_length(v1_), v1, v2,            // voronoi edges
       0, NULL, NULL                   // seed points 
     );
   } else {
     // Calculate polygons to match the seed points
     polys_ = extract_polygons_internal(
-      length(x_), REAL(x_), REAL(y_),            // voronoi vertices
-      length(v1_), v1, v2,                       // voronoi edges
-      length(xseed_), REAL(xseed_), REAL(yseed_) // seed points 
+      Rf_length(x_), REAL(x_), REAL(y_),            // voronoi vertices
+      Rf_length(v1_), v1, v2,                       // voronoi edges
+      Rf_length(xseed_), REAL(xseed_), REAL(yseed_) // seed points 
     );
   }
   

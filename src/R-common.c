@@ -1,4 +1,6 @@
 
+#define R_NO_REMAP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -66,7 +68,7 @@ void init_sites(context_t *ctx, double *x, double *y, int n) {
     if (ctx->sites[i].coord.x == ctx->sites[i - 1].coord.x &&
         ctx->sites[i].coord.y == ctx->sites[i - 1].coord.y) {
       free_all_myalloc(ctx);
-      error("Input points contain duplicates. Not allowed [mem: %i]", ctx->total_alloc);
+      Rf_error("Input points contain duplicates. Not allowed [mem: %i]", ctx->total_alloc);
     }
     
   };
