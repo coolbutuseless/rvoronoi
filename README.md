@@ -45,6 +45,7 @@ Juliet](https://www.imdb.com/title/tt0117509/?ref_=fn_al_tt_1)
 ``` r
 library(nara)
 library(grid)
+library(colorfast)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Load image
@@ -64,7 +65,7 @@ y <- (runif(N, 1, nrow(rj)))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ind  <- round(y) * ncol(rj) + round(x)
 cols <- rj[ind]
-cols <- nara::packed_cols_to_hex_cols(cols)
+cols <- colorfast::int_to_col(cols)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate the Voronoi
@@ -80,7 +81,7 @@ nr_polygon(nr, x = vor$polygons$coords$x, y = vor$polygons$coords$y,
 grid.raster(nr)
 ```
 
-<img src="man/figures/README-romeo-1.png" width="100%" />
+<img src="man/figures/README-romeo-1.png" alt="" width="100%" />
 
 ## Voronoi Terminology
 
@@ -128,13 +129,13 @@ vor <- voronoi(x, y)
 plot(vor, polys = FALSE, sites = TRUE, labels = TRUE, label_cex = 0.7)
 ```
 
-<img src="man/figures/README-voronoi-1.png" width="100%" />
+<img src="man/figures/README-voronoi-1.png" alt="" width="100%" />
 
 ``` r
 plot(vor, labels = TRUE, label_cex = 0.7)
 ```
 
-<img src="man/figures/README-voronoi-2.png" width="100%" />
+<img src="man/figures/README-voronoi-2.png" alt="" width="100%" />
 
 ``` r
 library(ggplot2)
@@ -150,7 +151,7 @@ ggplot() +
   )
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-2-1.png" alt="" width="100%" />
 
 ## Delaunay Triangulation
 
@@ -166,7 +167,7 @@ del <- delaunay(x, y)
 plot(del)
 ```
 
-<img src="man/figures/README-delaunay-1.png" width="100%" />
+<img src="man/figures/README-delaunay-1.png" alt="" width="100%" />
 
 ## Delaunay Benchmark
 
@@ -263,14 +264,14 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |    itr/sec | mem_alloc |
-|:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 397.9µs | 413.6µs | 2397.09618 |  162.78KB |
-| rvoronoi   | 385.9µs | 396.2µs | 2499.56380 |   23.58KB |
-| rvoronoi   |   392µs | 400.1µs | 2475.19530 |   39.07KB |
-| rvoronoi   | 743.4µs | 768.9µs | 1293.61878 |  163.41KB |
-| rtriangle  | 725.9µs | 763.2µs | 1278.59166 |  292.63KB |
-| deldir     |  16.8ms |  17.1ms |   58.32546 |    5.67MB |
+| expression |     min |  median |   itr/sec | mem_alloc |
+|:-----------|--------:|--------:|----------:|----------:|
+| rvoronoi   | 377.5µs | 392.5µs | 2523.7039 |   186.1KB |
+| rvoronoi   | 373.9µs | 384.6µs | 2586.5844 |    46.9KB |
+| rvoronoi   |   374µs |   387µs | 2563.4185 |   62.39KB |
+| rvoronoi   |   721µs | 742.7µs | 1340.8609 |  186.73KB |
+| rtriangle  | 744.2µs | 777.2µs | 1274.4197 |  292.63KB |
+| deldir     |  13.9ms |  14.1ms |   70.6593 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -369,11 +370,6 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
-| expression                 |   min | median |  itr/sec | mem_alloc |
-|:---------------------------|------:|-------:|---------:|----------:|
-| rvoronoi (match RTriangle) | 410µs |  423µs | 2339.006 |     137KB |
-| RTriangle                  | 723µs |  762µs | 1283.569 |     293KB |
-
 ### Voronoi - polygons
 
 ``` r
@@ -387,11 +383,11 @@ bench::mark(
 #> disabled.
 ```
 
-| expression                    |      min |   median |   itr/sec | mem_alloc |
-|:------------------------------|---------:|---------:|----------:|----------:|
-| rvoronoi (matched polygons)   |   3.32ms |   3.39ms | 292.10744 |   430.3KB |
-| rvoronoi (unmatched polygons) |   2.26ms |   2.33ms | 419.63734 |   430.3KB |
-| deldir                        | 162.26ms | 164.18ms |   6.03546 |    52.1MB |
+| expression                    |      min |   median |    itr/sec | mem_alloc |
+|:------------------------------|---------:|---------:|-----------:|----------:|
+| rvoronoi (matched polygons)   |   3.24ms |    3.3ms | 298.883319 |   601.8KB |
+| rvoronoi (unmatched polygons) |   2.19ms |   2.25ms | 423.851517 |   601.8KB |
+| deldir                        | 167.88ms | 170.99ms |   5.878556 |    52.1MB |
 
 # Pathological Test Cases
 
@@ -408,7 +404,7 @@ vor <- voronoi(x, y)
 plot(vor)
 ```
 
-<img src="man/figures/README-path1-1.png" width="100%" />
+<img src="man/figures/README-path1-1.png" alt="" width="100%" />
 
 ## Pathological 2
 
@@ -424,7 +420,7 @@ vor <- voronoi(x, y)
 plot(vor)
 ```
 
-<img src="man/figures/README-path2-1.png" width="100%" />
+<img src="man/figures/README-path2-1.png" alt="" width="100%" />
 
 ## Pathological 2a
 
@@ -440,7 +436,7 @@ vor <- voronoi(x, y)
 plot(vor)
 ```
 
-<img src="man/figures/README-path2a-1.png" width="100%" />
+<img src="man/figures/README-path2a-1.png" alt="" width="100%" />
 
 ## Pathological 3
 
@@ -454,7 +450,7 @@ vor <- voronoi(x, y)
 plot(vor)
 ```
 
-<img src="man/figures/README-path3-1.png" width="100%" />
+<img src="man/figures/README-path3-1.png" alt="" width="100%" />
 
 ## Pathological 4
 
@@ -470,7 +466,7 @@ vor <- voronoi(x, y)
 plot(vor, labels = TRUE)
 ```
 
-<img src="man/figures/README-path4-1.png" width="100%" />
+<img src="man/figures/README-path4-1.png" alt="" width="100%" />
 
 # Algorithms
 

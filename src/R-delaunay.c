@@ -121,10 +121,6 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   } else {
     idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
   }
-  set_df_attributes_and_trim(idx_, ctx.ntris, max_tris);
-  v1_ = VECTOR_ELT(idx_, 0);
-  v2_ = VECTOR_ELT(idx_, 1);
-  v3_ = VECTOR_ELT(idx_, 2);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -350,19 +346,20 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   Rf_setAttrib(res_, R_ClassSymbol, Rf_mkString("del"));
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Convert C 0-indexing to R 1-indexing
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
+  convert_indexing_c_to_r(v1_);
+  convert_indexing_c_to_r(v2_);
+  convert_indexing_c_to_r(v3_);
+  set_df_attributes_and_trim(idx_, ctx.ntris, max_tris);
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   for (int i = 0; i < ctx.alloc_count; i++) {
     free(ctx.allocs[i]);
   }
   free(ctx.allocs);
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Convert C 0-indexing to R 1-indexing
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-  convert_indexing_c_to_r(v1_);
-  convert_indexing_c_to_r(v2_);
-  convert_indexing_c_to_r(v3_);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return

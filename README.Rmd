@@ -78,6 +78,7 @@ A Voronoi tessellation of a scene from 1996 movie [Romeo + Juliet](https://www.i
 ```{r romeo, fig.height = 4}
 library(nara)
 library(grid)
+library(colorfast)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Load image
@@ -97,7 +98,7 @@ y <- (runif(N, 1, nrow(rj)))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ind  <- round(y) * ncol(rj) + round(x)
 cols <- rj[ind]
-cols <- nara::packed_cols_to_hex_cols(cols)
+cols <- colorfast::int_to_col(cols)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Calculate the Voronoi
@@ -375,7 +376,7 @@ if (FALSE) {
 
 ### Voronoi - vertices and segments only 
 
-```{r}
+```{r eval=FALSE}
 bench::mark(
   `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE, bound_segments = FALSE),
   RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),
