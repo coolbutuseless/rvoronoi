@@ -33,11 +33,14 @@ bool valid_idx(int x) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Trim a vector to the given length
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void trim_vec(SEXP vec_, int visible_length, int allocated_length) {
+SEXP trim_vec(SEXP vec_, int visible_length, int allocated_length) {
   if (visible_length != allocated_length) {
-      SETLENGTH(vec_, visible_length); 
-      SET_TRUELENGTH(vec_, allocated_length); 
-      SET_GROWABLE_BIT(vec_);
+      // SETLENGTH(vec_, visible_length); 
+      // SET_TRUELENGTH(vec_, allocated_length); 
+      // SET_GROWABLE_BIT(vec_);
+      return Rf_lengthgets(vec_, (R_len_t)visible_length);
+  } else {
+    return vec_;
   }
 }
 
@@ -64,7 +67,9 @@ void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_leng
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (visible_length != allocated_length) {
     for (int col_idx = 0; col_idx < Rf_length(df_); col_idx++) {
-      trim_vec(VECTOR_ELT(df_, col_idx), visible_length, allocated_length);
+      SEXP new_vec_ = PROTECT(trim_vec(VECTOR_ELT(df_, col_idx), visible_length, allocated_length));
+      SET_VECTOR_ELT(df_, col_idx, new_vec_);
+      UNPROTECT(1);
     }
   }
   
