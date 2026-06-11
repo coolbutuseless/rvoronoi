@@ -60,6 +60,10 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
     Rf_error("x/y lengths must be the same");
   }
   
+  if (Rf_length(x_) == 0) {
+    Rf_error("delauney_(): Must have at least 1 point. Got zero");
+  }
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialise the calculation context
   // Do delauney? TRUE

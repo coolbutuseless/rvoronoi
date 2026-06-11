@@ -6,8 +6,7 @@ test_that("Delaunays with low point counts behave sanely", {
   N <- 0
   x <- runif(N)
   y <- runif(N)
-  del <- delaunay(x, y)
-  expect_equal(del$ntris, 0)
+  expect_error(delaunay(x, y), "at least 1 point")
   
   N <- 1
   x <- runif(N)
