@@ -34,7 +34,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (Rf_length(x_) != Rf_length(y_)) {
-    Rf_error("x & y are not the same length");
+    Rf_error("voronoi_(): x & y are not the same length");
+  }
+  
+  
+  if (Rf_length(x_) == 0) {
+    Rf_error("voronoi_(): Must have at least 1 point. Got zero");
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

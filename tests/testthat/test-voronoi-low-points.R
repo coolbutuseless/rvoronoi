@@ -6,9 +6,9 @@ test_that("Voronois with low point counts behave sanely", {
   N <- 0
   x <- runif(N)
   y <- runif(N)
-  expect_no_error({
+  expect_error({
     vor <- voronoi(x, y)
-  })
+  }, "at least 1 point")
   
   N <- 1
   x <- runif(N)
