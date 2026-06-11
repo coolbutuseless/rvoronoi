@@ -62,7 +62,7 @@ plot.del <- function(x,
     
     tris <- split(del$polygons, del$polygons$idx)
     for (i in seq_along(tris)) {
-      polygon(tris[[i]]$x, tris[[i]]$y, col = tri_col[i])
+      graphics::polygon(tris[[i]]$x, tris[[i]]$y, col = tri_col[i])
     }
   }
 
