@@ -360,9 +360,9 @@ SEXP merge_vertices_(SEXP x_, SEXP y_,
                        nsegs, INTEGER(fline_), INTEGER(fv1_), INTEGER(fv2_), 
                        &nsegs_final, Rf_asInteger(verbosity_));
   
-  trim_vec(fv1_  , nsegs_final, nsegs);
-  trim_vec(fv2_  , nsegs_final, nsegs);
-  trim_vec(fline_, nsegs_final, nsegs);
+  fv1_   = PROTECT(trim_vec(fv1_  , nsegs_final, nsegs)); nprotect++;
+  fv2_   = PROTECT(trim_vec(fv2_  , nsegs_final, nsegs)); nprotect++;
+  fline_ = PROTECT(trim_vec(fline_, nsegs_final, nsegs)); nprotect++;
   
   convert_indexing_c_to_r_with_NA(fv1_);
   convert_indexing_c_to_r_with_NA(fv2_);

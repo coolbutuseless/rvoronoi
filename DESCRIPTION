@@ -11,7 +11,6 @@ Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
 Description: Fast voronoi tessellation and delaunay triangulation with Fortune's algorithm.
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 Suggests: 
@@ -19,3 +18,4 @@ Suggests:
 Config/testthat/edition: 3
 Copyright: The included voronoi C code was written by Steven Fortune and is
     Copyright (c) 1994 by AT&T Bell Laboratories.
+Config/roxygen2/version: 8.0.0
