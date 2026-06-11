@@ -228,14 +228,16 @@ void merge_vertices_core_(double tol,
   //        3      4       5
   //        2    -999    -999      REPEATED
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  bool line_used[nsegs];
-  for (int i = 0; i < nsegs; i++) line_used[i] = false;
-  for (int i = 0; i < nsegs; i++) {
-    if (valid_idx(v1[i]) || valid_idx(v2[i])) continue;
-    if (line_used[line[i]]) {
-      discard[i] = true;
+  if (nsegs > 0) {
+    bool line_used[nsegs];
+    for (int i = 0; i < nsegs; i++) line_used[i] = false;
+    for (int i = 0; i < nsegs; i++) {
+      if (valid_idx(v1[i]) || valid_idx(v2[i])) continue;
+      if (line_used[line[i]]) {
+        discard[i] = true;
+      }
+      line_used[line[i]] = true;
     }
-    line_used[line[i]] = true;
   }
   
   
