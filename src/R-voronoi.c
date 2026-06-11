@@ -34,7 +34,12 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   // Sanity Check
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (Rf_length(x_) != Rf_length(y_)) {
-    Rf_error("x & y are not the same length");
+    Rf_error("voronoi_(): x & y are not the same length");
+  }
+  
+  
+  if (Rf_length(x_) == 0) {
+    Rf_error("voronoi_(): Must have at least 1 point. Got zero");
   }
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,6 +179,15 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   ctx.seg_v1   = INTEGER(seg_v1_);
   ctx.seg_v2   = INTEGER(seg_v2_);
   
+  
+  for (int i = 0; i < max_edges; i++) {
+    ctx.seg_line[i] = NA_INTEGER;
+    ctx.seg_v1  [i] = NA_INTEGER;
+    ctx.seg_v2  [i] = NA_INTEGER;
+  }
+  
+  
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Calculate voronoi tessellation using Fortune's Sweep algorithm 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -254,6 +268,15 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     memcpy(v1m  , ctx.seg_v1  , (size_t)ctx.nsegs * sizeof(int));
     memcpy(v2m  , ctx.seg_v2  , (size_t)ctx.nsegs * sizeof(int));
     memcpy(linem, ctx.seg_line, (size_t)ctx.nsegs * sizeof(int));
+    
+    // INitialise the trailing values so that valgrind doesn't complain when
+    // these values are used within convert_indexing_c_to_r_with_NA
+    for (int i = 0; i < max_exterior_edges; i++) {
+      v1m  [ctx.nsegs + i] = NA_INTEGER;
+      v2m  [ctx.nsegs + i] = NA_INTEGER;
+      linem[ctx.nsegs + i] = NA_INTEGER;
+    }
+    
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Merge close vertices which are an artefact of the tessellation
