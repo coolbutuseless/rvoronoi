@@ -376,7 +376,7 @@ if (FALSE) {
 
 ### Voronoi - vertices and segments only 
 
-```{r eval=FALSE}
+```{r}
 bench::mark(
   `rvoronoi (match RTriangle)`  = voronoi(x, y, calc_polygons = FALSE, bound_segments = FALSE),
   RTriangle = RTriangle::triangulate(pslg(P = cbind(x, y))),

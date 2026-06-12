@@ -264,14 +264,14 @@ bench::mark(
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |   itr/sec | mem_alloc |
-|:-----------|--------:|--------:|----------:|----------:|
-| rvoronoi   | 377.5µs | 392.5µs | 2523.7039 |   186.1KB |
-| rvoronoi   | 373.9µs | 384.6µs | 2586.5844 |    46.9KB |
-| rvoronoi   |   374µs |   387µs | 2563.4185 |   62.39KB |
-| rvoronoi   |   721µs | 742.7µs | 1340.8609 |  186.73KB |
-| rtriangle  | 744.2µs | 777.2µs | 1274.4197 |  292.63KB |
-| deldir     |  13.9ms |  14.1ms |   70.6593 |    5.67MB |
+| expression |     min |  median |    itr/sec | mem_alloc |
+|:-----------|--------:|--------:|-----------:|----------:|
+| rvoronoi   | 378.3µs | 395.8µs | 2498.57142 |   186.1KB |
+| rvoronoi   | 369.1µs | 382.3µs | 2567.10425 |    46.9KB |
+| rvoronoi   | 370.8µs |   426µs | 2362.84904 |   62.39KB |
+| rvoronoi   | 724.8µs | 806.5µs | 1241.64742 |  186.73KB |
+| rtriangle  | 747.8µs | 793.6µs | 1237.94048 |  292.63KB |
+| deldir     |  13.9ms |  14.2ms |   69.93112 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -370,6 +370,11 @@ bench::mark(
 )[,1:5] |> knitr::kable()
 ```
 
+| expression                 |   min | median |  itr/sec | mem_alloc |
+|:---------------------------|------:|-------:|---------:|----------:|
+| rvoronoi (match RTriangle) | 405µs |  422µs | 2345.653 |     273KB |
+| RTriangle                  | 746µs |  828µs | 1193.271 |     293KB |
+
 ### Voronoi - polygons
 
 ``` r
@@ -385,9 +390,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   3.24ms |    3.3ms | 298.883319 |   601.8KB |
-| rvoronoi (unmatched polygons) |   2.19ms |   2.25ms | 423.851517 |   601.8KB |
-| deldir                        | 167.88ms | 170.99ms |   5.878556 |    52.1MB |
+| rvoronoi (matched polygons)   |   3.21ms |   3.28ms | 301.659208 |   601.8KB |
+| rvoronoi (unmatched polygons) |   2.17ms |   2.22ms | 389.360996 |   601.8KB |
+| deldir                        | 162.18ms | 163.54ms |   6.014229 |    52.1MB |
 
 # Pathological Test Cases
 
