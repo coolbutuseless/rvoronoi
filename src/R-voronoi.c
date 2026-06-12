@@ -257,10 +257,6 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     v2m_   = PROTECT(Rf_allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
     linem_ = PROTECT(Rf_allocVector(INTSXP, ctx.nsegs + max_exterior_edges)); nprotect++;
     
-    msegs_ = PROTECT(
-      create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
-    ); nprotect++;
-    
     v1m   = INTEGER(v1m_);
     v2m   = INTEGER(v2m_);
     linem = INTEGER(linem_);
@@ -347,11 +343,16 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Trim the merged indices to size (and make into a data.frame)
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    set_df_attributes_and_trim(msegs_, fnedges, Rf_length(v1m_));
-    // Have to unpack here as can be reassigned by Rf_lengthgets within the call
-    linem_ = VECTOR_ELT(msegs_, 0);
-    v1m_   = VECTOR_ELT(msegs_, 1);
-    v2m_   = VECTOR_ELT(msegs_, 2);
+    int alloc_len = Rf_length(v1m_);
+    linem_ = PROTECT(trim_vec(linem_, fnedges, alloc_len)); nprotect++;
+    v1m_   = PROTECT(trim_vec(v1m_  , fnedges, alloc_len)); nprotect++;
+    v2m_   = PROTECT(trim_vec(v2m_  , fnedges, alloc_len)); nprotect++;
+    msegs_ = PROTECT(
+      create_named_list(3, "line", linem_, "v1", v1m_, "v2", v2m_)
+    ); nprotect++;
+    
+    set_df_attributes(msegs_);
+    
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // All the vertices including those from bounding infinite segments 
@@ -400,26 +401,44 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Vertices:   data.frame(x = ..., y = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  vert_x_ = PROTECT(trim_vec(vert_x_, ctx.nverts, max_verts)); nprotect++;
+  vert_y_ = PROTECT(trim_vec(vert_y_, ctx.nverts, max_verts)); nprotect++;
   SEXP vert_ = PROTECT(
     create_named_list(2, "x", vert_x_, "y", vert_y_)
   ); nprotect++;
-  set_df_attributes_and_trim(vert_, ctx.nverts, max_verts);
+  set_df_attributes(vert_);
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  line_a_ = PROTECT(trim_vec(line_a_, ctx.nlines, max_edges)); nprotect++;
+  line_b_ = PROTECT(trim_vec(line_b_, ctx.nlines, max_edges)); nprotect++;
+  line_c_ = PROTECT(trim_vec(line_c_, ctx.nlines, max_edges)); nprotect++;
+  
   SEXP line_ = PROTECT(
     create_named_list(3, "a", line_a_, "b", line_b_, "c", line_c_)
   ); nprotect++;
-  set_df_attributes_and_trim(line_, ctx.nlines, max_edges);
+  
+  set_df_attributes(line_);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Segments: data.frame(line = integer(), v1 = integer(), v2 = integer())
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  seg_line_ = PROTECT(trim_vec(seg_line_, ctx.nsegs, max_edges)); nprotect++;
+  seg_v1_   = PROTECT(trim_vec(seg_v1_  , ctx.nsegs, max_edges)); nprotect++;
+  seg_v2_   = PROTECT(trim_vec(seg_v2_  , ctx.nsegs, max_edges)); nprotect++;
+  
+  convert_indexing_c_to_r_with_NA(seg_line_);
+  convert_indexing_c_to_r_with_NA(seg_v1_);
+  convert_indexing_c_to_r_with_NA(seg_v2_);
+  
   SEXP seg_ = PROTECT(
     create_named_list(3, "line", seg_line_, "v1", seg_v1_, "v2", seg_v2_)
   ); nprotect++;
+  set_df_attributes(seg_);
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Extents: list(xmin = numeric(), xmax = numeric(), ymin = numeric(), ymax = numeric())
@@ -434,6 +453,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     create_named_list(4, "xmin", xmin_, "xmax", xmax_, "ymin", ymin_, "ymax", ymax_)
   ); nprotect++;
   
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Final result: named list of data.frames
   //  list(
@@ -445,6 +465,13 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   ); nprotect++;
   set_df_attributes(sites_);
   
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Final result: named list of data.frames
+  //  list(
+  //     sites = ..., vertices = ..., ...
+  // )
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP res_ = PROTECT(
     create_named_list(
       8, 
@@ -462,20 +489,14 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   
   
   
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Convert C 0-indexing to R 1-indexing
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  convert_indexing_c_to_r_with_NA(seg_line_);
-  convert_indexing_c_to_r_with_NA(seg_v1_);
-  convert_indexing_c_to_r_with_NA(seg_v2_);
-  set_df_attributes_and_trim(seg_, ctx.nsegs, max_edges);
+  
+  
+  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' memory
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   free_all_myalloc(&ctx);
-  
-  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Tidy and return

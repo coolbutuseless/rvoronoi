@@ -48,38 +48,6 @@ SEXP trim_vec(SEXP vec_, int visible_length, int allocated_length) {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // @param df_ named list object which is to be promoted to data.frame
-// @param visible_length trim the data.frame to this number of rows
-// @param allocated length how many rows does each list member have?
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void set_df_attributes_and_trim(SEXP df_, int visible_length, int allocated_length) {
-  
-  if (!Rf_isNewList(df_)) {
-    Rf_error("set_df_attributes_and_trim(): only accepts 'lists' as input");
-  }
-  
-  if (visible_length > allocated_length) {
-    Rf_error("set_df_attributes_and_trim(): visible_length (%i) cannot be greater than allocated length (%i)",
-          visible_length, allocated_length);
-  }
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Truncate all the vectors to visible length
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (visible_length != allocated_length) {
-    for (int col_idx = 0; col_idx < Rf_length(df_); col_idx++) {
-      SEXP new_vec_ = PROTECT(trim_vec(VECTOR_ELT(df_, col_idx), visible_length, allocated_length));
-      SET_VECTOR_ELT(df_, col_idx, new_vec_);
-      UNPROTECT(1);
-    }
-  }
-  
-  set_df_attributes(df_);
-} 
-
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// @param df_ named list object which is to be promoted to data.frame
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void set_df_attributes(SEXP df_) {
   int nprotect = 0;

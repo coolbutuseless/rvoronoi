@@ -115,13 +115,10 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP idx_  = R_NilValue;
   SEXP area_ = R_NilValue;
+  
   if (Rf_asLogical(calc_areas_)) {
     area_ = PROTECT(Rf_allocVector(REALSXP, ctx.ntris)); nprotect++;
-    idx_  = PROTECT(create_named_list(4, "v1", v1_, "v2", v2_, "v3", v3_, "area", area_)); nprotect++;
-  } else {
-    idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
   }
-  
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Area
@@ -314,6 +311,28 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
     free(vpairs);
   }
   
+  
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Convert C 0-indexing to R 1-indexing
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
+  v1_ = PROTECT(trim_vec(v1_, ctx.ntris, max_tris)); nprotect++;
+  v2_ = PROTECT(trim_vec(v2_, ctx.ntris, max_tris)); nprotect++;
+  v3_ = PROTECT(trim_vec(v3_, ctx.ntris, max_tris)); nprotect++;
+  
+  convert_indexing_c_to_r(v1_);
+  convert_indexing_c_to_r(v2_);
+  convert_indexing_c_to_r(v3_);
+  
+  
+  if (Rf_asLogical(calc_areas_)) {
+    idx_  = PROTECT(create_named_list(4, "v1", v1_, "v2", v2_, "v3", v3_, "area", area_)); nprotect++;
+  } else {
+    idx_ = PROTECT(create_named_list(3, "v1", v1_, "v2", v2_, "v3", v3_)); nprotect++;
+  }
+  
+  set_df_attributes(idx_);
+  
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // data.frame of initial sites
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -344,14 +363,6 @@ SEXP delaunay_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP calc_areas_, SEXP cal
   ); nprotect++;
   
   Rf_setAttrib(res_, R_ClassSymbol, Rf_mkString("del"));
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Convert C 0-indexing to R 1-indexing
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-  convert_indexing_c_to_r(v1_);
-  convert_indexing_c_to_r(v2_);
-  convert_indexing_c_to_r(v3_);
-  set_df_attributes_and_trim(idx_, ctx.ntris, max_tris);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' allocations
