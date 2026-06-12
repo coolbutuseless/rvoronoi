@@ -344,6 +344,14 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
     fnedges += nbsegs;
     
     
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Trim the merged indices to size (and make into a data.frame)
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    set_df_attributes_and_trim(msegs_, fnedges, Rf_length(v1m_));
+    // Have to unpack here as can be reassigned by Rf_lengthgets within the call
+    linem_ = VECTOR_ELT(msegs_, 0);
+    v1m_   = VECTOR_ELT(msegs_, 1);
+    v2m_   = VECTOR_ELT(msegs_, 2);
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // All the vertices including those from bounding infinite segments 
@@ -395,6 +403,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   SEXP vert_ = PROTECT(
     create_named_list(2, "x", vert_x_, "y", vert_y_)
   ); nprotect++;
+  set_df_attributes_and_trim(vert_, ctx.nverts, max_verts);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Lines: data.frame(a = ..., b = ..., c = ...)
@@ -402,6 +411,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   SEXP line_ = PROTECT(
     create_named_list(3, "a", line_a_, "b", line_b_, "c", line_c_)
   ); nprotect++;
+  set_df_attributes_and_trim(line_, ctx.nlines, max_edges);
   
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -451,6 +461,7 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   Rf_setAttrib(res_, R_ClassSymbol, Rf_mkString("vor"));
   
   
+  
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Convert C 0-indexing to R 1-indexing
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -458,14 +469,6 @@ SEXP voronoi_(SEXP x_, SEXP y_, SEXP calc_polygons_, SEXP match_sites_, SEXP bou
   convert_indexing_c_to_r_with_NA(seg_v1_);
   convert_indexing_c_to_r_with_NA(seg_v2_);
   set_df_attributes_and_trim(seg_, ctx.nsegs, max_edges);
-  
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Trim the merged indices to size (and make into a data.frame)
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  set_df_attributes_and_trim(msegs_, fnedges, Rf_length(v1m_));
-  set_df_attributes_and_trim(vert_, ctx.nverts, max_verts);
-  set_df_attributes_and_trim(line_, ctx.nlines, max_edges);
   
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Free all the 'myalloc()' memory
