@@ -252,26 +252,30 @@ stopifnot(identical(
 </details>
 
 ``` r
+mat <- cbind(x, y)
+
 bench::mark(
   # delone    = xy_tri  (x, y),
   rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_areas = TRUE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_segments = TRUE),
-  rtriangle = triangulate(pslg(cbind(x, y))),
+  rtriangle = triangulate(pslg(mat)),
+  voronoifortune = voronoifortune::voronoi(mat),
   deldir    = deldir(x, y),
   check = FALSE
 )[,1:5]  |> knitr::kable()
 ```
 
-| expression |     min |  median |    itr/sec | mem_alloc |
-|:-----------|--------:|--------:|-----------:|----------:|
-| rvoronoi   | 378.3µs | 395.8µs | 2498.57142 |   186.1KB |
-| rvoronoi   | 369.1µs | 382.3µs | 2567.10425 |    46.9KB |
-| rvoronoi   | 370.8µs |   426µs | 2362.84904 |   62.39KB |
-| rvoronoi   | 724.8µs | 806.5µs | 1241.64742 |  186.73KB |
-| rtriangle  | 747.8µs | 793.6µs | 1237.94048 |  292.63KB |
-| deldir     |  13.9ms |  14.2ms |   69.93112 |    5.67MB |
+| expression     |     min |  median |    itr/sec | mem_alloc |
+|:---------------|--------:|--------:|-----------:|----------:|
+| rvoronoi       | 378.9µs | 392.5µs | 2527.49181 |   186.1KB |
+| rvoronoi       | 368.9µs | 380.6µs | 2609.03905 |    46.9KB |
+| rvoronoi       |   374µs | 386.8µs | 2568.16795 |   62.39KB |
+| rvoronoi       |   724µs | 778.8µs | 1274.52401 |  186.73KB |
+| rtriangle      | 751.7µs | 772.9µs | 1255.72250 |  276.96KB |
+| voronoifortune | 363.1µs | 393.4µs | 2475.92879 |  860.56KB |
+| deldir         |  13.8ms |  14.1ms |   70.47538 |    5.67MB |
 
 # Voronoi Tessellation Benchmark
 
@@ -280,6 +284,7 @@ Compare:
 - `{rvoronoi}`
 - `{deldir}`
 - `{RTriangle}`
+- `{voronoifortune}`
 
 <details>
 
@@ -372,8 +377,8 @@ bench::mark(
 
 | expression                 |   min | median |  itr/sec | mem_alloc |
 |:---------------------------|------:|-------:|---------:|----------:|
-| rvoronoi (match RTriangle) | 405µs |  422µs | 2345.653 |     273KB |
-| RTriangle                  | 746µs |  828µs | 1193.271 |     293KB |
+| rvoronoi (match RTriangle) | 410µs |  420µs | 2359.253 |     273KB |
+| RTriangle                  | 736µs |  763µs | 1296.392 |     293KB |
 
 ### Voronoi - polygons
 
@@ -390,9 +395,9 @@ bench::mark(
 
 | expression                    |      min |   median |    itr/sec | mem_alloc |
 |:------------------------------|---------:|---------:|-----------:|----------:|
-| rvoronoi (matched polygons)   |   3.21ms |   3.28ms | 301.659208 |   601.8KB |
-| rvoronoi (unmatched polygons) |   2.17ms |   2.22ms | 389.360996 |   601.8KB |
-| deldir                        | 162.18ms | 163.54ms |   6.014229 |    52.1MB |
+| rvoronoi (matched polygons)   |   3.22ms |   3.33ms | 292.655427 |   601.8KB |
+| rvoronoi (unmatched polygons) |   2.18ms |   2.22ms | 432.142561 |   601.8KB |
+| deldir                        | 167.42ms | 169.32ms |   5.917394 |    52.1MB |
 
 # Pathological Test Cases
 

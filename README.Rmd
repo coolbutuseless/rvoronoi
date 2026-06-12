@@ -275,13 +275,16 @@ stopifnot(identical(
 </details>
 
 ```{r}
+mat <- cbind(x, y)
+
 bench::mark(
   # delone    = xy_tri  (x, y),
   rvoronoi  = delaunay(x, y, calc_polygons = TRUE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_areas = TRUE),
   rvoronoi  = delaunay(x, y, calc_polygons = FALSE, calc_segments = TRUE),
-  rtriangle = triangulate(pslg(cbind(x, y))),
+  rtriangle = triangulate(pslg(mat)),
+  voronoifortune = voronoifortune::voronoi(mat),
   deldir    = deldir(x, y),
   check = FALSE
 )[,1:5]  |> knitr::kable()
@@ -296,6 +299,7 @@ Compare:
 * `{rvoronoi}`
 * `{deldir}`
 * `{RTriangle}`
+* `{voronoifortune}`
 
 <details>
 <summary>Voronoi Tessellation Benchmark</summary>
